@@ -1,0 +1,35 @@
+{
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "网易云信视频通讯"
+			}
+		},
+		{
+			"path": "pages/error/404",
+			"style": {
+				"navigationBarTitleText": "404"
+			}
+		},
+		{
+				"path": "pages/sl-videocall/sl-videocall",
+				"style": {
+					"navigationBarTitleText": "视频通话",
+					"navigationBarTextStyle": "white"
+				}
+			},{
+				"path": "pages/sl-videocall/sl-callclient",
+				"style": {
+					"navigationStyle": "custom"
+				}
+			}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "white",
+		"navigationBarTitleText": "uni-app",
+		"navigationBarBackgroundColor": "#0A67F7",
+		"backgroundColor": "#0A67F7"
+	},
+	"uniIdRouter": {}
+}
