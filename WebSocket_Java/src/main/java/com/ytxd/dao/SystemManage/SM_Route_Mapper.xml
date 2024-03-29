@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.SystemManage.SM_Route_Mapper">
+	<!-- 允许缓存 -->
+	<!-- <cache /> -->
+	
+	<!-- 查询表   表 字段  -->
+	<sql id="Select_Column">
+		sm_route.id,
+		sm_route.parentid,
+		sm_route.path,
+		sm_route.name,
+		sm_route.redirect,
+		sm_route.compenent,
+		sm_route.title,
+		sm_route.icon,
+		sm_route.hidden,ifnull(hidden.DescriptionJoin,sm_route.hidden) hiddenname,
+		sm_route.orderid,
+		case when haschildren.pid is not null then 1 else 0 end haschildren,
+		query 
+	</sql>
+
+	<!-- 查询表   查询条件参数  -->
+	<sql id="Select_Parmeter">
+		<if test="id!=null and id!=''"> AND sm_route.id IN (#{id}) </if>
+		<if test="parentid!=null and parentid!=''"> AND sm_route.parentid in (#{parentid}) </if>
+		<if test="path!=null and path!=''"> AND sm_route.path like CONCAT('%',#{path},'%') </if>
+		<if test="name!=null and name!=''"> AND sm_route.name like CONCAT('%',#{name},'%') </if>
+		<if test="redirect!=null and redirect!=''"> AND sm_route.redirect like CONCAT('%',#{redirect},'%') </if>
+		<if test="compenent!=null and compenent!=''"> AND sm_route.compenent like CONCAT('%',#{compenent},'%') </if>
+		<if test="icon!=null and icon!=''"> AND sm_route.icon like CONCAT('%',#{icon},'%') </if>
+		<if test="hidden!=null and hidden!=''"> AND sm_route.hidden = #{hidden} </if>
+		<if test="startorderid!=null and startorderid!=''"> AND sm_route.orderid &gt;= #{startorderid} </if>
+		<if test="endorderid!=null and endorderid!=''"> AND sm_route.orderid &lt;= #{endorderid} </if>
+	</sql>
+
+	<!-- 查询  表信息  -->
+	<select id="Select_SM_Route" parameterType="com.ytxd.model.SystemManage.SM_Route" resultType="com.ytxd.model.SystemManage.SM_Route">
+		SELECT <include refid="Select_Column" />
+		FROM sm_route 
+		LEFT JOIN (select distinct parentid pid from sm_route ) haschildren on haschildren.pid=sm_route.id
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') hidden on hidden.CodeJoin=sm_route.hidden 
+		WHERE 1=1
+		<include refid="Select_Parmeter" />
+		<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+		<if test="startRow!=null and startRow!='' and pageSize!=null and pageSize!=''"> LIMIT #{startRow},#{pageSize}</if>
+	</select>
+	<select id="Select_SM_Route_All" parameterType="com.ytxd.model.SystemManage.SM_Route" resultType="com.ytxd.model.SystemManage.SM_Route">
+		SELECT <include refid="Select_Column" />
+		FROM sm_route 
+		LEFT JOIN (select distinct parentid pid from sm_route ) haschildren on haschildren.pid=sm_route.id
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') hidden on hidden.CodeJoin=sm_route.hidden
+		WHERE 1=1
+			<include refid="Select_Parmeter" />
+			<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+	</select>
+	<!-- 查询表记录数  -->
+	<select id="Select_SM_Route_Count" parameterType="com.ytxd.model.SystemManage.SM_Route" resultType="java.lang.Integer">
+		SELECT COUNT(1)
+		FROM sm_route
+		WHERE 1=1
+			<include refid="Select_Parmeter" />
+	</select>
+	<!-- 查询表信息  -->
+	<select id="Select_SM_Route_ById" parameterType="java.lang.String" resultType="com.ytxd.model.SystemManage.SM_Route">
+		SELECT <include refid="Select_Column" />
+		FROM sm_route
+		LEFT JOIN (select distinct parentid pid from sm_route ) haschildren on haschildren.pid=sm_route.id 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') hidden on hidden.CodeJoin=sm_route.hidden 
+		WHERE
+			ID = #{userid}
+	</select>
+
+	<!-- 新增信息表字段 -->
+	<sql id="Insert_Column">
+		<if test="parentid!=null and parentid!=''">,parentid</if> <!--父级ID-->
+		<if test="path!=null and path!=''">,path</if> <!---->
+		<if test="name!=null and name!=''">,name</if> <!--菜单名称-->
+		<if test="redirect!=null and redirect!=''">,redirect</if> <!--权限标识-->
+		<if test="compenent!=null and compenent!=''">,compenent</if> <!--链接网页-->
+		<if test="title!=null and title!=''">,title</if> <!--子系统-->
+		<if test="icon!=null and icon!=''">,icon</if> <!--图片地址-->
+		<if test="hidden!=null and hidden!=''">,hidden</if> <!--是否可见-->
+		<if test="orderid!=null and orderid!=''">,orderid</if> <!--排序-->
+		<if test="query!=null and query!=''">,query</if>
+	</sql>
+
+	<sql id="Insert_Parmeter">
+		<if test="parentid!=null and parentid!=''">,#{parentid}</if>	<!--父级ID-->
+		<if test="path!=null and path!=''">,#{path}</if>	<!--路由地址-->
+		<if test="name!=null and name!=''">,#{name}</if>	<!--路由名称-->
+		<if test="redirect!=null and redirect!=''">,#{redirect}</if>	<!--重定向地址-->
+		<if test="compenent!=null and compenent!=''">,#{compenent}</if>	<!--组件-->
+		<if test="title!=null and title!=''">,#{title}</if>	<!--页面标题-->
+		<if test="icon!=null and icon!=''">,#{icon}</if>	<!--页面图标-->
+		<if test="hidden!=null and hidden!=''">,#{hidden}</if>	<!--是否显示到菜单上-->
+		<if test="orderid!=null and orderid!=''">,#{orderid}</if>	<!--排序-->
+		<if test="query!=null and query!=''">,#{query}</if>
+	</sql>
+
+	<!-- 新增表信息  -->
+	<insert id="Insert_SM_Route" parameterType="com.ytxd.model.SystemManage.SM_Route" >
+		INSERT INTO sm_route
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Column" />
+		</trim>
+		VALUES
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Parmeter" />
+		</trim>
+		<selectKey resultType="java.lang.String" keyProperty="id">
+			SELECT LAST_INSERT_ID() AS id FROM DUAL
+		</selectKey>
+	</insert>
+
+	<!-- 修改表  set 参数  -->
+	<sql id="Update_Parmeter">
+		<if test="parentid!=null">,parentid=#{parentid}</if>
+		<if test="path!=null">,path=#{path}</if>
+		<if test="name!=null">,name=#{name}</if>
+		<if test="redirect!=null">,redirect=#{redirect}</if>
+		<if test="compenent!=null">,compenent=#{compenent}</if>
+		<if test="title!=null">,title=#{title}</if>
+		<if test="icon!=null">,icon=#{icon}</if>
+		<if test="hidden!=null">,hidden=#{hidden}</if>
+		<if test="orderid!=null">,orderid=CASE WHEN #{orderid}='' THEN NULL ELSE #{orderid} END</if>
+		<if test="query!=null">,query=#{query}</if>
+	</sql>
+
+	<!-- 修改表信息 -->
+	<update id="Update_SM_Route" parameterType="com.ytxd.model.SystemManage.SM_Route">
+		UPDATE sm_route
+		<set>
+			<trim prefixOverrides=",">
+			<include refid="Update_Parmeter" />
+			</trim>
+		</set>
+		WHERE id IN (#{id})
+	</update>
+
+	<!-- 删除表信息 -->
+	<delete id="Delete_SM_Route" parameterType="java.lang.String">
+		DELETE FROM sm_route
+		WHERE id IN <foreach collection="array" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+	</delete>
+	
+	<!-- **扩展********************************************************************** -->
+	<select id="Select_Power_Route" parameterType="com.ytxd.model.SystemManage.SM_Route" resultType="com.ytxd.model.SystemManage.SM_Route">
+		select id,parentid,name,PATH,redirect,compenent,title,query,level,
+		icon,case when hidden='01' then 'true' else 'false' end hidden,case when haschildren.pid is not null then 1 else 0 end haschildren 
+		from sm_route 
+		left join (select distinct parentid pid from sm_route ) haschildren on haschildren.pid=sm_route.id 
+		left join (select distinct routeid from sm_users_route where userid in (select RoleId from sm_users_role where userid=#{userid})
+		union select parentid from sm_route 
+		where id in (select distinct routeid from sm_users_route where userid in (select RoleId from sm_users_role where userid=#{userid}) )
+		union select parentid from sm_route where id in (select parentid from sm_route 
+		where id in (select distinct routeid from sm_users_route where userid in (select RoleId from sm_users_role where userid=#{userid})))
+		union select parentid from sm_route where id in (select parentid from sm_route where id in (select parentid from sm_route 
+		where id in (select distinct routeid from sm_users_route where userid in (select RoleId from sm_users_role where userid=#{userid}))))
+		) userfunction ON userfunction.routeid=sm_route.id 
+		where sm_route.type = '01' and sm_route.hidden='01' and userfunction.routeid IS NOT NULL <if test="parentid!=null and parentid!=''"> and parentid= #{parentid}</if>
+		order by orderid
+	</select>
+	
+	<select id="Select_SM_Users_Route" parameterType="com.ytxd.model.SystemManage.SM_Route" resultType="com.ytxd.model.SystemManage.SM_Route">
+		select sm_route.id,sm_route.parentid, PATH, Redirect, name, Compenent, Title, Icon, orderid, Hidden,Permission,Query
+		,case when sm_users_route.UserId is not null then '1' else '0' end checked  
+		,case when haschildren.pid is not null then 1 else 0 end haschildren  
+		,case when BB.chilechecked is null or BB.chilechecked not like '%0%' then '1' else '0' end open 
+		from sm_route  
+		LEFT JOIN (select distinct parentid pid from sm_route ) haschildren on haschildren.pid=sm_route.id 
+		left join (select distinct userid,routeid from sm_users_route where 1=1 and userid=#{userid}) sm_users_route on sm_route.id=sm_users_route.routeid
+		LEFT JOIN (
+		select parentid,GROUP_CONCAT(checked) chilechecked from (
+		select id,parentid,case when sm_users_route.UserId is not null then '1' else '0' end checked 
+		from sm_route 
+		left join (select distinct userid,routeid from sm_users_route where 1=1 and userid=#{userid}) sm_users_route on sm_route.id=sm_users_route.routeid
+		order by sm_route.orderid asc) aa GROUP BY aa.parentid
+		) BB on BB.ParentId=sm_route.id  
+		<if test="id!=null and id!=''"> AND sm_route.id IN (#{id}) </if>
+		<if test="parentid!=null and parentid!=''"> AND sm_route.parentid in (#{parentid}) </if>
+		<if test="path!=null and path!=''"> AND sm_route.path like CONCAT('%',#{path},'%') </if>
+		<if test="name!=null and name!=''"> AND CONCAT(',',sm_route.name,',') like CONCAT('%,',#{name},',%') </if>
+		order by sm_route.orderid asc
+	</select>
+	
+	<!-- 删除权限 -->
+	<delete id="Delete_SM_Users_Route" parameterType="com.ytxd.model.SystemManage.SM_Route">
+		delete from sm_users_route
+		where userid=#{userid} and routeid not IN 
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach>
+	</delete>
+	<!-- 增加权限 -->
+	<delete id="Insert_SM_Users_Route" parameterType="com.ytxd.model.SystemManage.SM_Route">
+		insert into sm_users_route(userid,routeid) 
+		select ${userid} userid,id routeid 
+		from sm_route 
+		where id IN 
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach> and id not in (select routeid from sm_users_route where userid=#{userid})
+	</delete>
+</mapper>

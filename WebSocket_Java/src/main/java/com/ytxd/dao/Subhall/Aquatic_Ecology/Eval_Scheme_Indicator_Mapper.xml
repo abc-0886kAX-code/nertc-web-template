@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Subhall.Aquatic_Ecology.Eval_Scheme_Indicator_Mapper">
+	<select id="Select_Eval_Scheme_Indicator_List" resultType="java.util.HashMap">
+		select Eval_Scheme_Indicator.id,Eval_Scheme_Indicator.schemeid,Eval_Scheme_Indicator.indid,Eval_Scheme_Indicator.indname,
+		       Eval_Scheme_Indicator.parentid,Eval_Scheme_Indicator.indtype,Eval_Scheme_Indicator.indrank,Eval_Scheme_Indicator.otherscore,
+		       Eval_Scheme_Indicator.formuladesc,Eval_Scheme_Indicator.weight,Eval_Scheme_Indicator.calculation_formula,
+		       Eval_Scheme_Indicator.orderid,Eval_Scheme_Indicator.inrremake,Eval_Scheme_Indicator.score,Eval_Scheme_Indicator.submittime,
+			   indtype_join.description indtypename,indrank_join.description indrankname,Eval_Scheme.schemename,Eval_Scheme.schemeyear
+		from Eval_Scheme_Indicator
+		left join Eval_Scheme_Indicator parent_Scheme_Indicator on parent_Scheme_Indicator.indid = Eval_Scheme_Indicator.parentid
+		and parent_Scheme_Indicator.schemeid = Eval_Scheme_Indicator.schemeid
+		left join (select code,description from sm_codeitem where codeid ='ZT'
+		) indtype_join on indtype_join.code = Eval_Scheme_Indicator.indtype
+		left join (select code,description from sm_codeitem where codeid ='ZH'
+		) indrank_join on indrank_join.code = Eval_Scheme_Indicator.indrank
+		left join Eval_Scheme on Eval_Scheme.schemeid = Eval_Scheme_Indicator.schemeid
+		<where>
+			<if test="id != null and id != '' ">
+				and Eval_Scheme_Indicator.id in
+				<foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+					#{id}
+				</foreach>
+			</if>
+			<if test="schemeid != null and schemeid != '' ">
+				and Eval_Scheme_Indicator.schemeid in
+				<foreach collection="schemeid.split(',')" item="schemeid" open="(" separator="," close=")">
+					#{schemeid}
+				</foreach>
+			</if>
+			<if test="indid != null and indid != '' ">
+				and Eval_Scheme_Indicator.indid in
+				<foreach collection="indid.split(',')" item="indid" open="(" separator="," close=")">
+					#{indid}
+				</foreach>
+			</if>
+			<if test="parentid != null and parentid != '' ">
+				and Eval_Scheme_Indicator.parentid in
+				<foreach collection="parentid.split(',')" item="parentid" open="(" separator="," close=")">
+					#{parentid}
+				</foreach>
+			</if>
+			<if test="indtype != null and indtype != '' ">
+				and Eval_Scheme_Indicator.indtype = #{indtype}
+			</if>
+			<if test="indname != null and indname != '' ">
+				and Eval_Scheme_Indicator.indname like concat('%',#{indname},'%')
+			</if>
+			<if test="indrank != null and indrank != '' ">
+				and Eval_Scheme_Indicator.indrank in
+				<foreach collection="indrank.split(',')" item="indrank" open="(" separator="," close=")">
+					#{indrank}
+				</foreach>
+			</if>
+		</where>
+		order by Eval_Scheme_Indicator.orderid
+	</select>
+<!--	修改指标信息-->
+	<sql id="Update_Params">
+		<if test="formuladesc != null">
+			,formuladesc = #{formuladesc}
+		</if>
+		<if test="weight != null">
+			,weight = #{weight}
+		</if>
+		<if test="calculation_formula != null">
+			,calculation_formula = #{calculation_formula}
+		</if>
+		<if test="orderid != null">
+			,orderid = #{orderid}
+		</if>
+		<if test="inrremake != null">
+			,inrremake = #{inrremake}
+		</if>
+		<if test="score != null ">
+			,score = round(#{score},2)
+		</if>
+		<if test="submittime != null">
+			,submittime = #{submittime}
+		</if>
+		<if test="otherscore != null">
+			,otherscore = round(#{otherscore},2)
+		</if>
+	</sql>
+	<update id="Update_Eval_Scheme_Indicator">
+		update Eval_Scheme_Indicator set id = id <include refid="Update_Params"/>
+		where id in
+		<foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</update>
+<!--	删除-->
+	<delete id="Delete_Eval_Scheme_Indicator">
+		delete from Eval_Scheme_Indicator where id in
+		<foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+<!--	方案选择指标-->
+	<insert id="Insert_Choose_Eval_Scheme_Indicator">
+		insert into Eval_Scheme_Indicator(schemeid,indid,indname,parentid,indtype,indrank,formuladesc,weight,calculation_formula,orderid,inrremake)
+		select #{schemeid},indid,indname,parentid,indtype,indrank,formuladesc,weight,calculation_formula,orderid,inrremake from eval_indicator_library
+		where indid in
+		    <foreach collection="indid.split(',')" item="indid" open="(" separator="," close=")">
+				#{indid}
+			</foreach>
+			and not exists (select 1 from Eval_Scheme_Indicator where Eval_Scheme_Indicator.schemeid = #{schemeid} and Eval_Scheme_Indicator.indid = eval_indicator_library.indid)
+	</insert>
+<!--	查询父级指标-->
+	<select id="Select_Parent_Eval_Scheme_indList" resultType="java.util.HashMap">
+		select parentid from eval_indicator_library
+		where  indid in
+		<foreach collection="indid.split(',')" item="indid" open="(" separator="," close=")">
+			#{indid}
+		</foreach>
+	</select>
+<!--	查询子级指标-->
+	<select id="Select_Children_Eval_Scheme_indList" resultType="java.util.HashMap">
+		select indid from eval_indicator_library
+		where  parentid in
+		<foreach collection="indid.split(',')" item="indid" open="(" separator="," close=")">
+			#{indid}
+		</foreach>
+	</select>
+<!--	查询方案下的站点信息-->
+	<select id="Select_eval_scheme_stcd_List" resultType="java.util.Map">
+		select eval_scheme_stcd.schemeid,eval_scheme_stcd.stcd,eval_stcd.stnm
+		from  eval_scheme_stcd
+		left join eval_stcd on eval_stcd.stcd = eval_scheme_stcd.stcd
+		where eval_scheme_stcd.schemeid = #{schemeid}
+	</select>
+<!--	查询站点的得分信息-->
+	<select id="Select_eval_scheme_stcd_score_List" resultType="java.util.Map">
+		select eval_scheme_stcd.schemeid,eval_scheme_stcd.stcd,score,essid
+		from eval_scheme_stcd
+		left join  eval_scheme_indicator_score on eval_scheme_indicator_score.stcd = eval_scheme_stcd.stcd
+		where eval_scheme_stcd.schemeid = #{schemeid} and essid = #{essid}
+	</select>
+	<select id="Select_eval_indicator_format_list" resultType="java.util.Map">
+		select indid,title,formula,caltype from eval_indicator_format
+		where indid = #{indid}
+	</select>
+	<select id="Seletc_Parent_Ind_Info" resultType="java.util.Map">
+		select  id,schemeid,indid,indname,parentid,otherscore,score,weight
+		from Eval_Scheme_Indicator where indid = #{indid} and schemeid = #{schemeid}
+	</select>
+	<insert id="Insert_Eval_Scheme_Indicator_Score">
+		insert into eval_scheme_indicator_score(schemeid,stcd,essid,score) values(#{schemeid},#{stcd},#{essid},#{score});
+	</insert>
+	<delete id="Delete_Eval_Scheme_Indicator_Score">
+		delete from eval_scheme_indicator_score where essid = #{essid} and stcd = #{stcd} and schemeid = #{schemeid}
+	</delete>
+	<insert id="Insert_Lake_Healthy_Info">
+		insert into Lake_Healthy(tm,indexid,indexname,indextype,score,HEALTHY_LEVEL)
+		select now(),code,description,pptr,round(eval_scheme_indicator.score,2),
+		       (SELECT code from sm_codeitem where codeid='AE' and min &lt;= eval_scheme_indicator.Score
+		                                       and max > eval_scheme_indicator.Score limit 1 )
+		from sm_codeitem
+		left join  (select indid,case when score > 100 then 100 else score end  score from eval_scheme_indicator where schemeid = #{schemeid}
+		) eval_scheme_indicator on eval_scheme_indicator.indid = sm_codeitem.shortname
+		where sm_codeitem.codeid ='AD' and sm_codeitem.pptr !='AD' and sm_codeitem.flag ='01'
+		    and sm_codeitem.pptr !='03' and eval_scheme_indicator.SCORE is not null
+	</insert>
+	<insert id="Insert_Lake_Healthy_Total_Info">
+		insert into Lake_Healthy(tm,indexid,indexname,indextype,score,HEALTHY_LEVEL)
+		select now(),code,description,pptr,round(eval_scheme_indicator.score,2),
+			   (SELECT code from sm_codeitem where codeid='AE' and min &lt;= eval_scheme_indicator.Score
+											   and max > eval_scheme_indicator.Score limit 1 )
+		from sm_codeitem
+			left join  (select case when sum(score*weight) > 100 then 100 else sum(score*weight) end  score from eval_scheme_indicator where PARENTID is null and schemeid = #{schemeid}
+			) eval_scheme_indicator on 1=1
+		where sm_codeitem.codeid ='AD' and sm_codeitem.code = '0301'
+	</insert>
+	<update id="Update_Lake_Healthy_Total_Info">
+		with temp as (
+			select  score ,(SELECT code from sm_codeitem where codeid='AE' and min &lt;= eval_scheme_indicator.Score
+								and max > eval_scheme_indicator.Score limit 1 ) healthy_level
+			from (select case when sum(score*weight) > 100 then 100 else sum(score*weight) end  score from eval_scheme_indicator where PARENTID is null and
+			 schemeid = (select schemeid from (select * from eval_Scheme ORDER BY SCHEMEYEAR desc) HP_Scheme limit 1
+				)
+			) eval_scheme_indicator
+		)
+		update Lake_Healthy set score = (select  round(score,2)   from temp limit 1),healthy_level= (select healthy_level from temp limit 1)
+		where indexid ='0301' and indextype = '03'
+	</update>
+	<update id="Update_Parent_Ind_Score">
+		with temp as (select round(sum(score * weight),2) score from eval_scheme_indicator where parentid = #{parentid} and schemeid = #{schemeid})
+		update eval_scheme_indicator set score = (
+		    select case when score > 100 then 100 else score end from temp limit 1
+		),otherscore = (
+		select case when score > 100 then 100 else score end  from temp limit 1
+		) where indid = #{parentid} and schemeid = #{schemeid}
+	</update>
+	<update id="Update_Eval_scheme_Score">
+		with temp as (
+			select  score,(SELECT code from sm_codeitem where codeid='AE' and min &lt;= eval_scheme_indicator.Score
+								and max > eval_scheme_indicator.Score limit 1 ) healthy_level
+			from (select case when sum(score*weight) > 100 then 100 else sum(score*weight) end  score from eval_scheme_indicator where PARENTID is null and schemeid = #{schemeid}
+				 ) eval_scheme_indicator
+		)
+		update eval_scheme set score = (select  round(score,2)   from temp limit 1) where schemeid = #{schemeid}
+
+	</update>
+	<select id="Select_Ind_Radar_Info" resultType="java.util.Map">
+		select eval_scheme_indicator.indid,eval_scheme_indicator.indname,ifnull(eval_scheme_indicator.score,0) score
+		from eval_scheme_indicator
+		left join eval_scheme_indicator parent_scheme_indicator
+		    on parent_scheme_indicator.indid = eval_scheme_indicator.parentid
+			and parent_scheme_indicator.schemeid = eval_scheme_indicator.schemeid
+		where eval_scheme_indicator.schemeid = #{schemeid} AND eval_scheme_indicator.INDRANK  = '02'
+		  and parent_scheme_indicator.parentid is null  and eval_scheme_indicator.parentid is not null
+		order by eval_scheme_indicator.PARENTID ,eval_scheme_indicator.orderid asc
+	</select>
+</mapper>

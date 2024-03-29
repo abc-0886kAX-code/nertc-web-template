@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Subhall.Aquatic_Ecology.Aquatic_Ecology_Mapper">
+	<select id="Select_DNA_Info_List" resultType="java.util.Map">
+		select st_stbprp_b.stcd,
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>
+		    ,st_dna_r.tm,st_dna_r.bid,st_dna_r.imagesurl,st_dna_r.pdfurl,st_dna_r.fish,st_dna_r.mcd,
+		st_dna_r.phytoplankton,st_dna_r.zooplankton,st_dna_r.aquatic_bird,st_stbprp_introduce.introduce,st_stbprp_introduce.filepath
+		from st_stbprp_b
+		left join (select stcd,introduce,filepath from st_stbprp_introduce) st_stbprp_introduce on st_stbprp_introduce.stcd = st_stbprp_b.stcd
+		left join (select tm,bid,stcd,imagesurl,pdfurl,fish,mcd,phytoplankton,zooplankton,aquatic_bird from
+		        (select tm,bid,stcd,imagesurl,pdfurl,fish,mcd,phytoplankton,zooplankton,aquatic_bird,
+		                row_number() over(partition by stcd order by tm desc) rn
+					from st_dna_r where 1=1
+				<if test="tm != null and tm != '' ">
+					and tm >= adddate(#{tm},interval 0 hour)
+					and tm &lt; adddate(#{tm},interval 24 hour)
+				</if>
+				<if test="starttime != null and starttime != '' ">
+					and tm >= adddate(#{starttime},interval 0 hour)
+				</if>
+				<if test="endtime != null and endtime != '' ">
+					and tm &lt;= adddate(#{endtime},interval 0 hour)
+				</if>
+		            ) st_dna_r where rn = '1') st_dna_r on st_dna_r.stcd = st_stbprp_b.stcd
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+		<where>
+			<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+		</where>
+		order by -st_stbprp_b.orderid desc
+	</select>
+	<select id="Select_DNA_R_List" resultType="java.util.Map">
+		select id,tm,bid,stcd,imagesurl,pdfurl,fish,mcd,phytoplankton,zooplankton,aquatic_bird
+		from st_dna_r where stcd = #{stcd}
+		<if test="tm != null and tm != '' ">
+			and tm >= adddate(#{tm},interval 0 hour)
+			and tm &lt; adddate(#{tm},interval 24 hour)
+		</if>
+		<if test="starttime != null and starttime != '' ">
+			and tm >= adddate(#{starttime},interval 0 hour)
+		</if>
+		<if test="endtime != null and endtime != '' ">
+			and tm &lt;= adddate(#{endtime},interval 0 hour)
+		</if>
+		order by tm desc
+	</select>
+	<select id="Select_DNA_Pron_Info" resultType="java.util.Map">
+		select fish,mcd,phytoplankton,zooplankton,aquatic_bird,
+			   fish_kind,mcd_kind,phytoplankton_kind,zooplankton_kind,aquatic_bird_kind
+		from st_dna_r where id = #{stcd} order by tm desc limit 1
+	</select>
+	<select id="Select_Flow_Site_List_Old" resultType="java.util.Map">
+		select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+		st_river_r_view.z z,st_river_r_view.tm,st_river_r_view.eigen,eigenJOin.description eigenname,st_river_r_view.q,st_stbprp_introduce.introduce,st_stbprp_introduce.filepath
+		from st_stbprp_b
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+		left join (
+		select stcd,z,tm,q,fun_wl_eigenvalue(stcd,z) eigen from (select *, row_number() over(partition by stcd order by tm desc) rn from st_river_r_view
+		<where>
+			<if test="starttime != null and starttime != '' ">
+				and st_river_r_view.tm >= #{starttime}
+			</if>
+			<if test="endtime != null and endtime != '' ">
+				and st_river_r_view.tm &lt;= #{endtime}
+			</if>
+		</where>
+		) st_river_r_view where rn = '1'
+		) st_river_r_view on st_river_r_view.stcd = st_stbprp_b.stcd
+		left join (select code,description from sm_codeitem where codeid = 'AJ' ) eigenJOin on eigenJOin.code = st_river_r_view.eigen
+		left join (select stcd,introduce,filepath from st_stbprp_introduce) st_stbprp_introduce on st_stbprp_introduce.stcd = st_stbprp_b.stcd
+		<where>
+			<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+		</where>
+		order by -st_stbprp_b.orderid desc
+	</select>
+	<select id="Select_Flow_Site_List" resultType="java.util.Map">
+		select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+		st_gate_r.tm,st_gate_r.eigen,eigenJOin.description eigenname,st_gate_r.q,st_stbprp_introduce.introduce,st_stbprp_introduce.filepath
+		from st_stbprp_b
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+		left join (
+		select stcd,tm,q,fun_wl_eigenvalue(stcd,(select z from st_river_r_view where stcd ='3212000007_01' and st_river_r_view.tm &lt;= st_gate_r.tm and
+		tm >= date_add(st_gate_r.tm,interval -2 hour) order by tm desc limit 1
+		)) eigen from (select stcd,tm,gtq q, row_number() over(partition by stcd order by tm desc) rn from st_gate_r
+		<where>
+			<if test="starttime != null and starttime != '' ">
+				and st_gate_r.tm >= #{starttime}
+			</if>
+			<if test="endtime != null and endtime != '' ">
+				and st_gate_r.tm &lt;= #{endtime}
+			</if>
+		</where>
+		) st_gate_r where rn = '1'
+		) st_gate_r on st_gate_r.stcd = st_stbprp_b.stcd
+		left join (select code,description from sm_codeitem where codeid = 'AJ' ) eigenJOin on eigenJOin.code = st_gate_r.eigen
+		left join (select stcd,introduce,filepath from st_stbprp_introduce) st_stbprp_introduce on st_stbprp_introduce.stcd = st_stbprp_b.stcd
+		<where>
+			<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+		</where>
+		order by -st_stbprp_b.orderid desc
+	</select>
+</mapper>

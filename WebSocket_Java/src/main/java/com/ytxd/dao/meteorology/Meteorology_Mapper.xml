@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.meteorology.Meteorology_Mapper">
+
+	<select id="Select_Meteorology_Info" resultType="java.util.Map">
+		select st_stbprp_b.stcd,st_stbprp_b.stnm,st_stbprp_b.lgtd,st_stbprp_b.lttd, TM, e1, e2, e3,
+		       e4, e5, e6, e7, e8, e9, e10, e11,sttp_join.description sttpname,st_stbprp_b.sttp
+		from st_stbprp_b
+		left join (select stcd, tm, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11
+			from (select stcd, tm, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11,
+				row_number() over (partition by stcd order by tm desc) rn
+				from st_meteorology_r
+				where tm >= #{starttime}  and tm &lt;= #{endtime})  st_meteorology_r where rn = 1
+		)st_meteorology_r on st_meteorology_r.stcd = st_stbprp_b.stcd
+		left  join (select code,description from sm_codeitem where codeid='TP'
+		)sttp_join on  sttp_join.code = st_stbprp_b.sttp
+		where sttp = 14
+		<if test="stcd != null and stcd != ''">
+			and st_stbprp_b.stcd = #{stcd}
+		</if>
+		<if test="stnm != null and stnm !=''">
+			and st_stbprp_b.stnm concat('%',#{stnm},'%')
+		</if>
+		order by st_stbprp_b.ORDERID asc,tm desc
+	</select>
+
+	<select id="Select_meteorology_List" resultType="java.util.Map">
+		select st_meteorology_r.stcd,st_stbprp_b.stnm, tm, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11
+		from st_meteorology_r
+		left join st_stbprp_b on st_stbprp_b.stcd = st_meteorology_r.stcd
+		<where>
+			<if test="stcd != null and stcd != '' ">
+				and st_meteorology_r.stcd = #{stcd}
+			</if>
+			<if test="stnm != null and stnm != '' ">
+				and st_stbprp_b.stnm like concat('%',#{stnm},'%')
+			</if>
+			<if test="starttime != null and starttime != '' ">
+				and st_meteorology_r.tm >= #{starttime}
+			</if>
+			<if test="endtime != null and endtime != '' ">
+				and st_meteorology_r.tm &lt;= #{endtime}
+			</if>
+		</where>
+		order by tm asc
+	</select>
+
+	<select id="Select_Cod_List" resultType="java.util.Map">
+		select st_cod_r.stcd,st_stbprp_b.stnm,tm,vt,svt,sin,tem,hum,cod
+		from st_cod_r
+		left join st_stbprp_b on st_stbprp_b.stcd = st_cod_r.stcd
+		<where>
+			<if test="stcd != null and stcd != '' ">
+				and st_cod_r.stcd = #{stcd}
+			</if>
+			<if test="stnm != null and stnm != '' ">
+				and st_stbprp_b.stnm like concat('%',#{stnm},'%')
+			</if>
+			<if test="starttime != null and starttime != '' ">
+				and st_cod_r.tm >= #{starttime}
+			</if>
+			<if test="endtime != null and endtime != '' ">
+				and st_cod_r.tm &lt;= #{endtime}
+			</if>
+		</where>
+		order by tm asc
+	</select>
+
+</mapper>

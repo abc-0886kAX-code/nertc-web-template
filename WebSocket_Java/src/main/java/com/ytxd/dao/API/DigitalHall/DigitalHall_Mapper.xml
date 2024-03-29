@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.API.DigitalHall.DigitalHall_Mapper">
+	<select id="Select_Epn_List" resultType="java.util.HashMap">
+		select (select ifnull(sum(pn),0)  from st_epn where DATE_FORMAT(tm,'%Y-%m-%d') = DATE_FORMAT(#{keytime},'%Y-%m-%d')) daypn,
+			   (select ifnull(sum(pn),0) from st_epn where DATE_FORMAT(tm,'%Y-%m') = DATE_FORMAT(#{keytime},'%Y-%m')) monthpn,
+			   (select ifnull(sum(pn),0) from st_epn where year(tm) = DATE_FORMAT(#{keytime},'%Y')) yearpn from dual
+	</select>
+	<select id="Select_Epn_Statistics" resultType="java.util.HashMap">
+		select sm_codeitem.code type,sm_codeitem.description typename,ifnull(typecount,0) typecount from
+		(select code,description,orderid from sm_codeitem where codeid='MH') sm_codeitem
+		left join (select month(tm) type,sum(pn) typecount from st_epn where year(tm) = year(#{keytime}) group by DATE_FORMAT(tm,'%Y-%m')
+		) st_epn on st_epn.type = sm_codeitem.code
+		order by sm_codeitem.orderid
+	</select>
+
+	<update id="updateTodayNumbers">
+		INSERT INTO st_epn (TM,PN) VALUES (TIMESTAMP(CURDATE()), #{number})  ON DUPLICATE KEY UPDATE PN=PN+#{number};
+	</update>
+</mapper>

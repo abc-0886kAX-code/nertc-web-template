@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Water_Common.Water_Common_Mapper">
+	<sql id="Water_Common_Select">
+		st_stbprp_b.stnm,st_stbprp_b.rvnm,st_stbprp_b.hnnm,st_stbprp_b.bsnm,st_stbprp_b.lgtd,st_stbprp_b.lttd,
+		st_stbprp_b.stlc,st_stbprp_b.addvcd,st_stbprp_b.sttp,st_stbprp_b.flag,st_stbprp_b.state,st_stbprp_b.sign,
+		st_stbprp_b.orderid,sttp_join.description sttpname,(CASE WHEN st_stbprp_b.sign = '01' THEN '自建站点' ELSE '接入站点' END ) signname,
+		flag_join.description flagname,state_join.description statename,FORMAT(st_stbprp_b.alertstage,2) alertstage,
+        site_st_rsvrfcch_b.xxsw ,site_st_rsvrfcch_b.normz ,site_st_rsvrfcch_b.dsflz ,site_st_rsvrfcch_b.ckflz ,site_st_rsvrfcch_b.ydgl,site_st_rsvrfcch_b.damel,
+		site_st_rsvrfcch_b.ddz ,site_st_rsvrfcch_b.ttcp,site_st_rvfcch_b.wrz,site_st_rvfcch_b.wrq,site_st_rvfcch_b.grz,site_st_rvfcch_b.grq,
+		site_st_rvfcch_b.obhtz,site_st_rvfcch_b.ldkel,site_st_rvfcch_b.rdkel
+	</sql>
+	<!-- 通用连接 -->
+	<sql id="Water_Common_Join">
+		left join (select code,description from sm_codeitem where codeid = 'TP' ) sttp_join on sttp_join.code = st_stbprp_b.sttp
+		left join (select code,description from sm_codeitem where codeid = 'AA' ) sign_join on sign_join.code = st_stbprp_b.sign
+		left join (select code,description from sm_codeitem where codeid = 'FD' ) flag_join on flag_join.code = st_stbprp_b.flag
+		left join (select code,description from sm_codeitem where codeid = 'FD' ) state_join on state_join.code = st_stbprp_b.state
+		left join st_rvfcch_b site_st_rvfcch_b on site_st_rvfcch_b.stcd = st_stbprp_b.stcd
+		left join st_rsvrfcch_b site_st_rsvrfcch_b on site_st_rsvrfcch_b.stcd = st_stbprp_b.stcd
+	</sql><!-- 通用的查询条件 -->
+	<sql id="Water_Common_Where">
+		<if test="stcd != null and stcd != '' ">
+			and st_stbprp_b.stcd in
+			<foreach collection="stcd.split(',')" item="stcd" open="(" separator="," close=")">
+				#{stcd}
+			</foreach>
+		</if>
+		<if test="stnm != null and stnm != '' ">
+			and st_stbprp_b.stnm like concat('%',#{stnm},'%')
+		</if>
+		<if test="sttp != null and sttp != '' ">
+			and st_stbprp_b.sttp in
+			<foreach collection="sttp.split(',')" item="sttp" open="(" separator="," close=")">
+				#{sttp}
+			</foreach>
+		</if>
+		<if test="flag != null and flag != '' ">
+			and st_stbprp_b.flag = #{flag}
+		</if>
+		<if test="israin != null and israin != '' ">
+			and st_stbprp_b.israin = #{israin}
+		</if>
+		<if test="representative != null and representative != '' ">
+			and st_stbprp_b.representative = #{representative}
+		</if>
+		<if test="state != null and state != '' ">
+			and st_stbprp_b.state = #{state}
+		</if>
+		<if test="sign != null and sign != '' ">
+			and st_stbprp_b.sign in
+			<foreach collection="sign.split(',')" item="sign" open="(" separator="," close=")">
+				#{sign}
+			</foreach>
+		</if>
+	</sql>
+	<select id="Select_Site_Info_List" resultType="java.util.HashMap">
+		select st_stbprp_b.stcd,<include refid="Water_Common_Select"/>
+		from st_stbprp_b
+		<include refid="Water_Common_Join"/>
+		<where>
+			<include refid="Water_Common_Where"/>
+		</where>
+	</select>
+
+	<select id="Select_Site_Data_Info_List" resultType="java.util.HashMap">
+		select st_stbprp_b.stcd , (CASE WHEN st_stbprp_b.SIGN = '01' THEN '自建站点' ELSE '接入站点' END)  as signname,
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>
+		,st_pptn_r.p p,
+		 <if test="sttp == 'ZZ,ZQ'">
+			 st_river_r_view.tm tm ,
+		 </if>
+		 <if test="sttp == 'PP,ZQ'">
+			 st_pptn_r.tm tm ,
+		 </if>
+		 <if test="sttp == 'RR'">
+			 st_rsvr_r_view.tm tm ,
+		 </if>
+			 st_pptn_r.code,st_pptn_r.nm,st_stbprp_b.xxsw ,st_rsvr_r_view.W ,
+		st_stbprp_introduce.introduce,st_stbprp_introduce.filepath,st_rsvr_r_view.w, st_stbprp_b.VIDEOURL , st_stbprp_b.VIDEOFORMAT ,
+		FORMAT(ifnull(st_river_r_view.z,st_rsvr_r_view.z),2) z,st_river_r_view.eigen,eigenJOin.description eigenname,st_river_r_view.q
+		<if test="sttp == '03'">
+			, st_wq_r.CODCR , st_wq_r.DOX , st_wq_r.NH3N , st_wq_r.TP , st_wq_r.TN
+		</if>
+		from st_stbprp_b
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+		left join (select stcd,introduce,filepath from st_stbprp_introduce) st_stbprp_introduce on st_stbprp_introduce.stcd = st_stbprp_b.stcd
+		left join (
+			select st_pptn_r.*,st_pptn_l.nm,st_pptn_l.code from (
+			select stcd,format(sum(p),1) p,GetPptnName(ifnull(#{hour},24),round( sum( p ), 2 )) pptnid,max(tm) tm from st_pptn_r
+			where 1=1
+			<if test="starttime != null and starttime != '' and starttime != 'undefined' ">
+				and tm >= str_to_date(#{starttime},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="endtime != null and endtime != '' and endtime != 'undefined'  ">
+				and tm &lt;= str_to_date(#{endtime},'%Y-%m-%d %H:%i:%s')
+			</if>
+			group by stcd
+			) st_pptn_r LEFT JOIN st_pptn_l on st_pptn_r.pptnid = st_pptn_l.id
+		) st_pptn_r on st_pptn_r.stcd = st_stbprp_b.stcd
+		left join (
+		select stcd,z,tm,q,fun_wl_eigenvalue(stcd,z) eigen from (select *, row_number() over(partition by stcd order by tm desc) rn from st_river_r_view
+		<where>
+			<if test="starttime != null and starttime != '' and starttime != 'undefined' ">
+				and st_river_r_view.tm >= #{starttime}
+			</if>
+			<if test="endtime != null and endtime != '' and endtime != 'undefined' ">
+				and st_river_r_view.tm &lt;= #{endtime}
+			</if>
+		</where>
+		) st_river_r_view where rn = '1'
+		) st_river_r_view on st_river_r_view.stcd = st_stbprp_b.stcd
+		left join (
+		select stcd,z,tm,w from (select *, row_number() over(partition by stcd order by tm desc) rn from st_rsvr_r
+		<where>
+			<if test="starttime != null and starttime != '' and starttime != 'undefined' ">
+				and st_rsvr_r.tm >= #{starttime}
+			</if>
+			<if test="endtime != null and endtime != '' and endtime != 'undefined'  ">
+				and st_rsvr_r.tm &lt;= #{endtime}
+			</if>
+		</where>
+		) st_rsvr_r_view where rn = '1'
+		) st_rsvr_r_view on st_rsvr_r_view.stcd = st_stbprp_b.stcd
+		left join (select code,description from sm_codeitem where codeid = 'AJ' ) eigenJOin on eigenJOin.code = st_river_r_view.eigen
+		<if test="sttp == '03'">
+			left join (select st_wq_r.* from (select max(tm) tm , max(ID) id , stcd  from st_wq_r
+			<where>
+				<if test="starttime != null and starttime != '' and starttime != 'undefined' ">
+					and st_wq_r.tm >= #{starttime}
+				</if>
+				<if test="endtime != null and endtime != '' and endtime != 'undefined'  ">
+					and st_wq_r.tm &lt;= #{endtime}
+				</if>
+			</where>
+			       group by stcd) st_wq_r_view  left join st_wq_r on st_wq_r.tm = st_wq_r_view.tm and st_wq_r.stcd = st_wq_r_view.stcd and st_wq_r_view.id = st_wq_r.ID )
+			    st_wq_r on st_wq_r.stcd = st_stbprp_b.stcd
+		</if>
+		<where>
+			<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+		</where>
+		order by
+		SIGN IS NULL , SIGN,
+		<if test="sttp == 'RR' or sttp == 'ZZ,ZQ' or sttp == 'ZZ'  or sttp == 'ZQ'">
+			FORMAT(ifnull(st_river_r_view.z,st_rsvr_r_view.z),2) IS NULL , FORMAT(ifnull(st_river_r_view.z,st_rsvr_r_view.z),2) DESC,
+		</if>
+		<if test="sttp == '02'">
+			st_river_r_view.q IS NULL , st_river_r_view.q DESC,
+		</if>
+		<if test="sttp == 'PP,ZQ' or sttp == 'PP' or sttp == 'ZQ'">
+			st_pptn_r.p IS NULL , st_pptn_r.p DESC,
+		</if>
+		<if test="sttp == '03'">
+			st_wq_r.NH3N IS NULL , st_wq_r.NH3N DESC,
+		</if>
+		<if test="sttp == 'ZZ,ZQ'">
+			st_river_r_view.tm DESC ,
+		</if>
+		<if test="sttp == 'PP,ZQ'">
+			st_pptn_r.tm DESC ,
+		</if>
+		<if test="sttp == 'RR'">
+			st_rsvr_r_view.tm DESC ,
+		</if>
+		st_pptn_r.p desc
+		       , st_stbprp_b.orderid desc
+	</select>
+	<select id="selectSiteWARNInfoList" resultType="java.util.Map">
+		SELECT  *  , (CASE WHEN ABC.SIGN = '01' THEN '自建站点' ELSE '接入站点' END) as signname, '水库' as VALUE_TYPE
+		FROM (
+			SELECT st_stbprp_b.*,
+			st_rsvrfcch_b.XXSW as xxjj,
+			DATAVAL.Z , MaxTM
+			FROM (SELECT * FROM st_stbprp_b
+				WHERE
+				STTP = 'RR'
+				<if test="stnm != null" >
+					AND st_stbprp_b.STNM LIKE CONCAT('%', #{stnm}, '%')
+				</if>
+			) AS st_stbprp_b
+			LEFT JOIN st_rsvrfcch_b ON st_rsvrfcch_b.STCD = st_stbprp_b.STCD
+			LEFT JOIN (
+				SELECT a.STCD as idd, a.Z , MaxTM
+				FROM st_rsvr_r a
+				INNER JOIN (
+					SELECT STCD, MAX(TM) as MaxTM
+					FROM st_rsvr_r
+					<where>
+						<if test="start_time != null">
+							and st_rsvr_r.TM &gt;= #{start_time}
+						</if>
+						<if test="end_time != null">
+							and st_rsvr_r.TM &lt;= #{end_time}
+						</if>
+					</where>
+					GROUP BY STCD
+				) b ON a.STCD = b.STCD AND a.TM = b.MaxTM
+			) DATAVAL ON st_stbprp_b.STCD = DATAVAL.idd
+			where
+				DATAVAL.Z >= st_rsvrfcch_b.XXSW
+		) as ABC
+		LEFT JOIN (SELECT
+			curr.STCD,
+			curr.Z AS CurrentWaterLevel,
+			prev.Z AS PreviousWaterLevel,
+			CASE
+			WHEN curr.Z > prev.Z THEN '上升'
+			WHEN curr.Z &lt; prev.Z THEN '下降'
+			ELSE '不变'
+			END AS WaterLevelChange
+			FROM
+				(SELECT
+				STCD,
+				Z,
+				TM,
+				ROW_NUMBER() OVER (PARTITION BY STCD ORDER BY TM DESC) AS rn
+				FROM st_rsvr_r
+				<where>
+					<if test="start_time != null">
+						and st_rsvr_r.TM &gt;= #{start_time}
+					</if>
+					<if test="end_time != null">
+						and st_rsvr_r.TM &lt;= #{end_time}
+					</if>
+				</where>
+				) AS curr
+			JOIN
+				(SELECT
+				STCD,
+				Z,
+				TM,
+				ROW_NUMBER() OVER (PARTITION BY STCD ORDER BY TM DESC) AS rn
+				FROM st_rsvr_r
+				<where>
+					<if test="start_time != null">
+						and st_rsvr_r.TM &gt;= #{start_time}
+					</if>
+					<if test="end_time != null">
+						and st_rsvr_r.TM &lt;= #{end_time}
+					</if>
+				</where>
+				) AS prev
+			ON curr.STCD = prev.STCD AND curr.rn = 1 AND prev.rn = 2
+		) AS LEVEL_CHANGE ON LEVEL_CHANGE.STCD = ABC.STCD
+
+		union all
+
+		SELECT  * , (CASE WHEN ABC.SIGN = '01' THEN '自建站点' ELSE '接入站点' END) as signname , '河道' as VALUE_TYPE
+		FROM (
+			SELECT st_stbprp_b.*, st_rvfcch_b.WRZ as xxjj ,
+			DATAVAL.Z , MaxTM
+			FROM (SELECT * FROM st_stbprp_b
+				WHERE
+					( STTP = 'ZZ' OR STTP = 'ZQ' )
+					<if test="stnm != null" >
+						AND st_stbprp_b.STNM LIKE CONCAT('%', #{stnm}, '%')
+					</if>
+			) AS st_stbprp_b
+			LEFT JOIN st_rvfcch_b ON st_rvfcch_b.STCD = st_stbprp_b.STCD
+			LEFT JOIN (
+				SELECT a.STCD as idd, a.Z , b.MaxTM
+				FROM st_river_r a
+				INNER JOIN (
+					SELECT STCD, MAX(TM) as MaxTM
+					FROM st_river_r
+					<where>
+						<if test="start_time != null">
+							and st_river_r.TM &gt;= #{start_time}
+						</if>
+						<if test="end_time != null">
+							and st_river_r.TM &lt;= #{end_time}
+						</if>
+					</where>
+					GROUP BY STCD
+				) b ON a.STCD = b.STCD AND a.TM = b.MaxTM
+			) DATAVAL ON st_stbprp_b.STCD = DATAVAL.idd
+			where
+					DATAVAL.Z > st_rvfcch_b.WRZ
+		) as ABC
+		LEFT JOIN (SELECT
+			curr.STCD,
+			curr.Z AS CurrentWaterLevel,
+			prev.Z AS PreviousWaterLevel,
+			CASE
+			WHEN curr.Z > prev.Z THEN '上升'
+			WHEN curr.Z &lt; prev.Z THEN '下降'
+			ELSE '不变'
+			END AS WaterLevelChange
+			FROM
+				(SELECT
+				STCD,
+				Z,
+				TM,
+				ROW_NUMBER() OVER (PARTITION BY STCD ORDER BY TM DESC) AS rn
+				FROM st_river_r
+				<where>
+					<if test="start_time != null">
+						and st_river_r.TM &gt;= #{start_time}
+					</if>
+					<if test="end_time != null">
+						and st_river_r.TM &lt;= #{end_time}
+					</if>
+				</where>
+				) AS curr
+			JOIN
+			(SELECT
+			STCD,
+			Z,
+			TM,
+			ROW_NUMBER() OVER (PARTITION BY STCD ORDER BY TM DESC) AS rn
+			FROM st_river_r
+			<where>
+				<if test="start_time != null">
+					and st_river_r.TM &gt;= #{start_time}
+				</if>
+				<if test="end_time != null">
+					and st_river_r.TM &lt;= #{end_time}
+				</if>
+			</where>
+			) AS prev
+			ON curr.STCD = prev.STCD AND curr.rn = 1 AND prev.rn = 2
+		) AS LEVEL_CHANGE ON LEVEL_CHANGE.STCD = ABC.STCD
+	</select>
+</mapper>

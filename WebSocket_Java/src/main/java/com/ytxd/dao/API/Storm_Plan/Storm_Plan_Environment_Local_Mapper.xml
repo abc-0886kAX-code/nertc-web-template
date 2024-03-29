@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.API.Storm_Plan.Storm_Plan_Environment_Local_Mapper">
+
+
+    <select id="Select_Storm_Plan_Environment_Local_List" resultType="java.util.Map">
+        select storm_plan_environment_local.*
+        from storm_plan_environment_local
+        <where>
+            <if test="mh_wl != null and mh_wl != '' ">
+                and storm_plan_environment_local.mh_wl = #{mh_wl}
+            </if>
+            <if test="flow != null and flow != '' ">
+                and storm_plan_environment_local.flow = #{flow}
+            </if>
+            <if test="temp != null and temp != '' ">
+                and storm_plan_environment_local.temp = #{temp}
+            </if>
+        </where>
+        order by submittime desc
+    </select>
+    <sql id="Insert_Column">
+        <if test="plan_name != null and plan_name != '' ">
+            ,plan_name
+        </if>
+        <if test="mh_wl != null and mh_wl != '' ">
+            ,mh_wl
+        </if>
+        <if test="flow != null and flow != '' ">
+            ,flow
+        </if>
+        <if test="temp != null and temp != '' ">
+            ,temp
+        </if>
+        <if test="evaporation != null and evaporation != '' ">
+            ,evaporation
+        </if>
+        <if test="dox != null and dox != '' ">
+            ,dox
+        </if>
+        <if test="cod_mn != null and cod_mn != '' ">
+            ,cod_mn
+        </if>
+        <if test="nh3n != null and nh3n != '' ">
+            ,nh3n
+        </if>
+        <if test="tp != null and tp != '' ">
+            ,tp
+        </if>
+        <if test="tn != null and tn != '' ">
+            ,tn
+        </if>
+        <if test="codcr != null and codcr != '' ">
+            ,codcr
+        </if>
+    </sql>
+    <sql id="Insert_Param">
+        <if test="plan_name != null and plan_name != '' ">
+            ,#{plan_name}
+        </if>
+        <if test="mh_wl != null and mh_wl != '' ">
+            ,#{mh_wl}
+        </if>
+        <if test="flow != null and flow != '' ">
+            ,#{flow}
+        </if>
+        <if test="temp != null and temp != '' ">
+            ,#{temp}
+        </if>
+        <if test="evaporation != null and evaporation != '' ">
+            ,#{evaporation}
+        </if>
+        <if test="dox != null and dox != '' ">
+            ,#{dox}
+        </if>
+        <if test="cod_mn != null and cod_mn != '' ">
+            ,#{cod_mn}
+        </if>
+        <if test="nh3n != null and nh3n != '' ">
+            ,#{nh3n}
+        </if>
+        <if test="tp != null and tp != '' ">
+            ,#{tp}
+        </if>
+        <if test="tn != null and tn != '' ">
+            ,#{tn}
+        </if>
+        <if test="codcr != null and codcr != '' ">
+            ,#{codcr}
+        </if>
+    </sql>
+    <insert id="Insert_Storm_Plan_Environment_Local">
+        insert into storm_plan_environment_local(plan_id,submittime<include refid="Insert_Column"/>)
+        values(#{plan_id},#{submittime}<include refid="Insert_Param"/>)
+    </insert>
+    <sql id="Update_Param">
+        <if test="plan_id != null">
+            ,plan_id = #{plan_id}
+        </if>
+        <if test="plan_name != null">
+            ,plan_name = #{plan_name}
+        </if>
+        <if test="mh_wl != null">
+            ,mh_wl = #{mh_wl}
+        </if>
+        <if test="flow != null">
+            ,flow = #{flow}
+        </if>
+        <if test="temp != null">
+            ,temp = #{temp}
+        </if>
+        <if test="evaporation != null">
+            ,evaporation = #{evaporation}
+        </if>
+        <if test="dox != null">
+            ,dox = #{dox}
+        </if>
+        <if test="cod_mn != null">
+            ,cod_mn = #{cod_mn}
+        </if>
+        <if test="nh3n != null">
+            ,nh3n = #{nh3n}
+        </if>
+        <if test="tp != null">
+            ,tp = #{tp}
+        </if>
+        <if test="tn != null">
+            ,tn = #{tn}
+        </if>
+        <if test="codcr != null">
+            ,codcr = #{codcr}
+        </if>
+        <if test="submittime != null">
+            ,submittime = #{submittime}
+        </if>
+    </sql>
+    <update id="Update_Storm_Plan_Environment_Local">
+        update storm_plan_environment_local set id=id <include refid="Update_Param"/>
+        where id in
+        <foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    <delete id="Delete_Storm_Plan_Environment_Local">
+        delete from storm_plan_environment_local where id in
+        <foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+
+    <!-- 根据水位找最近库容 根据温度查询蒸发量和蒸发量当量流量 计算所需时间   -->
+    <select id="Select_Duration_Evaporation" resultType="java.util.Map">
+        select ABS(ROUND(12000000/(#{flow}-e_flow)*LN(2.5/4.5)/86400,2)) dox,
+               ABS(ROUND(12000000/(#{flow}-e_flow)*LN((2-6)/(2-10))/86400,2)) cod_mn,
+               ABS(ROUND(12000000/(#{flow}-e_flow)*LN((0.15-1)/(0.15-1.5))/86400,2)) nh3n,
+               ABS(ROUND(12000000/(#{flow}-e_flow)*LN((0.01-0.05)/(0.01-0.1))/86400,2)) tp,
+               ABS(ROUND(12000000/(#{flow}-e_flow)*LN((0.2-1)/(0.2-1.5))/86400,2)) tn,
+               ABS(ROUND(12000000/(#{flow}-e_flow)*LN((15-20)/(15-30))/86400,2)) codcr ,ROUND(evaporation,2) evaporation
+        from (
+                 select
+                    (select evaporation from st_temp_e order by abs(temp-#{temp}) LIMIT 1) evaporation,
+                    (select e_flow from st_temp_e order by abs(temp-#{temp}) LIMIT 1) e_flow
+            ) a
+    </select>
+    <select id="Get_Most_Suitable_Plan" resultType="java.util.Map">
+        select storm_plan_environment.plan_id,left_flow.flow_rn,left_temp.temp_rn,(left_flow.flow_rn+left_temp.temp_rn) rn from storm_plan_environment
+        left join (select plan_id,RANK() over(order by abs(flow-#{flow})) flow_rn,flow from storm_plan_environment ) left_flow on storm_plan_environment.plan_id = left_flow.plan_id
+        left join (select plan_id,RANK() over(order by abs(temp-#{temp})) temp_rn,temp from storm_plan_environment ) left_temp on storm_plan_environment.plan_id = left_temp.plan_id
+        order by rn asc LIMIT 1;
+    </select>
+    <select id="Get_Storm_plan_environment_Selected" resultType="java.util.Map">
+        select code, description, codeid
+        from (
+        select distinct mh_wl code, mh_wl description, '01' codeid
+        from storm_plan_environment_local
+        union all
+        select distinct flow code, flow description, '02' codeid
+        from storm_plan_environment_local
+        union all
+        select distinct temp code, temp description, '03' codeid
+        from storm_plan_environment_local
+        )storm_plan_ecology_local
+        <where>
+            <if test="codeid != null and codeid != '' ">
+                and codeid = #{codeid}
+            </if>
+            <if test="code != null and code != '' ">
+                and code = #{code}
+            </if>
+        </where>
+        order by codeid,code asc
+    </select>
+</mapper>

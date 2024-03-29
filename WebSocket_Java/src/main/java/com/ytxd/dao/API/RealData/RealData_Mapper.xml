@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.API.RealData.RealData_Mapper">
+	<sql id="GetRealRain">
+		<foreach collection="typelist" item="item" separator="union all">
+			select stcd,sum(p) rainfall,concat(#{item},'个小时') as hour from st_pptn_r where tm >= date_sub(#{tm},interval #{item} hour) group by stcd
+		</foreach>
+	</sql>
+	<select id="GetRealRainListByTm" resultType="java.util.Map">
+		select round(avg(rainfall),2) rainfall ,hour from (
+		    <include refid="GetRealRain"/>
+		) st_pptn_r group by hour
+		order by hour
+	</select>
+	<select id="GetRsvrLatestZ" resultType="java.lang.Double">
+		select round(z,2) z from st_rsvr_r where tm &lt;= #{tm} and stcd = #{stcd} order by tm desc limit 1
+	</select>
+
+	<select id="Select_Stcd_Rain_list" resultType="java.util.Map">
+		select round(sum(p),2) rain,'3小时' title from st_pptn_r where tm &lt;= #{tm}
+			and tm >= SUBDATE(#{tm},INTERVAL  3 hour) and stcd = #{stcd}
+		union all
+		select round(sum(p),2) rain,'1天' title from st_pptn_r where tm &lt;= #{tm}
+			and tm >= SUBDATE(#{tm},INTERVAL  1 day) and stcd = #{stcd}
+		union all
+		select round(sum(p),2) rain,'3天' title  from st_pptn_r where tm &lt;= #{tm}
+			and tm >= SUBDATE(#{tm},INTERVAL  3 day) and stcd = #{stcd}
+		union all
+		select round(sum(p),2) rain,'7天' title  from st_pptn_r where tm &lt;= #{tm}
+			and tm >= SUBDATE(#{tm},INTERVAL  7 day) and stcd = #{stcd}
+	</select>
+	<resultMap id="SiteStatisticsData" type="java.util.Map" autoMapping="true">
+		<result column="stcd" property="stcd"/>
+		<association column="{stcd = stcd,tm=tm}" property="water" javaType="java.util.LinkedList" autoMapping="true" select="Select_Site_R_W_List"/>
+	</resultMap>
+	<select id="Select_Site_Statistics_List" resultMap="SiteStatisticsData">
+		select * from (select st_stbprp_b.stcd,st_stbprp_b.stnm,z level,#{tm} tm from st_stbprp_b
+		left join (
+		    select stcd,z from (
+				select stcd, z,row_number() over(partition by stcd order by tm desc) rn from st_river_r_view where tm &lt;= adddate(#{tm},interval 1 hour)
+				and tm >= adddate(#{tm},interval -24 hour)
+		) st_river_r_view where rn ='1'
+		) st_river_r_view on st_river_r_view.stcd =  st_stbprp_b.stcd
+		<where>
+			<if test="stcd != null and stcd != ''">
+				and st_stbprp_b.stcd in
+				<foreach collection="stcd.split(',')" item="id" open="(" separator="," close=")">
+					#{id}
+				</foreach>
+			</if>
+<!--			<if test="stnm != null and stnm != '' ">-->
+<!--				and st_stbprp_b.stnm like CONCAT('%',#{stnm},'%')-->
+<!--			</if>-->
+<!--			<if test="sttp != null and sttp != '' ">-->
+<!--				and st_stbprp_b.sttp in-->
+<!--				<foreach collection="sttp.split(',')" item="sttp" open="(" separator="," close=")">-->
+<!--					#{sttp}-->
+<!--				</foreach>-->
+<!--			</if>-->
+<!--			<if test="flag != null and flag != '' ">-->
+<!--				and st_stbprp_b.flag = #{flag}-->
+<!--			</if>-->
+<!--			<if test="state != null and state != '' ">-->
+<!--				and st_stbprp_b.state = #{state}-->
+<!--			</if>-->
+<!--			<if test="sign != null and sign != '' ">-->
+<!--				and st_stbprp_b.sign in-->
+<!--				<foreach collection="sign.split(',')" item="sign" open="(" separator="," close=")">-->
+<!--					#{sign}-->
+<!--				</foreach>-->
+<!--			</if>-->
+		</where> order by st_stbprp_b.orderid) st_stbprp_b
+		<if test="sort != null and sort != '' ">
+			order by ${sort} ${order}
+		</if>
+	</select>
+	<select id="Select_Site_R_W_List" resultType="java.util.Map">
+		select tmjoin.tm,p rain,z water
+		from ( select DATE_FORMAT(SUBDATE(#{tm},INTERVAL code hour),'%Y-%m-%d %H:00:00') tm,orderid from sm_codeitem where codeid ='MH'
+		) tmjoin
+		left join ( select DATE_FORMAT(tm,'%Y-%m-%d %H:00:00') tm,round(sum(p),2) p from st_pptn_r
+			where tm &lt;= adddate(#{tm},interval 1 hour) and tm >= adddate(#{tm},interval -13 hour)
+			  and exists (select 1 from st_site_relation
+			      	left join st_stbprp_b on st_stbprp_b.stcd = st_site_relation.target_stcd
+			  where st_site_relation.soure_stcd = #{stcd} and st_stbprp_b.sttp ='04' and st_site_relation.target_stcd = st_pptn_r.stcd)
+			group by DATE_FORMAT(tm,'%Y-%m-%d %H:00:00')
+		) st_pptn_r on st_pptn_r.tm = tmjoin.tm
+		left join (
+		    select tm,z from ( select DATE_FORMAT(tm,'%Y-%m-%d %H:00:00') tm, z,row_number() over(partition by stcd,DATE_FORMAT(tm,'%Y-%m-%d %H:00:00') order by tm desc ) rn from st_river_r_view
+						  where tm &lt;= adddate(#{tm},interval 1 hour) and tm >= adddate(#{tm},interval -13 hour) and stcd = #{stcd}
+						   ) st_river_r_view where rn ='1'
+		) st_river_r_view on st_river_r_view.tm = tmjoin.tm
+		where z is not null and z > 0
+		order by tmjoin.tm asc
+	</select>
+
+	<select id="Select_WQ_M_List" resultType="java.util.Map">
+			select DATE_FORMAT(tm,'%Y-%m') tm, type_value, type, typename,water_quality,water_quality_join.description water_qualityname,type_orderid
+		from (select * from (select  tm, codcr type_value, '01' type, 'COD' typename,water_quality,40 type_orderid
+			from st_wq_m where stcd = 'D0550210011' order by tm desc limit 5 )st_wq_m
+			union all
+			select * from (select  tm, dox type_value, '02' type, '溶解氧' typename,water_quality,20 type_orderid
+			from st_wq_m where stcd = 'D0550210011' order by tm desc limit 5 )st_wq_m
+			union all
+			select * from (select  tm, nh3n type_value, '03' type, '氨氮' typename,water_quality,30 type_orderid
+			from st_wq_m where stcd = 'D0550210011' order by tm desc limit 5 )st_wq_m
+			union all
+			select * from (select  tm, tp type_value, '04' type, '总磷' typename,water_quality,10 type_orderid
+			from st_wq_m where stcd = 'D0550210011' order by tm desc limit 5 )st_wq_m
+			 ) st_wq_m
+			left join (select code,description from sm_codeitem where codeid ='WA') water_quality_join on water_quality_join.code = st_wq_m.water_quality
+			<where>
+				<if test="type != null and type != '' ">
+					and st_wq_m.type = #{type}
+				</if>
+			</where>
+			order by tm asc
+	</select>
+	<select id="Select_Last_WQ_D_List" resultType="java.util.Map">
+		select st_wq_d.*,water_quality_join.description  water_qualityname from (
+		select * from (select water_quality,tm,'01' type,codcr type_value from st_wq_d  where stcd ='D0550210011'
+		                        and codcr is not null and water_quality is not null and water_quality !='--' order by tm desc limit 1) st_wq_d
+		union all
+		select * from (select water_quality,tm,'02' type, dox type_value from st_wq_d  where stcd ='D0550210011'
+		                        and dox is not null and water_quality is not null and water_quality !='--' order by tm desc limit 1) st_wq_d
+		union all
+		select * from (select water_quality,tm,'03' type,nh3n type_value from st_wq_d  where stcd ='D0550210011'
+		                        and nh3n is not null and water_quality is not null and water_quality !='--' order by tm desc limit 1) st_wq_d
+		union all
+		select * from (select water_quality,tm,'04' type,tp type_value from st_wq_d  where stcd ='D0550210011'
+		                        and tp is not null and water_quality is not null and water_quality !='--' order by tm desc limit 1) st_wq_d
+		) st_wq_d
+		left join (select code,description from sm_codeitem where codeid ='WA'
+		) water_quality_join on water_quality_join.code = st_wq_d.water_quality
+	</select>
+
+	<select id="Select_WQ_D_List_ByDay" resultType="java.util.Map">
+		select DATE_FORMAT(tm,'%Y-%m-%d') tm, type_value, type, typename,water_quality,water_quality_join.description water_qualityname
+		from (select * from (select  tm, codcr type_value, '01' type, 'COD' typename,water_quality
+							 from st_wq_daily where stcd = 'D0550210011'
+								and date_format(tm,'%Y-%m') = #{tm}
+				order by tm desc  ) st_wq_daily
+			  union all
+			  select * from (select  tm, dox type_value, '02' type, '溶解氧' typename,water_quality
+							 from st_wq_daily where stcd = 'D0550210011'
+											and date_format(tm,'%Y-%m') = #{tm}
+			  	order by tm desc)st_wq_daily
+			  union all
+			  select * from (select  tm, nh3n type_value, '03' type, '氨氮' typename,water_quality
+							 from st_wq_daily where stcd = 'D0550210011'
+											and date_format(tm,'%Y-%m') = #{tm}
+			  	order by tm desc)st_wq_daily
+
+			  union all
+			  select * from (select  tm, tp type_value, '04' type, '总磷' typename,water_quality
+							 from st_wq_daily where stcd = 'D0550210011'
+											and date_format(tm,'%Y-%m') = #{tm}
+			  	order by tm desc)st_wq_daily
+			 ) st_wq_daily
+			left join (select code,description from sm_codeitem where codeid ='WA'
+			) water_quality_join on water_quality_join.code = st_wq_daily.water_quality
+		<where>
+			<if test="type != null and type != '' ">
+				and st_wq_daily.type = #{type}
+			</if>
+		</where>
+		order by tm asc
+	</select>
+
+
+	<!-- 实时数据 -->
+	<!-- 通用的查询字段 -->
+	<sql id="Site_Select">
+		st_stbprp_b.*,sttp_join.description sttpname,sign_join.description signname,
+		flag_join.description flagname,state_join.description statename
+	</sql>
+	<!-- 通用连接 -->
+	<sql id="Site_Join">
+		left join (select code,descripiton from sm_codeitem where codeid = 'TP' ) sttp_join on sttp_join.code = st_stbprp_b.sttp
+		left join (select code,descripiton from sm_codeitem where codeid = 'AA' ) sign_join on sign_join.code = st_stbprp_b.sign
+		left join (select code,descripiton from sm_codeitem where codeid = 'FD' ) flag_join on flag_join.code = st_stbprp_b.flag
+	</sql><!-- 通用的查询条件 -->
+	<sql id="Site_where">
+		<if test="stcd != null and stcd != '' ">
+			and st_stbprp_b.stcd in
+			<foreach collection="stcd.split(',')" item="stcd" open="(" separator="," close=")">
+				#{stcd}
+			</foreach>
+		</if>
+		<if test="stnm != null and stnm != '' ">
+			and stnm like concat('$',#{stnm},'%')
+		</if>
+		<if test="sttp != null and sttp != '' ">
+			and st_stbprp_b.sttp in
+			<foreach collection="sttp.split(',')" item="sttp" open="(" separator="," close=")">
+				#{sttp}
+			</foreach>
+		</if>
+		<if test="flag != null and flag != '' ">
+			and st_stbprp_b.flag = #{flag}
+		</if>
+		<if test="state != null and state != '' ">
+			and st_stbprp_b.state = #{state}
+		</if>
+		<if test="sign != null and sign != '' ">
+			and st_stbprp_b.sign in
+			<foreach collection="sign.split(',')" item="sign" open="(" separator="," close=")">
+				#{sign}
+			</foreach>
+		</if>
+	</sql>
+	<!-- 工情信息 取最新-->
+	<select id="Select_Gate_List" resultType="java.util.Map">
+		select * from (select <include refid="Site_Select"/>,ifnull(st_gate_r.gtopnum,0) gtopnum,st_gate_r.tm,
+		st_gate_r.gtq
+		from st_stbprp_b
+		<include refid="Site_Join"/>
+		left join(select  stcd,tm,gtopnum,gtq from (
+				select  stcd,tm,gtopnum,gtq,row_number() over(partition by stcd order by tm desc) rn from st_gate_r
+				) st_gate_r where rn =1
+		) st_gate_r on st_gate_r.stcd = st_stbprp_b.stcd
+		<where>
+			<include refid="Site_where"/>
+		</where>
+		order by -st_stbprp_b.orderid desc
+		) st_stbprp_b
+	</select>
+</mapper>

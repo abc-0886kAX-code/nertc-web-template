@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Lake_Patrol.Lake_Patrol_Mapper">
+	<select id="Select_RL_Punch_Clock_List" resultType="java.util.HashMap">
+		select * from (select rl_punch_clock.id,rl_punch_clock.macurl,
+		                      date_format(rl_punch_clock.starttime,'%Y-%m-%d %H:%m') starttime,rl_punch_clock.endtime,
+		                      rl_punch_clock.flag,
+			   rl_punch_clock.remark,rl_punch_clock.submittime,flagjoin.description flagname,
+				rl_punch_clock.userid,rl_punch_clock.username,
+		       concat(minute(TIMEDIFF(STARTTIME,ENDTIME)),'分钟')  timediff
+		from rl_punch_clock
+		left join (select code,description from sm_codeitem where codeid = 'FD'
+		) flagjoin on  flagjoin.code = rl_punch_clock.flag
+		<where>
+			<if test="id != null and id != ''">
+				and ID = #{id}
+			</if>
+<!--			<if test="macurl != null and macurl != ''">-->
+<!--				and MACURL = #{macurl}-->
+<!--			</if>-->
+			<if test="starttime != null and starttime != ''">
+				and STARTTIME >= #{starttime}
+			</if>
+			<if test="endtime != null and endtime != ''">
+				and ENDTIME &lt;= #{endtime}
+			</if>
+			<if test="flag != null and flag != ''">
+				and FLAG = #{flag}
+			</if>
+			<if test="submittime != null and submittime != ''">
+				and SUBMITTIME = #{submittime}
+			</if>
+			<if test="isregister == '01' ">
+				and ENDTIME is null
+			</if>
+		</where>
+		order by rl_punch_clock.flag desc,rl_punch_clock.endtime desc) rl_punch_clock
+	</select>
+	<sql id="Insert_Column">
+		<if test="macurl != null and macurl != '' ">
+			,macurl
+		</if>
+		<if test="starttime != null and starttime != '' ">
+			,starttime
+		</if>
+		<if test="endtime != null and endtime != '' ">
+			,endtime
+		</if>
+		<if test="flag != null and flag != '' ">
+			,flag
+		</if>
+		<if test="remark != null and remark != '' ">
+			,remark
+		</if>
+		<if test="submittime != null and submittime != '' ">
+			,submittime
+		</if>
+		<if test="userid != null and userid != '' ">
+			,userid
+		</if>
+		<if test="username != null and username != '' ">
+			,username
+		</if>
+	</sql>
+	<sql id="Insert_Params">
+		<if test="macurl != null and macurl != '' ">
+			,#{macurl}
+		</if>
+		<if test="starttime != null and starttime != '' ">
+			,#{starttime}
+		</if>
+		<if test="endtime != null and endtime != '' ">
+			,#{endtime}
+		</if>
+		<if test="flag != null and flag != '' ">
+			,#{flag}
+		</if>
+		<if test="remark != null and remark != '' ">
+			,#{remark}
+		</if>
+		<if test="submittime != null and submittime != '' ">
+			,#{submittime}
+		</if>
+		<if test="userid != null and userid != '' ">
+			,#{userid}
+		</if>
+		<if test="username != null and username != '' ">
+			,#{username}
+		</if>
+	</sql>
+	<insert id="Insert_RL_Punch_Clock">
+		insert into RL_Punch_Clock (id<include refid="Insert_Column"/>)
+		values(#{id}<include refid="Insert_Params"/>)
+	</insert>
+	<insert id="Insert_st_lake_way">
+		INSERT INTO st_lake_way(tm, NAME, flag) VALUES (now(), '测序巡湖打卡', '01');
+	</insert>
+	<sql id="Update_Params">
+		<if test="starttime != null">
+			,starttime = #{starttime}
+		</if>
+		<if test="endtime != null">
+			,endtime = #{endtime}
+		</if>
+		<if test="flag != null">
+			,flag = #{flag}
+		</if>
+		<if test="remark != null">
+			,remark = #{remark}
+		</if>
+		<if test="submittime != null">
+			,submittime = #{submittime}
+		</if>
+		<if test="userid != null and userid != '' ">
+			,userid = #{userid}
+		</if>
+		<if test="username != null and username != '' ">
+			,username = #{username}
+		</if>
+	</sql>
+	<update id="Update_RL_Punch_Clock">
+		update RL_Punch_Clock set id =id <include refid="Update_Params"/>
+		where id in
+		<foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</update>
+	<delete id="Delete_RL_Punch_Clock">
+		delete from RL_Punch_Clock where id in
+		<foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<select id="Select_RL_Punch_Address" resultType="java.util.HashMap">
+		select id,clockid,lgtd,lttd,height,orderid from RL_Punch_Address
+		where clockid = #{clockid}
+		order by orderid asc
+	</select>
+
+	<sql id="Insert_Punch_Column">
+		<if test="lgtd != null and lgtd != '' ">
+			,lgtd
+		</if>
+		<if test="lttd != null and lttd != '' ">
+			,lttd
+		</if>
+		<if test="height != null and height != '' ">
+			,height
+		</if>
+		<if test="orderid != null and orderid != '' ">
+			,orderid
+		</if>
+	</sql>
+	<sql id="Insert_Punch_Params">
+		<if test="lgtd != null and lgtd != '' ">
+			,#{lgtd}
+		</if>
+		<if test="lttd != null and lttd != '' ">
+			,#{lttd}
+		</if>
+		<if test="height != null and height != '' ">
+			,#{height}
+		</if>
+		<if test="orderid != null and orderid != '' ">
+			,#{orderid}
+		</if>
+	</sql>
+	<insert id="Insert_RL_Punch_Address">
+		insert into RL_Punch_Address(clockid<include refid="Insert_Punch_Column"/>)
+		values(#{clockid}<include refid="Insert_Punch_Params"/>)
+	</insert>
+	<delete id="Delete_RL_Punch_Address">
+		delete from RL_Punch_Address where clockid in
+		<foreach collection="clockid.split(',')" item="clockid" open="(" separator="," close=")">
+			#{clockid}
+		</foreach>
+	</delete>
+	
+	<select id="Select_RL_Patrol" resultType="java.util.HashMap">
+		select RL_Patrol.id,RL_Patrol.clockid,RL_Patrol.eventname,RL_Patrol.tm,RL_Patrol.address,RL_Patrol.eventdesc,
+		       RL_Patrol.filepath,RL_Patrol.flag,RL_Patrol.lgtd,RL_Patrol.lttd,RL_Patrol.remark,RL_Patrol.submittime,
+			   flagjoin.description flagname
+		from RL_Patrol
+		left join (select code,description from sm_codeitem where codeid = 'FD'
+		) flagjoin on  flagjoin.code = RL_Patrol.flag
+		<where>
+			<if test="id != null and id != ''">
+				and id = #{id}
+			</if>
+			<if test="clockid != null and clockid != ''">
+				and clockid = #{clockid}
+			</if>
+			<if test="eventname != null and eventname != ''">
+				and eventname like concat('%',#{eventname},'%')
+			</if>
+			<if test="tm != null and tm != ''">
+				and str_to_date(tm,'%Y-%m-%d') = str_to_date(#{tm},'%Y-%m-%d')
+			</if>
+			<if test="address != null and address != ''">
+				and address like concat('%',#{address},'%')
+			</if>
+			<if test="flag != null and flag != ''">
+				and flag = #{flag}
+			</if>
+		</where>
+		order by RL_Patrol.submittime desc
+	</select>
+	<sql id="Insert_Patrol_Columns">
+		<if test="clockid != null and clockid != '' ">
+			,clockid
+		</if>
+		<if test="eventname != null and eventname != '' ">
+			,eventname
+		</if>
+		<if test="tm != null and tm != '' ">
+			,tm
+		</if>
+		<if test="address != null and address != '' ">
+			,address
+		</if>
+		<if test="eventdesc != null and eventdesc != '' ">
+			,eventdesc
+		</if>
+		<if test="filepath != null and filepath != '' ">
+			,filepath
+		</if>
+		<if test="flag != null and flag != '' ">
+			,flag
+		</if>
+		<if test="lgtd != null and lgtd != '' ">
+			,lgtd
+		</if>
+		<if test="lttd != null and lttd != '' ">
+			,lttd
+		</if>
+		<if test="remark != null and remark != '' ">
+			,remark
+		</if>
+		<if test="userid != null and userid != '' ">
+			,userid
+		</if>
+		<if test="username != null and username != '' ">
+			,username
+		</if>
+		<if test="submittime != null and submittime != '' ">
+			,submittime
+		</if>
+	</sql>
+	<sql id="Insert_Patrol_Params">
+		<if test="clockid != null and clockid != '' ">
+			,#{clockid}
+		</if>
+		<if test="eventname != null and eventname != '' ">
+			,#{eventname}
+		</if>
+		<if test="tm != null and tm != '' ">
+			,#{tm}
+		</if>
+		<if test="address != null and address != '' ">
+			,#{address}
+		</if>
+		<if test="eventdesc != null and eventdesc != '' ">
+			,#{eventdesc}
+		</if>
+		<if test="filepath != null and filepath != '' ">
+			,#{filepath}
+		</if>
+		<if test="flag != null and flag != '' ">
+			,#{flag}
+		</if>
+		<if test="lgtd != null and lgtd != '' ">
+			,#{lgtd}
+		</if>
+		<if test="lttd != null and lttd != '' ">
+			,#{lttd}
+		</if>
+		<if test="remark != null and remark != '' ">
+			,#{remark}
+		</if>
+		<if test="userid != null and userid != '' ">
+			,#{userid}
+		</if>
+		<if test="username != null and username != '' ">
+			,#{username}
+		</if>
+		<if test="submittime != null and submittime != '' ">
+			,#{submittime}
+		</if>
+	</sql>
+	<insert id="Insert_RL_Patrol">
+		insert into RL_Patrol(id<include refid="Insert_Patrol_Columns"/>)
+		values(#{id}<include refid="Insert_Patrol_Params"/>)
+	</insert>
+	<sql id="Update_Patrol_Params">
+		<if test="clockid != null">
+			,clockid = #{clockid}
+		</if>
+		<if test="eventname != null">
+			,eventname = #{eventname}
+		</if>
+		<if test="tm != null">
+			,tm = #{tm}
+		</if>
+		<if test="eventdesc != null">
+			,eventdesc = #{eventdesc}
+		</if>
+		<if test="filepath != null ">
+			,filepath = #{filepath}
+		</if>
+		<if test="flag != null">
+			,flag = #{flag}
+		</if>
+		<if test="lgtd != null">
+			,lgtd = #{lgtd}
+		</if>
+		<if test="lttd != null">
+			,lttd = #{lttd}
+		</if>
+		<if test="remark != null">
+			,remark = #{remark}
+		</if>
+		<if test="userid != null and userid != '' ">
+			,userid = #{userid}
+		</if>
+		<if test="username != null and username != '' ">
+			,username = #{username}
+		</if>
+		<if test="submittime != null">
+			,submittime = #{submittime}
+		</if>
+	</sql>
+	<update id="Update_Rl_Patrol">
+		update rl_patrol set id = id <include refid="Update_Patrol_Params"/>
+		where id in
+		<foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</update>
+	<delete id="Delete_Rl_Patrol">
+		delete from Rl_Patrol
+		where id in
+		<foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+</mapper>

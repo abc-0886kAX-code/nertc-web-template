@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Water_Common.RealData.Water_Supply_Plant_Mapper">
+    <!-- 取最新的供水数据 取最新的一条-->
+    <select id="Select_Water_Supply_Plant_List" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        affiliation, coverage, st_watersupplyplant_b.address, unit_leader, leader_telephone, day_water_supply, day_max_water_supply, population, construction_time,
+        round(st_watersupplyplant_r.water_amount,2) water_amount,st_watersupplyplant_r.water_quality,round(st_watersupplyplant_r.temperature,2) temperature,
+        st_watersupplyplant_r.tm
+        from st_stbprp_b
+        left join (select stcd, affiliation, coverage, address, unit_leader, leader_telephone, day_water_supply, day_max_water_supply, population, construction_time
+        from st_watersupplyplant_b) st_watersupplyplant_b on st_watersupplyplant_b.stcd = st_stbprp_b.stcd
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        left join (
+        select stcd,tm,water_amount,water_quality,temperature from (
+            select stcd,tm,water_amount,water_quality,temperature, row_number() over(partition by stcd order by tm desc) rn from st_watersupplyplant_r
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_watersupplyplant_r.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_watersupplyplant_r.tm &lt;= #{endtime}
+            </if>
+        </where>
+        ) st_watersupplyplant_r where rn = '1'
+        ) st_watersupplyplant_r on st_watersupplyplant_r.stcd = st_stbprp_b.stcd
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by -st_stbprp_b.orderid desc
+    </select>
+    <!-- 取实时供水量数据 -->
+    <select id="Select_Real_Water_Supply_Plant_List" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        round(st_watersupplyplant_r.water_amount,2) water_amount,st_watersupplyplant_r.water_quality,round(st_watersupplyplant_r.temperature,2) temperature,
+        st_watersupplyplant_r.tm
+        from st_stbprp_b
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        left join (
+            select stcd,tm,water_amount,water_quality,temperature from st_watersupplyplant_r
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_watersupplyplant_r.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_watersupplyplant_r.tm &lt;= #{endtime}
+            </if>
+        </where>
+        ) st_watersupplyplant_r on st_watersupplyplant_r.stcd = st_stbprp_b.stcd
+
+        <where>
+            and  st_watersupplyplant_r.tm is not null
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by -st_stbprp_b.orderid desc
+    </select>
+</mapper>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.SystemManage.SM_Role_Mapper">
+	<!-- 允许缓存 -->
+	<!-- <cache /> -->
+	
+	<!-- 查询表   表 字段  -->
+	<sql id="Select_Column">
+		sm_users.creatby,
+		sm_users.disabled,
+		sm_users.userid,
+		sm_users.usertype,
+		sm_users.loginname,
+		sm_users.truename,
+		sm_users.remark,
+		sm_users.orderid AS orderid,
+		case when sm_users_role.roleidjoin is not null then '01' else '00' end ischecked 
+	</sql>
+
+	<!-- 查询表   查询条件参数  -->
+	<sql id="Select_Parmeter">
+		<if test="userid!=null and userid!=''"> AND sm_users.userid IN 
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+	        #{item}
+	    </foreach>  </if>
+		<if test="usertype!=null and usertype!=''"> AND sm_users.usertype IN 
+		<foreach collection="usertypearray" index="index" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach> </if>
+		<if test="disabled!=null and disabled!=''"> AND sm_users.disabled=#{disabled} </if>
+		<if test="truename!=null and truename!=''"> AND sm_users.truename like CONCAT('%',#{truename},'%') </if>
+		<if test="remark!=null and remark!=''"> AND sm_users.remark like CONCAT('%',#{remark},'%') </if>
+		<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> -->
+	</sql>
+
+	<!-- 查询  表信息  -->
+	<select id="Select_SM_Role" parameterType="com.ytxd.model.SystemManage.SM_Role" resultType="com.ytxd.model.SystemManage.SM_Role">
+		SELECT
+		<if test="selectrowcount==null">
+			<include refid="Select_Column" />
+		</if>
+		<if test="selectrowcount!=null">
+			COUNT(1) selectrowcount 
+		</if>					
+		FROM sm_users 
+		left join (select userid useridjoin,roleid roleidjoin from sm_users_role where 1=2 <if test="ischecked!=null and ischecked!=''"> or userid=#{ischecked} </if>) sm_users_role on sm_users_role.roleidjoin=sm_users.userid 
+		WHERE usertype='02' 
+		<include refid="Select_Parmeter" />
+		<if test="selectrowcount==null">
+			<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+		</if>
+		<if test="page!=null and rows!=null and selectrowcount==null">
+			LIMIT #{startRow},#{pageSize}
+		</if>
+	</select>
+
+	<!-- 新增信息表字段 -->
+	<sql id="Insert_Column">
+		<if test="creatby!=null and creatby!=''">,creatby</if> <!--由谁创建 关联表SM_Users的UserId字段-->
+		<if test="disabled!=null and disabled!=''">,disabled</if> <!--是可用00不可用01可用-->
+		<if test="usertype!=null and usertype!=''">,usertype</if> <!--用户类型00为普通用户01为外部资源02为角色用户03为内置用户-->
+		<if test="loginname!=null and loginname!=''">,loginname</if> <!--系统登录名-->
+		<if test="truename!=null and truename!=''">,truename</if> <!--姓名-->
+		<if test="remark!=null and remark!=''">,remark</if> <!--备注-->
+		<if test="orderid!=null and orderid!=''">,orderid</if> <!--排序-->
+	</sql>
+
+	<sql id="Insert_Parmeter">
+		<if test="creatby!=null and creatby!=''">,#{creatby}</if>	<!--由谁创建 关联表SM_Users的UserId字段-->
+		<if test="disabled!=null and disabled!=''">,#{disabled}</if>	<!--是可用00不可用01可用-->
+		<if test="usertype!=null and usertype!=''">,#{usertype}</if>	<!--用户类型00为普通用户01为外部资源02为角色用户03为内置用户-->
+		<if test="loginname!=null and loginname!=''">,#{loginname}</if>	<!--系统登录名-->
+		<if test="truename!=null and truename!=''">,#{truename}</if>	<!--姓名-->
+		<if test="remark!=null and remark!=''">,#{remark}</if>	<!--备注-->
+		<if test="orderid!=null and orderid!=''">,#{orderid}</if>	<!--排序-->
+	</sql>
+
+	<!-- 新增表信息  -->
+	<insert id="Insert_SM_Role" parameterType="com.ytxd.model.SystemManage.SM_Role" >
+		INSERT INTO sm_users
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Column" />
+		</trim>
+		VALUES
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Parmeter" />
+		</trim>
+		<selectKey resultType="java.lang.String" keyProperty="userid">
+			SELECT LAST_INSERT_ID() AS userid FROM DUAL
+		</selectKey>
+	</insert>
+
+	<!-- 修改表  set 参数  -->
+	<sql id="Update_Parmeter">
+		<if test="disabled!=null">,disabled=#{disabled}</if>
+		<if test="usertype!=null">,usertype=#{usertype}</if>
+		<if test="loginname!=null">,loginname=#{loginname}</if>
+		<if test="truename!=null">,truename=#{truename}</if>
+		<if test="remark!=null">,remark=#{remark}</if>
+		<if test="orderid!=null">,orderid=#{orderid}</if>
+	</sql>
+
+	<!-- 修改表信息 -->
+	<update id="Update_SM_Role" parameterType="com.ytxd.model.SystemManage.SM_Role">
+		UPDATE sm_users
+		<set>
+			<trim prefixOverrides=",">
+			<include refid="Update_Parmeter" />
+			</trim>
+		</set>
+		WHERE userid IN 
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+	        #{item}
+	    </foreach>
+	</update>
+
+	<!-- 删除表信息 -->
+	<delete id="Delete_SM_Role" parameterType="java.lang.String">
+		DELETE FROM sm_users
+		WHERE userid IN <foreach collection="array" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+	</delete>
+
+
+	<!-- **扩展********************************************************************** -->
+	
+	<!-- 删除用户角色权限  -->
+	<delete id="Delete_SM_Users_Role" parameterType="com.ytxd.model.SystemManage.SM_Role" >
+		DELETE FROM sm_users_role 
+		WHERE userid=#{userid} and roleid not IN 
+		<foreach collection="allrolearray" index="index" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach> 
+	</delete>
+	<!-- 给用户角色权限  -->
+	<insert id="Insert_SM_Users_Role" parameterType="com.ytxd.model.SystemManage.SM_Role" >
+		INSERT INTO sm_users_role(userid,roleid)
+		SELECT #{userid} userid,userid roleid 
+		FROM sm_users 
+		WHERE userid IN 
+		<foreach collection="allrolearray" index="index" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach> and userid not in (select roleid from sm_users_role where userid=#{userid}) 
+	</insert>
+	<!-- 删除用户菜单权限  -->
+	<delete id="Delete_SM_Users_Function" parameterType="java.lang.String" >
+		DELETE FROM sm_users_function 
+		WHERE userid IN <foreach collection="array" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+	</delete>
+	<!-- 删除角色关联用户  -->
+	<delete id="Delete_SM_Role_Users" parameterType="java.lang.String" >
+		DELETE FROM sm_users_role 
+		WHERE roleid IN <foreach collection="array" index="index" item="item" open="(" separator="," close=")">#{item}</foreach> 
+	</delete>
+</mapper>

@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Subhall.RiverAndLake.RiverAndLake_Mapper">
+	<select id="Select_RL_Video_Partition_List" resultType="java.util.Map">
+		select rl_video_partition.vp_id, rl_video_partition.vp_type, rl_video_partition.stcd, rl_video_partition.vp_step,
+			   rl_video_partition.submittime,rl_video_partition.orderid,st_stbprp_b.stcd,st_stbprp_b.lgtd,st_stbprp_b.lttd,
+				st_stbprp_b.flag,st_stbprp_b.state,st_stbprp_b.videourl,st_stbprp_b.videoformat,vp_type_join.description vp_typename,
+			   flag_join.description flagname,state_join.description statename,st_stbprp_b.sign
+		from rl_video_partition
+		left join (select * from st_stbprp_b where STTP = '06') st_stbprp_b on st_stbprp_b.stcd = rl_video_partition.stcd
+		left join (select code,description from sm_codeitem where codeid='VP'
+		) vp_type_join on vp_type_join.code = rl_video_partition.vp_type
+		left join (select code,description from sm_codeitem where codeid='FD'
+		) flag_join on flag_join.code = st_stbprp_b.flag
+		left join (select code,description from sm_codeitem where codeid='FD'
+		) state_join on state_join.code = st_stbprp_b.state
+		<where>
+			rl_video_partition.flag = '6'
+			<if test="vp_id != null and vp_id != '' ">
+				and rl_video_partition.vp_id = #{vp_id}
+			</if>
+			<if test="vp_type != null and vp_type != '' ">
+				and rl_video_partition.vp_type = #{vp_type}
+			</if>
+			<if test="stcd != null and stcd != '' ">
+				and rl_video_partition.stcd = #{stcd}
+			</if>
+			<if test="flag != null and flag != '' ">
+				and rl_video_partition.flag = #{flag}
+			</if>
+			<if test="state != null and state != '' ">
+				and st_stbprp_b.state = #{state}
+			</if>
+			<if test="stnm != null and stnm != '' ">
+				and st_stbprp_b.stnm like concat('%',#{stnm},'%')
+			</if>
+		</where>
+		order by rl_video_partition.orderid asc
+	</select>
+
+	<select id = "Select_Video_Statistics_Info" resultType="java.util.Map">
+		select video_sum,video_available,video_online,(video_sum-video_online) video_offline from
+			(select (select count(stcd) from st_stbprp_b where STTP = '06') video_sum ,
+			    (select count(stcd) from st_stbprp_b where STTP = '06' AND flag = '01') video_available,
+					(select count(stcd) from st_stbprp_b where STTP = '06' AND  state = '01') video_online
+		from dual) video_info
+	</select>
+
+	<select id="Select_RL_Arrange_List" resultType="java.util.Map">
+		select userid,username,sex,telephone,email,zw,duty,sex_join.description sexname,imageurl
+		from rl_users
+		left join (select code,description from sm_codeitem where codeid= 'XB'
+		) sex_join on sex_join.code = rl_users.sex
+	</select>
+<!--	where exists (select 1 from RL_Arrange where RL_Arrange.userid = rl_users.userid and tm = #{tm}) -->
+	<select id="Select_RL_Infrastructure_List" resultType="java.util.Map">
+		select infid,inftype,infname,infclassify,tm,flag,introduce,imageurl,remake,lgtd,lttd,address,
+			   inftype_join.description inftypename,infclassify_join.description infclassifyname,
+			   flag_join.description flagname
+		from rl_infrastructure
+		left join (select code,description from sm_codeitem where codeid ='RI'
+		) inftype_join on inftype_join.code = rl_infrastructure.inftype
+		left join (select code,description from sm_codeitem where codeid ='RJ'
+		) infclassify_join on infclassify_join.code = rl_infrastructure.infclassify
+		left join (select code,description from sm_codeitem where codeid ='FD'
+		) flag_join on flag_join.code = rl_infrastructure.flag
+		<where>
+			<if test="infid != null and infid != '' ">
+				and rl_infrastructure.infid = #{infid}
+			</if>
+			<if test="inftype != null and inftype != '' ">
+				and rl_infrastructure.inftype = #{inftype}
+			</if>
+			<if test="infname != null and infname != '' ">
+				and rl_infrastructure.infname like concat('%',#{infname},'%')
+			</if>
+			<if test="infclassify != null and infclassify != '' ">
+				and rl_infrastructure.infclassify = #{infclassify}
+			</if>
+			<if test="flag != null and flag != '' ">
+				and rl_infrastructure.flag = #{flag}
+			</if>
+		</where>
+	order by rl_infrastructure.orderid asc
+	</select>
+
+	<select id="Select_RL_Infrastructure_Statistics" resultType="java.util.Map">
+		select sm_codeitem.code ,sm_codeitem.description title,ifnull(RL_Infrastructure.infcount,0) infcount
+		from (select code,description,orderid from sm_codeitem where codeid ='RI' and flag = '01'
+		) sm_codeitem
+		left join (select inftype,count(infid) infcount from RL_Infrastructure group by inftype
+		) RL_Infrastructure on RL_Infrastructure.inftype = sm_codeitem.code
+		order by sm_codeitem.orderid asc
+	</select>
+
+	<select id="Select_St_Alarm_R_Statistics" resultType="java.util.Map">
+		select count(*) warn_count,'01' warn_type,'报警总数' warn_name, '' flag from St_Alarm_R
+		where  1=1
+		<if test="type != null and type != '' ">
+			and ifnull(St_Alarm_R.type,'01') = #{type}
+		</if>
+		union all
+		select count(*) warn_count,'02' warn_type,'已处理' warn_name,'01' flag from St_Alarm_R
+		where  1=1 and flag ='01'
+		<if test="type != null and type != '' ">
+			and ifnull(St_Alarm_R.type,'01') = #{type}
+		</if>
+		union all
+		select count(*) warn_count,'03' warn_type,'未处理' warn_name,'00' flag from St_Alarm_R
+		where  1=1 and (flag ='00' or flag is null)
+		<if test="type != null and type != '' ">
+			and ifnull(St_Alarm_R.type,'01') = #{type}
+		</if>
+	</select>
+	<select id="Select_St_Alarm_R_List" resultType="java.util.Map">
+		select St_Alarm_R.warnid,St_Alarm_R.deviceid,stnm,warnstarttime,warnendtime,warndesc,(CASE WHEN St_Alarm_R.flag = '01' then '已处理' else '未处理' end) flag ,
+			   flag_join.description flagname,St_Alarm_R.type,St_Alarm_R.imagepath,type_join.description typename
+		from St_Alarm_R
+		left join st_stbprp_b on st_stbprp_b.stcd = St_Alarm_R.deviceID
+		left join (select code,description from sm_codeitem where codeid ='FD') flag_join on ifnull(St_Alarm_R.flag,'00') = flag_join.code
+		left join (select code,description from sm_codeitem where codeid ='BD') type_join on ifnull(St_Alarm_R.type,'00') = type_join.code
+		<where>
+<!--			<if test="tm != null and tm != '' ">-->
+<!--				and warnstarttime >= adddate(ifnull(#{tm},now()),interval -2 hour)-->
+<!--			</if>-->
+			<if test="flag != null and flag != '' ">
+				and ifnull(St_Alarm_R.flag,'00') = #{flag}
+			</if>
+			<if test="type != null and type != '' ">
+				and ifnull(St_Alarm_R.type,'01') = #{type}
+			</if>
+			<if test="warnid != null and warnid != '' ">
+				and St_Alarm_R.warnid = #{warnid}
+			</if>
+			<if test="deviceid != null and deviceid != '' ">
+				and St_Alarm_R.deviceid = #{deviceid}
+			</if>
+		</where>
+		order by warnstarttime desc
+	</select>
+	<sql id="Update_Params">
+		<if test="flag != null">
+			,flag = #{flag}
+		</if>
+		<if test="remark != null">
+			,remark = #{remark}
+		</if>
+		<if test="warnendtime != null">
+			,warnendtime = #{warnendtime}
+		</if>
+	</sql>
+	<update id="Update_St_Alarm_R">
+		update St_Alarm_R set warnid = warnid<include refid="Update_Params"/>
+		where warnid in
+		<foreach collection="warnid.split(',')" item="warnid" open="(" separator="," close=")">
+			#{warnid}
+		</foreach>
+	</update>
+	<select id="Select_RL_Structure_Info" resultType="java.util.Map">
+		select * ,structuretype_join.description structuretypename
+		from RL_Structure
+		left join (select code,description from sm_codeitem where codeid ='BE'
+		) structuretype_join on structuretype_join.code = RL_Structure.structuretype
+		ORDER BY orderid asc
+	</select>
+	<select id="Select_RL_Information_List" resultType="java.util.Map">
+		select infoid,rl_information.stcd,rl_information.infotype,infotype_join.description infotypename,
+		       <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>
+		       ,ifnull(st_river_r_view.tm,st_rsvr_r.tm) tm,ifnull(st_river_r_view.z,st_rsvr_r.z) z
+		from rl_information
+		left join (select code,description from sm_codeitem where codeid = 'BF') infotype_join on infotype_join.code = rl_information.infotype
+		left join st_stbprp_b on st_stbprp_b.stcd = rl_information.stcd
+		left join (
+			select stcd,tm,z from (select stcd ,tm,z ,row_number() over(partition by stcd order by tm desc ) rn from st_river_r_view)
+		    st_river_r_view where rn =1
+		)st_river_r_view on st_river_r_view.stcd =  st_stbprp_b.stcd
+		left join (
+			select stcd,tm,z from (select stcd ,tm,z ,row_number() over(partition by stcd order by tm desc ) rn from st_rsvr_r)
+			st_rsvr_r where rn =1
+		)st_rsvr_r on st_rsvr_r.stcd =  st_stbprp_b.stcd
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+		<where>
+			<if test="infotype != null and infotype != '' ">
+				and rl_information.infotype in
+				<foreach collection="infotype.split(',')" item="infotype" open="(" separator="," close=")">
+					#{infotype}
+				</foreach>
+			</if>
+			<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+		</where>
+	</select>
+	<select id="Select_Site_Introduce_Info" resultType="java.util.Map">
+		select st_stbprp_b.stcd,
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>
+		       ,st_stbprp_introduce.filepath,st_stbprp_introduce.reg,st_stbprp_introduce.inttype,st_stbprp_introduce.introduce,
+				st_stbprp_introduce.manageunit,st_stbprp_introduce.drainage_area,st_stbprp_introduce.river_name,
+		       st_stbprp_introduce.gate,st_stbprp_introduce.contractor,st_stbprp_introduce.devops_unit,st_stbprp_introduce.project_name
+				,ifnull(st_river_r_view.tm,st_rsvr_r.tm) tm,ifnull(st_river_r_view.z,st_rsvr_r.z) z
+		from st_stbprp_b
+		left join st_stbprp_introduce on st_stbprp_introduce.stcd = st_stbprp_b.stcd
+		left join (
+			select stcd,tm,z from (select stcd ,tm,z ,row_number() over(partition by stcd order by tm desc ) rn from st_river_r_view)
+			st_river_r_view where rn =1
+		)st_river_r_view on st_river_r_view.stcd =  st_stbprp_b.stcd
+		left join (
+			select stcd,tm,z from (select stcd ,tm,z ,row_number() over(partition by stcd order by tm desc ) rn from st_rsvr_r)
+			st_rsvr_r where rn =1
+		)st_rsvr_r on st_rsvr_r.stcd =  st_stbprp_b.stcd
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+		<where>
+			<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+		</where>
+		order by -st_stbprp_b.orderid desc
+	</select>
+	<select id="Select_Site_Rvfcch_Info" resultType="java.util.Map">
+		select stcd, ldkel, rdkel, wrz, wrq, grz, grq, taz, taq, laz, laq, sfz, sfq, obhtz, obhtztm
+		from st_rvfcch_b where stcd = #{stcd} limit 1
+	</select>
+	<select id="Select_Site_Rsvrfcch_Info" resultType="java.util.Map">
+		select stcd,rsvrtp, damel, ckflz, dsflz, normz, ddz, actz, ttcp, fldcp, actcp, ddcp, laz, sfq, xxsw, rbel, leel
+		from st_rsvrfcch_b where stcd = #{stcd} limit 1
+	</select>
+
+	<select id="Select_RL_Patrol_List" resultType="java.util.Map">
+		SELECT * FROM
+		             (select id,clockid,eventname,tm,address,filepath,(CASE WHEN flag = '01' THEN '已解决' ELSE '未解决' END) as flag,remark,submittime,eventdesc
+		from rl_patrol
+		<where>
+			<if test="id != null and id != ''">
+				and id = #{id}
+			</if>
+			<if test="clockid != null and clockid != ''">
+				and clockid = #{clockid}
+			</if>
+			<if test="eventname != null and eventname != ''">
+				and eventname like concat('%',#{eventname},'%')
+			</if>
+			<if test="tm != null and tm != ''">
+				and str_to_date(tm,'%Y-%m-%d') = str_to_date(#{tm},'%Y-%m-%d')
+			</if>
+			<if test="address != null and address != ''">
+				and address like concat('%',#{address},'%')
+			</if>
+			<if test="flag != null and flag != ''">
+				and flag = #{flag}
+			</if>
+		</where>
+		ORDER BY tm desc) ABC
+			LIMIT 20
+	</select>
+
+	<select id="selectRlPersonnel" resultType="java.util.Map">
+		select * from rl_personnel_duties
+		<where>
+			<if test="trueName != null and trueName != ''">
+				and trueName like concat('%',#{trueName},'%')
+			</if>
+			<if test="phoneNumber != null and phoneNumber != ''">
+				and phoneNumber like concat('%',#{phoneNumber},'%')
+			</if>
+			<if test="jobDuties != null and jobDuties != ''">
+				and jobDuties like concat('%',#{jobDuties},'%')
+			</if>
+		</where>
+	</select>
+
+	<insert id="insertStAlarmR">
+		insert into st_alarm_r(warnID, deviceID, warnStartTime, warnEndTime, warnDesc, flag,  type)
+			VALUES (#{warnID} , #{deviceID} , #{warnStartTime} , #{warnEndTime} , #{warnDesc}  ,  #{flag}  , #{type})
+	</insert>
+
+	<insert id="insertRlPatrol">
+		insert into rl_patrol(id, clockid, eventname, tm, address, eventdesc,  flag,  submittime)
+			VALUES (#{id} , #{clockid} , #{eventname} , #{tm} , #{address} , #{eventdesc} ,  #{flag} ,  #{submittime})
+	</insert>
+</mapper>

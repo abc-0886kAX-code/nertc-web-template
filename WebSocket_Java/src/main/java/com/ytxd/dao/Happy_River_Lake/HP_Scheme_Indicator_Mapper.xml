@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Happy_River_Lake.HP_Scheme_Indicator_Mapper">
+	<select id="Select_HP_Scheme_Indicator_List" resultType="java.util.HashMap">
+		select HP_Scheme_Indicator.id,HP_Scheme_Indicator.schemeid,HP_Scheme_Indicator.indid,HP_Scheme_Indicator.indname,
+		HP_Scheme_Indicator.parentid,HP_Scheme_Indicator.indtype,HP_Scheme_Indicator.indrank,HP_Scheme_Indicator.otherscore,
+		HP_Scheme_Indicator.formuladesc,HP_Scheme_Indicator.weight,HP_Scheme_Indicator.formula,
+		HP_Scheme_Indicator.orderid,HP_Scheme_Indicator.inrremake,HP_Scheme_Indicator.score,
+		indtype_join.description indtypename,indrank_join.description indrankname,HP_Scheme.schemename,HP_Scheme.schemeyear
+		from HP_Scheme_Indicator
+		left join HP_Scheme_Indicator parent_Scheme_Indicator on parent_Scheme_Indicator.indid = HP_Scheme_Indicator.parentid
+		and parent_Scheme_Indicator.schemeid = HP_Scheme_Indicator.schemeid
+		left join (select code,description from sm_codeitem where codeid ='ZT'
+		) indtype_join on indtype_join.code = HP_Scheme_Indicator.indtype
+		left join (select code,description from sm_codeitem where codeid ='ZH'
+		) indrank_join on indrank_join.code = HP_Scheme_Indicator.indrank
+		left join HP_Scheme on HP_Scheme.schemeid = HP_Scheme_Indicator.schemeid
+		<where>
+			<if test="id != null and id != '' ">
+				and HP_Scheme_Indicator.id in
+				<foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+					#{id}
+				</foreach>
+			</if>
+			<if test="schemeid != null and schemeid != '' ">
+				and HP_Scheme_Indicator.schemeid in
+				<foreach collection="schemeid.split(',')" item="schemeid" open="(" separator="," close=")">
+					#{schemeid}
+				</foreach>
+			</if>
+			<if test="indid != null and indid != '' ">
+				and HP_Scheme_Indicator.indid in
+				<foreach collection="indid.split(',')" item="indid" open="(" separator="," close=")">
+					#{indid}
+				</foreach>
+			</if>
+			<if test="parentid != null and parentid != '' ">
+				and HP_Scheme_Indicator.parentid in
+				<foreach collection="parentid.split(',')" item="parentid" open="(" separator="," close=")">
+					#{parentid}
+				</foreach>
+			</if>
+			<if test="indtype != null and indtype != '' ">
+				and HP_Scheme_Indicator.indtype = #{indtype}
+			</if>
+			<if test="indname != null and indname != '' ">
+				and HP_Scheme_Indicator.indname like concat('%',#{indname},'%')
+			</if>
+			<if test="indrank != null and indrank != '' ">
+				and HP_Scheme_Indicator.indrank in
+				<foreach collection="indrank.split(',')" item="indrank" open="(" separator="," close=")">
+					#{indrank}
+				</foreach>
+			</if>
+		</where>
+		order by HP_Scheme_Indicator.orderid
+	</select>
+	<!--	修改指标信息-->
+	<sql id="Update_Params">
+		<if test="formuladesc != null">
+			,formuladesc = #{formuladesc}
+		</if>
+		<if test="weight != null">
+			,weight = #{weight}
+		</if>
+		<if test="orderid != null">
+			,orderid = #{orderid}
+		</if>
+		<if test="inrremake != null">
+			,inrremake = #{inrremake}
+		</if>
+		<if test="score != null">
+			,score = round(#{score},2)
+		</if>
+		<if test="otherscore != null">
+			,otherscore = round(#{otherscore},2)
+		</if>
+	</sql>
+	<update id="Update_HP_Scheme_Indicator">
+		update HP_Scheme_Indicator set id = id <include refid="Update_Params"/>
+		where id in
+		<foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</update>
+	<!--	删除-->
+	<delete id="Delete_HP_Scheme_Indicator">
+		delete from HP_Scheme_Indicator where id in
+		<foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+	<!--	方案选择指标-->
+	<insert id="Insert_Choose_HP_Scheme_Indicator">
+		insert into HP_Scheme_Indicator(schemeid,indid,indname,parentid,indtype,indrank,formuladesc,weight,formula,orderid,inrremake)
+		select #{schemeid},indid,indname,parentid,indtype,indrank,formuladesc,weight,formula,orderid,inrremake from HP_indicator_library
+		where indid in
+		<foreach collection="indid.split(',')" item="indid" open="(" separator="," close=")">
+			#{indid}
+		</foreach>
+		and not exists (select 1 from HP_Scheme_Indicator where HP_Scheme_Indicator.schemeid = #{schemeid} and HP_Scheme_Indicator.indid = HP_indicator_library.indid)
+	</insert>
+	<!--	查询父级指标-->
+	<select id="Select_Parent_HP_Scheme_indList" resultType="java.util.HashMap">
+		select parentid from HP_indicator_library
+		where  indid in
+		<foreach collection="indid.split(',')" item="indid" open="(" separator="," close=")">
+			#{indid}
+		</foreach>
+	</select>
+	<!--	查询子级指标-->
+	<select id="Select_Children_HP_Scheme_indList" resultType="java.util.HashMap">
+		select indid from HP_indicator_library
+		where  parentid in
+		<foreach collection="indid.split(',')" item="indid" open="(" separator="," close=")">
+			#{indid}
+		</foreach>
+	</select>
+	<!--	查询方案下的站点信息-->
+	<select id="Select_hp_scheme_bulk_List" resultType="java.util.Map">
+		select hp_scheme_bulk.schemeid,hp_scheme_bulk.bulkid,hp_eval_bulk.bulkname,hp_scheme_bulk.bulkid stcd,hp_eval_bulk.bulkname stnm
+		from  hp_scheme_bulk
+		left join hp_eval_bulk on hp_eval_bulk.bulkid = hp_scheme_bulk.bulkid
+		where hp_scheme_bulk.schemeid = #{schemeid}
+	</select>
+	<!--	查询站点的得分信息-->
+	<select id="Select_hp_scheme_bulk_score_List" resultType="java.util.Map">
+		select hp_scheme_bulk.schemeid,hp_scheme_bulk.bulkid,score,hpsciid
+		from hp_scheme_bulk
+		left join  hp_scheme_bulk_score on hp_scheme_bulk_score.bulkid = hp_scheme_bulk.bulkid
+		where hp_scheme_bulk.schemeid = #{schemeid} and hpsciid = #{hpsciid}
+	</select>
+	<select id="Select_HP_indicator_format_list" resultType="java.util.Map">
+		select indid,formulaname title,formula from hp_indicator_formula
+		where indid = #{indid}
+	</select>
+	<select id="Seletc_Parent_Ind_Info" resultType="java.util.Map">
+		select  id,schemeid,indid,indname,parentid,otherscore,score,weight
+		from HP_Scheme_Indicator where indid = #{indid} and schemeid = #{schemeid}
+	</select>
+	<insert id="Insert_HP_Scheme_Indicator_Score">
+		insert into HP_SCHEME_BULK_SCORE(schemeid,bulkid,hpsciid,score) values(#{schemeid},#{bulkid},#{hpsciid},#{score});
+	</insert>
+	<delete id="Delete_HP_Scheme_Indicator_Score">
+		delete from HP_SCHEME_BULK_SCORE where hpsciid = #{hpsciid} and bulkid = #{bulkid} and schemeid = #{schemeid}
+	</delete>
+	<insert id="Insert_Lake_Healthy_Info">
+		insert into Lake_Healthy(tm,indexid,indexname,indextype,score,HEALTHY_LEVEL)
+		select now(),code,description,pptr,round(HP_scheme_indicator.score,2),
+			   (SELECT code from sm_codeitem where codeid='AE' and min &lt;= HP_scheme_indicator.Score
+											   and max > HP_scheme_indicator.Score limit 1 )
+		from sm_codeitem
+			left join  (select indid,case when score > 100 then 100 else score end  score from HP_scheme_indicator where schemeid = #{schemeid}
+			) HP_scheme_indicator on HP_scheme_indicator.indid = sm_codeitem.shortname
+		where sm_codeitem.codeid ='AD' and sm_codeitem.pptr !='AD' and sm_codeitem.flag ='01'
+		  and sm_codeitem.pptr !='03' and HP_scheme_indicator.SCORE is not null
+	</insert>
+	<insert id="Insert_Lake_Healthy_Total_Info">
+		insert into Lake_Healthy(tm,indexid,indexname,indextype,score,HEALTHY_LEVEL)
+		select now(),code,description,pptr,round(HP_scheme_indicator.score,2),
+			   (SELECT code from sm_codeitem where codeid='AE' and min &lt;= HP_scheme_indicator.Score
+											   and max > HP_scheme_indicator.Score limit 1 )
+		from sm_codeitem
+			left join  (select case when sum(score*weight) > 100 then 100 else sum(score*weight) end  score from HP_scheme_indicator where PARENTID is null and schemeid = #{schemeid}
+			) HP_scheme_indicator on 1=1
+		where sm_codeitem.codeid ='AD' and sm_codeitem.code = '0301'
+	</insert>
+	<update id="Update_Lake_Bliss_Total_Info">
+		with temp as (
+			select  score,(SELECT code from sm_codeitem where codeid='AH' and min &lt;= HP_scheme_indicator.Score
+								and max > HP_scheme_indicator.Score limit 1 ) healthy_level
+			from (select case when sum(score*weight) > 100 then 100 else sum(score*weight) end  score from HP_scheme_indicator where PARENTID is null and schemeid = (
+					select schemeid from (select * from HP_Scheme ORDER BY SCHEMEYEAR desc) HP_Scheme limit 1
+				)
+				 ) HP_scheme_indicator
+		)
+		update lake_bliss set score = (select  round(score,2)   from temp limit 1),bliss_level= (select healthy_level from temp limit 1)
+		where indexid ='0301' and indextype = '03'
+	</update>
+	<update id="Update_Parent_Ind_Score">
+		with temp as (select round(sum(score * weight),2) score from HP_scheme_indicator where parentid = #{parentid} and schemeid = #{schemeid})
+		update HP_scheme_indicator set score = (
+			select case when score > 100 then 100 else score end from temp limit 1
+			),otherscore = (
+		select case when score > 100 then 100 else score end  from temp limit 1
+			) where indid = #{parentid} and schemeid = #{schemeid}
+	</update>
+
+	<update id="Update_HP_scheme_Score">
+		with temp as (
+			select  round(score,2) score,(SELECT code from sm_codeitem where codeid='AH' and min &lt;= hp_scheme_indicator.Score
+														  and max > hp_scheme_indicator.Score limit 1 ) healthy_level
+			from (select case when sum(score*weight) > 100 then 100 else sum(score*weight) end  score from hp_scheme_indicator where PARENTID is null and schemeid = #{schemeid}
+			) hp_scheme_indicator
+			)
+		update hp_scheme set score = (select  round(score,2)   from temp limit 1) where schemeid = #{schemeid}
+
+	</update>
+	<select id="Select_Ind_Radar_Info" resultType="java.util.Map">
+		select hp_scheme_indicator.indid,hp_scheme_indicator.indname,round(ifnull(hp_scheme_indicator.score,0),2) score
+		from hp_scheme_indicator
+				 left join hp_scheme_indicator parent_scheme_indicator
+						   on parent_scheme_indicator.indid = hp_scheme_indicator.parentid
+							   and parent_scheme_indicator.schemeid = hp_scheme_indicator.schemeid
+		where hp_scheme_indicator.schemeid = #{schemeid}
+		  and parent_scheme_indicator.parentid is null  and hp_scheme_indicator.parentid is not null
+		order by hp_scheme_indicator.orderid asc
+	</select>
+</mapper>

@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.SystemManage.SM_Router_Mapper">
+	<sql id="Select_Column">
+		sm_router.id,sm_router.pid,sm_router.name,sm_router.address,sm_router.title,sm_router.icon,
+		sm_router.redirect,sm_router.mode,modecode.modename,sm_router.menu,sm_router.menu menubl,menucode.menuname,sm_router.hidden,sm_router.hidden hiddenbl,
+		hiddencode.hiddenname,sm_router.affix,sm_router.affix affixbl,affixcode.affixname,sm_router.flag,flagcode.flagname,sm_router.configid,
+		sm_router.systype,systypecode.systypename,sm_router.orderid,sm_router.permission,sm_router.submitman,
+		sm_users.truename,sm_router.submittime,sm_router.template,sm_router.module,modulecode.modulename
+	</sql>
+	<sql id="Select_Search">
+		<if test="id != null and id != ''">
+			and sm_router.id = #{id}
+		</if>
+		<if test="pid != null and pid != ''">
+			and sm_router.pid = #{pid}
+		</if>
+		<if test="name != null and name != '' ">
+			and sm_router.name = #{name}
+		</if>
+		<if test="title != null and title != '' ">
+			and sm_router.title = like concat('%',#{title},'%')
+		</if>
+		<if test="mode != null and mode != '' ">
+			and sm_router.mode = #{mode}
+		</if>
+		<if test="menu != null and menu != '' ">
+			and sm_router.menu = #{menu}
+		</if>
+		<if test="hidden != null and hidden != '' ">
+			and sm_router.hidden = #{hidden}
+		</if>
+		<if test="affix != null and affix != '' ">
+			and sm_router.affix = #{affix}
+		</if>
+		<if test="flag != null and flag != '' ">
+			and sm_router.flag = #{flag}
+		</if>
+		<if test="systype != null and systype != '' ">
+			and sm_router.systype = #{systype}
+		</if>
+		<if test="module != null and module != '' ">
+			and sm_router.module = #{module}
+		</if>
+		<if test="userid != null and userid != '' ">
+			and exists (select 1 from sm_router_role left join sm_user_role on sm_router_role.roleid = sm_user_role.roleid
+			where sm_user_role.userid = #{userid} and sm_router_role.routerid = sm_router.id)
+		</if>
+	</sql>
+	<select id="Select_SM_Route" resultType="com.ytxd.model.SystemManage.SM_Router">
+		select * from (select <include refid="Select_Column"/>
+		from sm_router
+		left join (select code ,description modename from sm_codeitem where codeid ='LY' and flag = '1'
+		) modecode on modecode.code = sm_router.mode
+		left join (select code ,description menuname from sm_codeitem where codeid ='FD' and flag = '1'
+		) menucode on menucode.code = sm_router.menu
+		left join (select code ,description hiddenname from sm_codeitem where codeid ='FD' and flag = '1'
+		) hiddencode on hiddencode.code = sm_router.hidden
+		left join (select code ,description affixname from sm_codeitem where codeid ='FD' and flag = '1'
+		) affixcode on affixcode.code = sm_router.affix
+		left join (select code ,description flagname from sm_codeitem where codeid ='FD' and flag = '1'
+		) flagcode on flagcode.code = sm_router.flag
+		left join (select code ,description systypename from sm_codeitem where codeid ='FD' and flag = '1'
+		) systypecode on systypecode.code = sm_router.systype
+		left join (select code ,description modulename from sm_codeitem where codeid ='FD' and flag = '1'
+		) modulecode on modulecode.code = sm_router.module
+		left join sm_users on sm_users.userid = sm_router.submitman
+		where 1=1
+		<include refid="Select_Search"/>
+		order by sm_router.orderid
+		) sm_router
+		<if test="sort != null and sort != ''">
+			order by ${sort} ${order}
+		</if>
+	</select>
+	<sql id="Insert_Column">
+		<if test="pid != null and pid != '' ">,pid</if>
+		<if test="name != null and name != '' ">,name</if>
+		<if test="address != null and address != '' ">,address</if>
+		<if test="title != null and title != '' ">,title</if>
+		<if test="icon != null and icon != '' ">,icon</if>
+		<if test="redirect != null and redirect != '' ">,redirect</if>
+		<if test="mode != null and mode != '' ">,mode</if>
+		<if test="menu != null and menu != '' ">,menu</if>
+		<if test="hidden != null and hidden != '' ">,hidden</if>
+		<if test="affix != null and affix != '' ">,affix</if>
+		<if test="flag != null and flag != '' ">,flag</if>
+		<if test="configid != null and configid != '' ">,configid</if>
+		<if test="systype != null and systype != '' ">,systype</if>
+		<if test="permission != null and permission != '' ">,permission</if>
+		<if test="submitman != null and submitman != '' ">,submitman</if>
+		<if test="submittime != null and submittime != '' ">,submittime</if>
+		<if test="orderid != null and orderid != '' ">,orderid</if>
+		<if test="template != null and template != '' ">,template</if>
+		<if test="module != null and module != '' ">,module</if>
+	</sql>
+	<sql id="Insert_Params">
+		<if test="pid != null and pid != '' ">,#{pid}</if>
+		<if test="name != null and name != '' ">,#{name}</if>
+		<if test="address != null and address != '' ">,#{address}</if>
+		<if test="title != null and title != '' ">,#{title}</if>
+		<if test="icon != null and icon != '' ">,#{icon}</if>
+		<if test="redirect != null and redirect != '' ">,#{redirect}</if>
+		<if test="mode != null and mode != '' ">,#{mode}</if>
+		<if test="menu != null and menu != '' ">,#{menu}</if>
+		<if test="hidden != null and hidden != '' ">,#{hidden}</if>
+		<if test="affix != null and affix != '' ">,#{affix}</if>
+		<if test="flag != null and flag != '' ">,#{flag}</if>
+		<if test="configid != null and configid != '' ">,#{configid}</if>
+		<if test="systype != null and systype != '' ">,#{systype}</if>
+		<if test="permission != null and permission != '' ">,#{permission}</if>
+		<if test="submitman != null and submitman != '' ">,#{submitman}</if>
+		<if test="submittime != null and submittime != '' ">,#{submittime}</if>
+		<if test="orderid != null and orderid != '' ">,#{orderid}</if>
+		<if test="template != null and template != '' ">,#{template}</if>
+		<if test="module != null and module != '' ">,#{module}</if>
+	</sql>
+	<insert id="Insert_SM_Route" parameterType="com.ytxd.model.SystemManage.SM_Router">
+		insert into SM_Router
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Column" />
+		</trim>
+		values
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Params" />
+		</trim>
+		<selectKey resultType="java.lang.String" keyProperty="id">
+			SELECT LAST_INSERT_ID() AS id FROM DUAL
+		</selectKey>
+	</insert>
+	<sql id="Update_Params">
+		<if test="pid != null">,pid = #{pid}</if>
+		<if test="name != null">,name = #{name}</if>
+		<if test="address != null">,address = #{address}</if>
+		<if test="title != null ">,title = #{title}</if>
+		<if test="icon != null">,icon = #{icon}</if>
+		<if test="redirect != null">,redirect = #{redirect}</if>
+		<if test="mode != null ">,mode = #{mode}</if>
+		<if test="menu != null">,menu = #{menu}</if>
+		<if test="hidden != null ">,hidden = #{hidden}</if>
+		<if test="affix != null">,affix = #{affix}</if>
+		<if test="flag != null ">,flag = #{flag}</if>
+		<if test="configid != null ">,configid = #{configid}</if>
+		<if test="systype != null ">,systype = #{systype}</if>
+		<if test="permission != null ">,permission = #{permission}</if>
+		<if test="orderid != null">,orderid = #{orderid}</if>
+		<if test="template != null">,template = #{template}</if>
+		<if test="module != null">,module = #{module}</if>
+	</sql>
+	<update id="Update_SM_Route">
+		UPDATE SM_Router
+		<set>
+			<trim prefixOverrides=",">
+				<include refid="Update_Params" />
+			</trim>
+		</set>
+		WHERE id = #{id}
+	</update>
+	<delete id="Delete_SM_Route">
+		delete from SM_Router where id in
+		<foreach collection="array" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+	</delete>
+
+	<delete id="Delete_SM_RouteByPid">
+		delete from SM_Router where pid in
+		<foreach collection="array" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+	</delete>
+</mapper>

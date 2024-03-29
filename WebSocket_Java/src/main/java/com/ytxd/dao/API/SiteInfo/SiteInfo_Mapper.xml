@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.API.SiteInfo.SiteInfo_Mapper">
+	<select id="Select_SiteInfo_List" resultType="java.util.Map">
+		select st_stbprp_b.stcd,st_stbprp_b.deviceid,st_stbprp_b.videourl,st_stbprp_b.videoformat,  (CASE WHEN st_stbprp_b.SIGN = '01' THEN '自建站点' ELSE '接入站点' END)  as signname,
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>
+		,st_stbprp_introduce.filepath,st_stbprp_introduce.reg,st_stbprp_introduce.inttype,st_stbprp_introduce.introduce,
+		st_stbprp_introduce.manageunit,st_stbprp_introduce.drainage_area,st_stbprp_introduce.river_name,
+		st_stbprp_introduce.gate,st_stbprp_introduce.contractor,st_stbprp_introduce.devops_unit,st_stbprp_introduce.project_name
+		,ifnull(st_river_r_view.tm,st_rsvr_r.tm) tm,ifnull(st_river_r_view.z,st_rsvr_r.z) z,st_rsvr_r.w,st_river_r_view.q
+		from st_stbprp_b
+		left join st_stbprp_introduce on st_stbprp_introduce.stcd = st_stbprp_b.stcd
+		left join (
+		select stcd,tm,z,q from (select stcd ,tm,z,q ,row_number() over(partition by stcd order by tm desc ) rn from st_river_r_view)
+		st_river_r_view where rn =1
+		)st_river_r_view on st_river_r_view.stcd =  st_stbprp_b.stcd
+		left join (
+		select stcd,tm,z,w from (select stcd ,tm,z,w ,row_number() over(partition by stcd order by tm desc ) rn from st_rsvr_r)
+		st_rsvr_r where rn =1
+		)st_rsvr_r on st_rsvr_r.stcd =  st_stbprp_b.stcd
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+		<where>
+			<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+		</where>
+		order by -st_stbprp_b.orderid desc
+	</select>
+	<select id="Select_Site_Rvfcch_Info" resultType="java.util.Map">
+		select stcd, ldkel, rdkel, wrz, wrq, grz, grq, taz, taq, laz, laq, sfz, sfq, obhtz, obhtztm
+		from st_rvfcch_b where stcd = #{stcd} limit 1
+	</select>
+	<select id="Select_Site_Rsvrfcch_Info" resultType="java.util.Map">
+		select stcd,rsvrtp, damel, ckflz, dsflz, normz, ddz, actz, ttcp, fldcp, actcp, ddcp, laz, sfq, xxsw, rbel, leel
+		from st_rsvrfcch_b where stcd = #{stcd} limit 1
+	</select>
+	<select id="Select_Site_Gate_List" resultType="java.util.Map">
+		select * from (
+			select
+			    st_stbprp_b.id,st_stbprp_b.stcd,st_stbprp_b.stnm,st_stbprp_b.deviceid,st_stbprp_b.state,
+			   	st_stbprp_b.sttp,st_stbprp_b.lgtd,st_stbprp_b.lttd,
+			   	sttpjoin.description sttpname,ST_GATE_R.tm,
+				ifnull(ST_GATE_R.gtopnum,0) gtopnum,
+				case when st_stbprp_b.stcd = 'MHZM03' and ST_GATE_R.gtq is null then '-' else FORMAT(ifnull(ST_GATE_R.gtq,0),1) end flow,
+			   	st_stbprp_b.total_gate total
+			from st_stbprp_b
+			left join (select code,description from sm_codeitem where codeid = 'TP') sttpjoin on sttpjoin.code = st_stbprp_b.sttp
+			left join (
+				select  stcd,tm,GTOPNUM,GTQ from (
+					select  stcd,tm,GTOPNUM,GTQ,row_number() over(partition by stcd order by tm desc) rn from ST_GATE_R where tm &lt;= #{tm}
+				    and tm >= date_sub(#{tm},interval 12 hour)
+				) ST_GATE_R where rn =1
+			)ST_GATE_R on ST_GATE_R.stcd = st_stbprp_b.stcd
+			where st_stbprp_b.sttp = '07'
+		<if test="stcd != null and stcd != '' ">
+			and st_stbprp_b.stcd in
+			<foreach collection="stcd.split(',')" item="id" open="(" separator="," close=")">
+				#{id}
+			</foreach>
+		</if>
+		<if test="stnm != null and stnm != '' ">
+			and st_stbprp_b.stnm like CONCAT('%',#{stnm},'%')
+		</if>
+		<if test="flag != null and flag != '' ">
+			and st_stbprp_b.flag = #{flag}
+		</if>
+		<if test="state != null and state != '' ">
+			and st_stbprp_b.state = #{state}
+		</if>
+		<if test="sign != null and sign != '' ">
+			and st_stbprp_b.sign in
+			<foreach collection="sign.split(',')" item="sign" open="(" separator="," close=")">
+				#{sign}
+			</foreach>
+		</if> order by st_stbprp_b.orderid )st_stbprp_b
+		<if test="sort != null and sort != '' ">
+			order by ${sort} ${order}
+		</if>
+	</select>
+	<select id="Select_Early_Warning_List" resultType="java.util.Map">
+		select * from (select early_warning.*,st_stbprp_b.stnm,warningtypejoin.description warningtypename,
+		flagjoin.description flagname,statejoin.description statename
+		from early_warning
+		left join st_stbprp_b on early_warning.stcd = st_stbprp_b.stcd
+		left join (select code,description from sm_codeitem where codeid ='AB'
+		) warningtypejoin on warningtypejoin.code = early_warning.warningtype
+		left join (select code,description from sm_codeitem where codeid ='FD'
+		) flagjoin on flagjoin.code = early_warning.flag
+		left join (select code,description,orderid from sm_codeitem where codeid ='AC'
+		) statejoin on statejoin.code = early_warning.state
+		<where>
+			<if test="id != null and id != '' ">
+				and early_warning.id in
+				<foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+					#{id}
+				</foreach>
+			</if>
+			<if test="stcd != null and stcd != '' ">
+				and early_warning.stcd in
+				<foreach collection="stcd.split(',')" item="stcd" open="(" separator="," close=")">
+					#{stcd}
+				</foreach>
+			</if>
+			<if test="warningtype != null and warningtype != '' ">
+				and early_warning.warningtype in
+				<foreach collection="warningtype.split(',')" item="warningtype" open="(" separator="," close=")">
+					#{warningtype}
+				</foreach>
+			</if>
+			<if test="stnm != null and stnm != '' ">
+				and st_stbprp_b.stnm like CONCAT('%',#{stnm},'%')
+			</if>
+			<if test="flag != null and flag != '' ">
+				and early_warning.flag = #{flag}
+			</if>
+			<if test="state != null and state != '' ">
+				and early_warning.state = #{state}
+			</if>
+		</where>
+		order by statejoin.orderid asc ,early_warning.submittime desc) early_warning
+		<if test="sort != null and sort != '' ">
+			order by ${sort} ${order}
+		</if>
+	</select>
+	<select id="Select_ST_Subhall_Site_List" resultType="java.util.Map">
+		select st_stbprp_b.stcd,
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>
+		,st_stbprp_introduce.filepath,st_stbprp_introduce.reg,st_stbprp_introduce.inttype,st_stbprp_introduce.introduce,
+		st_stbprp_introduce.manageunit,st_stbprp_introduce.drainage_area,st_stbprp_introduce.river_name,
+		st_stbprp_introduce.gate,st_stbprp_introduce.contractor,st_stbprp_introduce.devops_unit,st_stbprp_introduce.project_name
+		,ifnull(st_river_r_view.tm,st_rsvr_r.tm) tm,ifnull(st_river_r_view.z,st_rsvr_r.z) z,st_rsvr_r.w,st_river_r_view.q
+		from (select distinct stcd from ST_Subhall_Site 
+		    	<where>
+					<if test="subhall_type != null and subhall_type != '' ">
+						and ST_Subhall_Site.subhall_type = #{subhall_type}
+					</if>
+					<if test="address_type != null and address_type != '' ">
+						and ST_Subhall_Site.address_type = #{address_type}
+					</if>
+				</where>
+		) ST_Subhall_Site
+		left join st_stbprp_b on st_stbprp_b.stcd = ST_Subhall_Site.stcd
+		left join st_stbprp_introduce on st_stbprp_introduce.stcd = st_stbprp_b.stcd
+		left join (
+		select stcd,tm,z,q from (select stcd ,tm,z,q ,row_number() over(partition by stcd order by tm desc ) rn from st_river_r_view)
+		st_river_r_view where rn =1
+		)st_river_r_view on st_river_r_view.stcd =  st_stbprp_b.stcd
+		left join (
+		select stcd,tm,z,w from (select stcd ,tm,z,w ,row_number() over(partition by stcd order by tm desc ) rn from st_rsvr_r)
+		st_rsvr_r where rn =1
+		)st_rsvr_r on st_rsvr_r.stcd =  st_stbprp_b.stcd
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+		<where>
+			<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+		</where>
+		order by -st_stbprp_b.orderid desc
+	</select>
+
+	<select id="Select_Last_Rain_Info" resultType="java.util.Map">
+		select max(tm) tm,sum(p) sitevalue,sum(p) p from st_pptn_r where stcd = #{stcd}
+		and tm >= #{starttm} and tm &lt; #{endtm}
+	</select>
+
+	<select id="Select_Last_Water_Quality_Info" resultType="java.util.Map">
+		select tm, sitevalue
+		from (select tm, water_quality_join.description sitevalue, row_number() over(partition by stcd order by tm desc) rn
+			  from st_wq_r
+				left join (
+				  select code, description
+				  from sm_codeitem
+				  where codeid = 'WA'
+			  ) water_quality_join on water_quality_join.code = st_wq_r.water_quality
+			  where stcd = #{stcd}
+				and tm &lt;= str_to_date(#{tm}, '%Y-%m-%d %H:%i:%s')
+				and tm > adddate(#{tm},interval -24 hour)
+	) st_wq_r where rn ='1' limit 1
+	</select>
+
+	<select id="Select_Last_Water_Level_Info" resultType="java.util.Map">
+		select tm, z sitevalue
+		from (select tm, z, row_number() over(partition by stcd order by tm desc) rn
+			  from st_river_r_view
+			  where stcd = #{stcd}
+				and tm &lt;= str_to_date(#{tm}, '%Y-%m-%d %H:%i:%s')
+				and tm > adddate(#{tm},interval -24 hour)
+			  union all
+			  select tm, z, row_number() over(partition by stcd order by tm desc) rn
+			  from st_rsvr_r
+			  where stcd = #{stcd}
+				and tm &lt;= str_to_date(#{tm}, '%Y-%m-%d %H:%i:%s')
+		    	and tm > adddate(#{tm},interval -24 hour)
+		) st_river_r_view where rn ='1' order by tm desc limit 1
+	</select>
+
+    <select id="selectVideoStationNum" resultType="java.util.Map">
+		SELECT COUNT(st_stbprp_b.STCD) as num
+			FROM st_stbprp_b
+				WHERE STTP = '06'
+	</select>
+
+</mapper>

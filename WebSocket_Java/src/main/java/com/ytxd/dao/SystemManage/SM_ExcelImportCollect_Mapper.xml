@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.SystemManage.SM_ExcelImportCollect_Mapper">
+	<!-- 允许缓存 -->
+	<!-- <cache /> -->
+	
+	<!-- 查询表   表 字段  -->
+	<sql id="Select_Column">
+		sm_excelimportcollect.id,
+		sm_excelimportcollect.importname,
+		sm_excelimportcollect.description,
+		sm_excelimportcollect.tablename,
+		sm_excelimportcollect.importcheckresult,
+		sm_excelimportcollect.templatefile,
+		sm_excelimportcollect.remark,
+		sm_excelimportcollect.idfieldname 
+	</sql>
+
+	<!-- 查询表   查询条件参数  -->
+	<sql id="Select_Parmeter">
+		<if test="id!=null and id!=''"> AND sm_excelimportcollect.id IN (#{id}) </if>
+		<if test="importname!=null and importname!=''"> AND sm_excelimportcollect.importname like CONCAT('%',#{importname},'%') </if>
+		<if test="description!=null and description!=''"> AND sm_excelimportcollect.description like CONCAT('%',#{description},'%') </if>
+		<if test="tablename!=null and tablename!=''"> AND sm_excelimportcollect.tablename like CONCAT('%',#{tablename},'%') </if>
+		<if test="importcheckresult!=null and importcheckresult!=''"> AND sm_excelimportcollect.importcheckresult like CONCAT('%',#{importcheckresult},'%') </if>
+		<if test="templatefile!=null and templatefile!=''"> AND sm_excelimportcollect.templatefile like CONCAT('%',#{templatefile},'%') </if>
+		<if test="remark!=null and remark!=''"> AND sm_excelimportcollect.remark like CONCAT('%',#{remark},'%') </if>
+		<if test="idfieldname!=null and idfieldname!=''"> AND sm_excelimportcollect.idfieldname like CONCAT('%',#{idfieldname},'%') </if>
+		<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> -->
+	</sql>
+
+	<!-- 查询  表信息  -->
+	<select id="Select_SM_ExcelImportCollect" parameterType="com.ytxd.model.SystemManage.SM_ExcelImportCollect" resultType="com.ytxd.model.SystemManage.SM_ExcelImportCollect">
+		SELECT <include refid="Select_Column" />
+		FROM sm_excelimportcollect 
+		WHERE 1 = 1 
+		<include refid="Select_Parmeter" />
+		<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+		LIMIT #{startRow},#{pageSize}
+	</select>
+	<select id="Select_SM_ExcelImportCollect_All" parameterType="com.ytxd.model.SystemManage.SM_ExcelImportCollect" resultType="com.ytxd.model.SystemManage.SM_ExcelImportCollect">
+		SELECT
+			<include refid="Select_Column" />
+		FROM sm_excelimportcollect
+		WHERE 1 = 1
+			<include refid="Select_Parmeter" />
+			<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+	</select>
+	<!-- 查询表记录数  -->
+	<select id="Select_SM_ExcelImportCollect_Count" parameterType="com.ytxd.model.SystemManage.SM_ExcelImportCollect" resultType="java.lang.Integer">
+		SELECT
+			COUNT(1)
+		FROM sm_excelimportcollect
+		WHERE 1 = 1
+			<include refid="Select_Parmeter" />
+	</select>
+	<!-- 查询表信息  -->
+	<select id="Select_SM_ExcelImportCollect_ById" parameterType="java.lang.String" resultType="com.ytxd.model.SystemManage.SM_ExcelImportCollect">
+		SELECT
+			<include refid="Select_Column" />
+		FROM
+			sm_excelimportcollect
+		WHERE
+			ID = #{_parameter}
+	</select>
+
+	<!-- 新增信息表字段 -->
+	<sql id="Insert_Column">
+		<if test="importname!=null and importname!=''">,importname</if> <!--导入名称-->
+		<if test="description!=null and description!=''">,description</if> <!--导入描述-->
+		<if test="tablename!=null and tablename!=''">,tablename</if> <!--导入表名-->
+		<if test="importcheckresult!=null and importcheckresult!=''">,importcheckresult</if> <!--导入状态-->
+		<if test="templatefile!=null and templatefile!=''">,templatefile</if> <!--模板文件-->
+		<if test="remark!=null and remark!=''">,remark</if> <!--导入说明-->
+		<if test="idfieldname!=null and idfieldname!=''">,idfieldname</if> <!--导入表Id名称-->
+	</sql>
+
+	<sql id="Insert_Parmeter">
+		<if test="importname!=null and importname!=''">,#{importname}</if>	<!--导入名称-->
+		<if test="description!=null and description!=''">,#{description}</if>	<!--导入描述-->
+		<if test="tablename!=null and tablename!=''">,#{tablename}</if>	<!--导入表名-->
+		<if test="importcheckresult!=null and importcheckresult!=''">,#{importcheckresult}</if>	<!--导入状态-->
+		<if test="templatefile!=null and templatefile!=''">,#{templatefile}</if>	<!--模板文件-->
+		<if test="remark!=null and remark!=''">,#{remark}</if>	<!--导入说明-->
+		<if test="idfieldname!=null and idfieldname!=''">,#{idfieldname}</if>	<!--导入表Id名称-->
+	</sql>
+
+	<!-- 新增表信息  -->
+	<insert id="Insert_SM_ExcelImportCollect" parameterType="com.ytxd.model.SystemManage.SM_ExcelImportCollect" >
+		INSERT INTO sm_excelimportcollect
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Column" />
+		</trim>
+		VALUES
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Parmeter" />
+		</trim>
+		<selectKey resultType="java.lang.String" keyProperty="id">
+			SELECT LAST_INSERT_ID() AS id FROM DUAL
+		</selectKey>
+	</insert>
+
+	<!-- 修改表  set 参数  -->
+	<sql id="Update_Parmeter">
+		<if test="importname!=null">,importname=#{importname}</if>
+		<if test="description!=null">,description=#{description}</if>
+		<if test="tablename!=null">,tablename=#{tablename}</if>
+		<if test="importcheckresult!=null">,importcheckresult=#{importcheckresult}</if>
+		<if test="templatefile!=null">,templatefile=#{templatefile}</if>
+		<if test="remark!=null">,remark=#{remark}</if>
+		<if test="idfieldname!=null">,idfieldname=#{idfieldname}</if>
+	</sql>
+
+	<!-- 修改表信息 -->
+	<update id="Update_SM_ExcelImportCollect" parameterType="com.ytxd.model.SystemManage.SM_ExcelImportCollect">
+		UPDATE sm_excelimportcollect
+		<set>
+			<trim prefixOverrides=",">
+			<include refid="Update_Parmeter" />
+			</trim>
+		</set>
+		WHERE id IN 
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+	        #{item}
+	    </foreach> 
+	</update>
+
+	<!-- 删除表信息 -->
+	<delete id="Delete_SM_ExcelImportCollect" parameterType="java.lang.String">
+		DELETE FROM
+			sm_excelimportcollect
+		WHERE
+			id IN <foreach collection="array" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+	</delete>
+	<!-- 得到ID为空的记录 -->
+	<select id="Select_SM_ExcelImportCollect_IDNULL" resultType="com.ytxd.model.SystemManage.SM_ExcelImportCollect">
+		SELECT <include refid="Select_Column" /> 
+		FROM SM_EXCELIMPORTCOLLECT 
+		WHERE ID IS NULL 
+		ORDER BY IMPORTNAME
+	</select>
+	<update id="Update_SM_ExcelImportCollect_ID" parameterType="java.lang.String">
+		UPDATE SM_EXCELIMPORTCOLLECT 
+		SET ID=SEQ_SM_EXCELIMPORTCOLLECT.Nextval 
+		WHERE IMPORTNAME=#{_parameter} 
+	</update>
+</mapper>

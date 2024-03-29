@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.SystemManage.SM_Department_Dept_Mapper">
+	<!-- 允许缓存 -->
+	<!-- <cache /> -->
+	
+	<!-- 查询表   表 字段  -->
+	<sql id="Select_Column">
+		ifnull(DepartmentId.NodeNameJoin,SM_Department_Dept.DepartmentId) DepartmentIdName,
+		ifnull(DeptId.NodeNameJoin,SM_Department_Dept.DeptId) DeptIdName,
+
+		sm_department_dept.id,
+		sm_department_dept.departmentid,
+		sm_department_dept.deptid 
+	</sql>
+
+	<!-- 查询表   查询条件参数  -->
+	<sql id="Select_Parmeter">
+		<if test="id!=null and id!=''"> AND sm_department_dept.id IN (#{id}) </if>
+		<if test="departmentid!=null and departmentid!=''"> AND sm_department_dept.departmentid like #{departmentid},'%') </if>
+		<if test="deptid!=null and deptid!=''"> AND sm_department_dept.deptid like #{deptid},'%') </if>
+		<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> -->
+	</sql>
+
+	<!-- 查询  表信息  -->
+	<select id="Select_SM_Department_Dept" parameterType="com.ytxd.model.SystemManage.SM_Department_Dept" resultType="com.ytxd.model.SystemManage.SM_Department_Dept">
+		SELECT
+		<if test="selectrowcount==null">
+			<include refid="Select_Column" />
+		</if>
+		<if test="selectrowcount!=null">
+			COUNT(1) selectrowcount 
+		</if>
+		FROM sm_department_dept 
+		left join (select DepartmentId DepartmentIdJoin,NodeName NodeNameJoin from SM_Department) DepartmentId on DepartmentId.DepartmentIdJoin=SM_Department_Dept.DepartmentId 
+		left join (select DepartmentId DepartmentIdJoin,NodeName NodeNameJoin from SM_Department) DeptId on DeptId.DepartmentIdJoin=SM_Department_Dept.DeptId 
+		<where> 1 = 1 <include refid="Select_Parmeter" /> </where>
+		<if test="selectrowcount==null">
+			<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if> 
+		</if>
+		<if test="page!=null and rows!=null and selectrowcount==null">
+			LIMIT #{startRow},#{pageSize}
+		</if>
+	</select>
+
+	<!-- 新增信息表字段 -->
+	<sql id="Insert_Column">
+		<if test="departmentid!=null and departmentid!=''">,departmentid</if> <!--管理机构-->
+		<if test="deptid!=null and deptid!=''">,deptid</if> <!--代管机构-->
+	</sql>
+
+	<sql id="Insert_Parmeter">
+		<if test="departmentid!=null and departmentid!=''">,#{departmentid}</if>	<!--管理机构-->
+		<if test="deptid!=null and deptid!=''">,#{deptid}</if>	<!--代管机构-->
+	</sql>
+
+	<!-- 新增表信息  -->
+	<insert id="Insert_SM_Department_Dept" parameterType="com.ytxd.model.SystemManage.SM_Department_Dept" >
+		INSERT INTO sm_department_dept(id <include refid="Insert_Column" /> )
+		VALUES(SEQ_SM_DEPARTMENT_DEPT.Nextval <include refid="Insert_Parmeter" /> )
+		<selectKey resultType="java.lang.String" keyProperty="id">
+			SELECT SEQ_SM_DEPARTMENT_DEPT.CURRVAL AS id FROM DUAL
+		</selectKey>
+	</insert>
+
+	<!-- 修改表  set 参数  -->
+	<sql id="Update_Parmeter">
+		<if test="departmentid!=null">,departmentid=#{departmentid}</if>
+		<if test="deptid!=null">,deptid=#{deptid}</if>
+	</sql>
+
+	<!-- 修改表信息 -->
+	<update id="Update_SM_Department_Dept" parameterType="com.ytxd.model.SystemManage.SM_Department_Dept">
+		UPDATE sm_department_dept
+		<set> id = id <include refid="Update_Parmeter" /> </set>
+		WHERE id IN (#{id}) 
+	</update>
+
+	<!-- 删除表信息 -->
+	<delete id="Delete_SM_Department_Dept" parameterType="java.lang.String">
+		DELETE FROM sm_department_dept
+		WHERE id IN (#{_parameter})
+	</delete>
+
+
+	<!-- **扩展********************************************************************** -->
+</mapper>

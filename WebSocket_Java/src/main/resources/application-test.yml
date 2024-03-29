@@ -1,0 +1,15 @@
+#测试环境配置
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: frx
+    password: YTXD@frx(26549)
+    url: jdbc:mysql://192.1.1.5:3306/sw_frx?autoReconnect=true&useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8&zeroDateTimeBehavior=convertToNull&allowPublicKeyRetrieval=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&nullCatalogMeansCurrent=true&failOverReadOnly=false
+logging: 
+  pattern: 
+    console: "%d - %msg%n" 
+  path: D:/log/kjmis-gx
+  file: D:/log/kjmis-gx/log.log
+  level: 
+    com.springboot.service.LoggerTest: error 

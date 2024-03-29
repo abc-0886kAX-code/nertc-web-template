@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.SystemManage.SM_FunctionTree_Mapper">
+	<!-- 允许缓存 -->
+	<!-- <cache /> -->
+	
+	<!-- 查询表   表 字段  -->
+	<sql id="Select_Column">
+		sm_functiontree.cptr,
+		sm_functiontree.id,
+		sm_functiontree.parentid,
+		sm_functiontree.processitemid,
+		sm_functiontree.name,
+		sm_functiontree.logo,
+		sm_functiontree.navigateurl,
+		sm_functiontree.systype,ifnull(systype.DescriptionJoin,sm_functiontree.systype) systypename,
+		sm_functiontree.imageurl,
+		sm_functiontree.disabled,ifnull(disabled.DescriptionJoin,sm_functiontree.disabled) disabledname,
+		sm_functiontree.orderid,
+		sm_functiontree.type,ifnull(type.DescriptionJoin,sm_functiontree.type) typename,
+		sm_functiontree.remark,
+		case when haschildren.pid is not null then 1 else 0 end haschildren 
+	</sql>
+
+	<!-- 查询表   查询条件参数  -->
+	<sql id="Select_Parmeter">
+		<if test="cptr!=null and cptr!=''"> AND sm_functiontree.cptr=#{cptr} </if>
+		<if test="id!=null and id!=''"> AND sm_functiontree.id IN (#{id}) </if>
+		<if test="parentid!=null and parentid!=''"> AND sm_functiontree.parentid in (#{parentid}) </if>
+		<if test="processitemid!=null and processitemid!=''"> AND sm_functiontree.processitemid=#{processitemid} </if>
+		<if test="name!=null and name!=''"> AND sm_functiontree.name like CONCAT('%',#{name},'%') </if>
+		<if test="logo!=null and logo!=''"> AND sm_functiontree.logo=#{logo} </if>
+		<if test="navigateurl!=null and navigateurl!=''"> AND sm_functiontree.navigateurl like CONCAT('%',#{navigateurl},'%') </if>
+		<if test="systype!=null and systype!=''"> AND CONCAT(',',sm_functiontree.systype,',') like CONCAT('%,',#{systype},',%') </if>
+		<if test="imageurl!=null and imageurl!=''"> AND sm_functiontree.imageurl like CONCAT('%',#{imageurl},'%') </if>
+		<if test="disabled!=null and disabled!=''"> AND sm_functiontree.disabled = #{disabled} </if>
+		<if test="startorderid!=null and startorderid!=''"> AND sm_functiontree.orderid &gt;= #{startorderid} </if>
+		<if test="endorderid!=null and endorderid!=''"> AND sm_functiontree.orderid &lt;= #{endorderid} </if>
+		<if test="type!=null and type!=''"> AND sm_functiontree.type=#{type} </if>
+		<if test="remark!=null and remark!=''"> AND sm_functiontree.remark like CONCAT('%',#{remark},'%') </if>
+		<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> -->
+	</sql>
+
+	<!-- 查询  表信息  -->
+	<select id="Select_SM_FunctionTree" parameterType="com.ytxd.model.SystemManage.SM_FunctionTree" resultType="com.ytxd.model.SystemManage.SM_FunctionTree">
+		SELECT <include refid="Select_Column" />
+		FROM sm_functiontree 
+		LEFT JOIN (select distinct parentid pid from sm_functiontree where disabled='01') haschildren on haschildren.pid=sm_functiontree.id 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='RN') systype on systype.CodeJoin=sm_functiontree.systype 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') disabled on disabled.CodeJoin=sm_functiontree.disabled 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FU') type on type.CodeJoin=sm_functiontree.type 
+		WHERE disabled = '01' 
+		<include refid="Select_Parmeter" />
+		<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+		<if test="startRow!=null and startRow!='' and pageSize!=null and pageSize!=''"> LIMIT #{startRow},#{pageSize}</if>
+	</select>
+	<select id="Select_SM_FunctionTree_All" parameterType="com.ytxd.model.SystemManage.SM_FunctionTree" resultType="com.ytxd.model.SystemManage.SM_FunctionTree">
+		SELECT <include refid="Select_Column" />
+		FROM sm_functiontree 
+		LEFT JOIN (select distinct parentid pid from sm_functiontree where disabled='01') haschildren on haschildren.pid=sm_functiontree.id 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='RN') systype on systype.CodeJoin=sm_functiontree.systype 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') disabled on disabled.CodeJoin=sm_functiontree.disabled 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FU') type on type.CodeJoin=sm_functiontree.type 
+		WHERE disabled = '01'
+			<include refid="Select_Parmeter" />
+			<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+	</select>
+	<!-- 查询表记录数  -->
+	<select id="Select_SM_FunctionTree_Count" parameterType="com.ytxd.model.SystemManage.SM_FunctionTree" resultType="java.lang.Integer">
+		SELECT COUNT(1)
+		FROM sm_functiontree
+		WHERE disabled = '01'
+			<include refid="Select_Parmeter" />
+	</select>
+	<!-- 查询表信息  -->
+	<select id="Select_SM_FunctionTree_ById" parameterType="java.lang.String" resultType="com.ytxd.model.SystemManage.SM_FunctionTree">
+		SELECT <include refid="Select_Column" />
+		FROM sm_functiontree 
+		LEFT JOIN (select distinct parentid pid from sm_functiontree where disabled='01') haschildren on haschildren.pid=sm_functiontree.id 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='RN') systype on systype.CodeJoin=sm_functiontree.systype 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') disabled on disabled.CodeJoin=sm_functiontree.disabled 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FU') type on type.CodeJoin=sm_functiontree.type 
+		WHERE
+			ID = #{_parameter}
+	</select>
+
+	<!-- 新增信息表字段 -->
+	<sql id="Insert_Column">
+		<if test="cptr!=null and cptr!=''">,cptr</if> <!--是否含有子集00含有子集01为无-->
+		<if test="parentid!=null and parentid!=''">,parentid</if> <!--父级ID-->
+		<if test="processitemid!=null and processitemid!=''">,processitemid</if> <!---->
+		<if test="name!=null and name!=''">,name</if> <!--菜单名称-->
+		<if test="logo!=null and logo!=''">,logo</if> <!--权限标识-->
+		<if test="navigateurl!=null and navigateurl!=''">,navigateurl</if> <!--链接网页-->
+		<if test="systype!=null and systype!=''">,systype</if> <!--子系统-->
+		<if test="imageurl!=null and imageurl!=''">,imageurl</if> <!--图片地址-->
+		<if test="disabled!=null and disabled!=''">,disabled</if> <!--是否可见-->
+		<if test="orderid!=null and orderid!=''">,orderid</if> <!--排序-->
+		<if test="type!=null and type!=''">,type</if> <!--菜单类型-->
+		<if test="remark!=null and remark!=''">,remark</if> <!--菜单使用说明-->
+	</sql>
+
+	<sql id="Insert_Parmeter">
+		<if test="cptr!=null and cptr!=''">,#{cptr}</if>	<!--是否含有子集00含有子集01为无-->
+		<if test="parentid!=null and parentid!=''">,#{parentid}</if>	<!--父级ID-->
+		<if test="processitemid!=null and processitemid!=''">,#{processitemid}</if>	<!---->
+		<if test="name!=null and name!=''">,#{name}</if>	<!--菜单名称-->
+		<if test="logo!=null and logo!=''">,#{logo}</if>	<!--权限标识-->
+		<if test="navigateurl!=null and navigateurl!=''">,#{navigateurl}</if>	<!--链接网页-->
+		<if test="systype!=null and systype!=''">,#{systype}</if>	<!--子系统-->
+		<if test="imageurl!=null and imageurl!=''">,#{imageurl}</if>	<!--图片地址-->
+		<if test="disabled!=null and disabled!=''">,#{disabled}</if>	<!--是否可见-->
+		<if test="orderid!=null and orderid!=''">,#{orderid}</if>	<!--排序-->
+		<if test="type!=null and type!=''">,#{type}</if>	<!--菜单类型-->
+		<if test="remark!=null and remark!=''">,#{remark}</if>	<!--菜单使用说明-->
+	</sql>
+
+	<!-- 新增表信息  -->
+	<insert id="Insert_SM_FunctionTree" parameterType="com.ytxd.model.SystemManage.SM_FunctionTree" >
+		INSERT INTO sm_functiontree
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Column" />
+		</trim>
+		VALUES
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Parmeter" />
+		</trim>
+		<selectKey resultType="java.lang.String" keyProperty="id">
+			SELECT LAST_INSERT_ID() AS id FROM DUAL
+		</selectKey>
+	</insert>
+
+	<!-- 修改表  set 参数  -->
+	<sql id="Update_Parmeter">
+		<if test="cptr!=null">,cptr=#{cptr}</if>
+		<if test="parentid!=null">,parentid=#{parentid}</if>
+		<if test="processitemid!=null">,processitemid=#{processitemid}</if>
+		<if test="name!=null">,name=#{name}</if>
+		<if test="logo!=null">,logo=#{logo}</if>
+		<if test="navigateurl!=null">,navigateurl=#{navigateurl}</if>
+		<if test="systype!=null">,systype=#{systype}</if>
+		<if test="imageurl!=null">,imageurl=#{imageurl}</if>
+		<if test="disabled!=null">,disabled=#{disabled}</if>
+		<if test="orderid!=null">,orderid=CASE WHEN #{orderid}='' THEN NULL ELSE #{orderid} END</if>
+		<if test="type!=null">,type=#{type}</if>
+		<if test="remark!=null">,remark=#{remark}</if>
+	</sql>
+
+	<!-- 修改表信息 -->
+	<update id="Update_SM_FunctionTree" parameterType="com.ytxd.model.SystemManage.SM_FunctionTree">
+		UPDATE sm_functiontree
+		<set>
+			<trim prefixOverrides=",">
+			<include refid="Update_Parmeter" />
+			</trim>
+		</set>
+		WHERE id IN (#{id})
+	</update>
+
+	<!-- 删除表信息 -->
+	<delete id="Delete_SM_FunctionTree" parameterType="java.lang.String">
+		DELETE FROM sm_functiontree
+		WHERE id IN <foreach collection="array" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+	</delete>
+	
+	<!-- **扩展********************************************************************** -->
+	<select id="Select_SM_Users_Function" parameterType="com.ytxd.model.SystemManage.SM_FunctionTree" resultType="com.ytxd.model.SystemManage.SM_FunctionTree">
+		select sm_functiontree.id, parentid, logo, cptr, name, navigateurl, imageurl, disabled, orderid, type
+		,case when sm_users_function.UserId is not null then '1' else '0' end checked 
+		,case when haschildren.pid is not null then 1 else 0 end haschildren 
+		from sm_functiontree 
+		LEFT JOIN (select distinct parentid pid from sm_functiontree where disabled='01') haschildren on haschildren.pid=sm_functiontree.id 
+		left join (select distinct userid,functionid from sm_users_function where 1=1 and userid=#{userid}) sm_users_function on sm_functiontree.id=sm_users_function.functionid 
+		where disabled = '01'  
+		<if test="id!=null and id!=''"> AND sm_functiontree.id IN (#{id}) </if>
+		<if test="parentid!=null and parentid!=''"> AND sm_functiontree.parentid in (#{parentid}) </if>
+		<if test="logo!=null and logo!=''"> AND sm_functiontree.logo=#{logo} </if>
+		<if test="systype!=null and systype!=''"> AND CONCAT(',',sm_functiontree.systype,',') like CONCAT('%,',#{systype},',%') </if>
+		<if test="disabled!=null and disabled!=''"> AND sm_functiontree.disabled = #{disabled} </if>
+		<if test="type!=null and type!=''"> AND sm_functiontree.type=#{type} </if>
+		<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> --> 
+		order by sm_functiontree.orderid asc
+	</select>
+	<!-- 删除权限 -->
+	<delete id="Delete_SM_Users_Function" parameterType="com.ytxd.model.SystemManage.SM_FunctionTree">
+		delete from sm_users_function
+		where userid=#{userid} and functionid not IN 
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach>
+	</delete>
+	<!-- 增加权限 -->
+	<delete id="Insert_SM_Users_Function" parameterType="com.ytxd.model.SystemManage.SM_FunctionTree">
+		insert into sm_users_function(userid,functionid) 
+		select ${userid} userid,id functionid 
+		from sm_functiontree 
+		where id IN 
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach> and id not in (select functionid from sm_users_function where userid=#{userid})
+	</delete>
+	<!-- 查询  表信息  -->
+	<select id="Select_Power_FunctionTree" parameterType="java.lang.String" resultType="com.ytxd.model.SystemManage.SM_FunctionTree">
+		select id,parentid,name,logo,navigateurl,systype,ifnull(systype.DescriptionJoin,sm_functiontree.systype) systypename,
+		imageurl,disabled,"type",cptr,remark,processitemid,case when haschildren.pid is not null then 1 else 0 end haschildren
+		from sm_functiontree 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='RN') systype on systype.CodeJoin=sm_functiontree.systype 
+		left join (select distinct parentid pid from sm_functiontree where type!='02' and disabled in ('01','11')) haschildren on haschildren.pid=sm_functiontree.id
+		left join (select distinct functionid from sm_users_function where userid=#{_parameter} or userid in (select roleid from sm_users_role where userid=#{_parameter})
+		union select parentid from sm_functiontree 
+		where id in (select distinct functionid from sm_users_function where userid=#{_parameter} or userid in (select roleid from sm_users_role where userid=#{_parameter}))
+		union select parentid from sm_functiontree where id in (select parentid from sm_functiontree 
+		where id in (select distinct functionid from sm_users_function where userid=#{_parameter} or userid in (select roleid from sm_users_role where userid=#{_parameter})))
+		union select parentid from sm_functiontree where id in (select parentid from sm_functiontree where id in (select parentid from sm_functiontree 
+		where id in (select distinct functionid from sm_users_function where userid=#{_parameter} or userid in (select roleid from sm_users_role where userid=#{_parameter}))))
+		) userfunction ON userfunction.functionid=sm_functiontree.id 
+		where type!='02' and disabled in ('01','11') and userfunction.functionid IS NOT NULL 
+		order by orderid
+	</select>
+	
+	<!-- 获取所有url不为空的菜单  -->
+	<select id="Select_SM_FunctionTreeUrlNotNull" resultType="com.ytxd.model.SystemManage.SM_FunctionTree">
+		SELECT 
+		sm_functiontree.id,
+		sm_functiontree.name,
+		sm_functiontree.navigateurl
+		FROM sm_functiontree 
+		WHERE disabled = '01' and navigateurl is not null and navigateurl!=''
+	</select>
+</mapper>

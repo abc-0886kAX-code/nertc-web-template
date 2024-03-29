@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Video.Video_Mapper">
+	<select id="Select_Video_Info_List" resultType="java.util.Map">
+		select st_stbprp_b.stcd,
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>
+		,st_stbprp_b.videourl,st_stbprp_b.videoformat,st_stbprp_b.deviceid
+		from st_stbprp_b
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+		<where>
+			<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+		</where>
+		order by -st_stbprp_b.orderid desc
+	</select>
+	<update id="Update_Vide_Url">
+		update st_stbprp_b set videourl=#{videourl}
+		<where>
+			<if test="stcd != null and stcd != '' ">
+				and stcd = #{stcd}
+			</if>
+			<if test="deviceid != null and deviceid != '' ">
+				and deviceid = #{deviceid}
+			</if>
+		</where>
+	</update>
+</mapper>

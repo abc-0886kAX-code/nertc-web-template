@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.SystemManage.SM_ExcelItem_Mapper">
+	<!-- 允许缓存 -->
+	<!-- <cache /> -->
+	
+	<!-- 查询表   表 字段  -->
+	<sql id="Select_Column">
+		sm_excelitem.exportname,
+		sm_excelitem.id,
+		sm_excelitem.iftotal,
+		sm_excelitem.sourcecolumnname,
+		sm_excelitem.excelcolumnname,
+		sm_excelitem.rownumber,
+		sm_excelitem.columnnumber,
+		sm_excelitem.visible,ifnull(visible.DescriptionJoin,sm_excelitem.visible) visibleName,
+		sm_excelitem.columnwidth,
+		sm_excelitem.horizontalalignment,ifnull(horizontalalignment.DescriptionJoin,sm_excelitem.horizontalalignment) horizontalalignmentName,
+		sm_excelitem.numberformatlocal 
+	</sql>
+
+	<!-- 查询表   查询条件参数  -->
+	<sql id="Select_Parmeter">
+		<if test="exportname!=null and exportname!=''"> AND sm_excelitem.exportname = #{exportname} </if>
+		<if test="id!=null and id!=''"> AND sm_excelitem.id IN (#{id}) </if>
+		<if test="iftotal!=null and iftotal!=''"> AND sm_excelitem.iftotal like CONCAT('%',#{iftotal},'%') </if>
+		<if test="sourcecolumnname!=null and sourcecolumnname!=''"> AND sm_excelitem.sourcecolumnname like CONCAT('%',#{sourcecolumnname},'%') </if>
+		<if test="excelcolumnname!=null and excelcolumnname!=''"> AND sm_excelitem.excelcolumnname like CONCAT('%',#{excelcolumnname},'%') </if>
+		<if test="startrownumber!=null and startrownumber!=''"> AND sm_excelitem.rownumber &gt;= #{startrownumber} </if>
+		<if test="endrownumber!=null and endrownumber!=''"> AND sm_excelitem.rownumber &lt;= #{endrownumber} </if>
+		<if test="startcolumnnumber!=null and startcolumnnumber!=''"> AND sm_excelitem.columnnumber &gt;= #{startcolumnnumber} </if>
+		<if test="endcolumnnumber!=null and endcolumnnumber!=''"> AND sm_excelitem.columnnumber &lt;= #{endcolumnnumber} </if>
+		<if test="visible!=null and visible!=''"> AND sm_excelitem.visible = #{visible} </if>
+		<if test="columnwidth!=null and columnwidth!=''"> AND sm_excelitem.columnwidth like CONCAT('%',#{columnwidth},'%') </if>
+		<if test="horizontalalignment!=null and horizontalalignment!=''"> AND sm_excelitem.horizontalalignment = #{horizontalalignment} </if>
+		<if test="numberformatlocal!=null and numberformatlocal!=''"> AND sm_excelitem.numberformatlocal like CONCAT('%',#{numberformatlocal},'%') </if>
+		<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> -->
+	</sql>
+
+	<!-- 查询  表信息  -->
+	<select id="Select_SM_ExcelItem" parameterType="com.ytxd.model.SystemManage.SM_ExcelItem" resultType="com.ytxd.model.SystemManage.SM_ExcelItem">
+		SELECT <include refid="Select_Column" />
+		FROM sm_excelitem 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') visible on visible.CodeJoin=sm_excelitem.visible 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FH') horizontalalignment on horizontalalignment.CodeJoin=sm_excelitem.horizontalalignment 
+		WHERE 1 = 1 
+		<include refid="Select_Parmeter" />
+		<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+		LIMIT #{startRow},#{pageSize}
+	</select>
+	<select id="Select_SM_ExcelItem_All" parameterType="com.ytxd.model.SystemManage.SM_ExcelItem" resultType="com.ytxd.model.SystemManage.SM_ExcelItem">
+		SELECT
+			<include refid="Select_Column" />
+		FROM sm_excelitem 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') visible on visible.CodeJoin=sm_excelitem.visible 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FH') horizontalalignment on horizontalalignment.CodeJoin=sm_excelitem.horizontalalignment 
+		WHERE 1 = 1
+			<include refid="Select_Parmeter" />
+			<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+	</select>
+	<!-- 查询表记录数  -->
+	<select id="Select_SM_ExcelItem_Count" parameterType="com.ytxd.model.SystemManage.SM_ExcelItem" resultType="java.lang.Integer">
+		SELECT
+			COUNT(1)
+		FROM sm_excelitem
+		WHERE 1 = 1
+			<include refid="Select_Parmeter" />
+	</select>
+	<!-- 查询表信息  -->
+	<select id="Select_SM_ExcelItem_ById" parameterType="java.lang.String" resultType="com.ytxd.model.SystemManage.SM_ExcelItem">
+		SELECT
+			<include refid="Select_Column" />
+		FROM
+			sm_excelitem 
+			left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') visible on visible.CodeJoin=sm_excelitem.visible 
+			left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FH') horizontalalignment on horizontalalignment.CodeJoin=sm_excelitem.horizontalalignment 
+		WHERE
+			ID = #{_parameter}
+	</select>
+
+	<!-- 新增信息表字段 -->
+	<sql id="Insert_Column">
+		<if test="exportname!=null and exportname!=''">,exportname</if> <!---->
+		<if test="iftotal!=null and iftotal!=''">,iftotal</if> <!--合计-->
+		<if test="sourcecolumnname!=null and sourcecolumnname!=''">,sourcecolumnname</if> <!--数据源列名-->
+		<if test="excelcolumnname!=null and excelcolumnname!=''">,excelcolumnname</if> <!--Excel导出列名-->
+		<if test="rownumber!=null and rownumber!=''">,rownumber</if> <!--行号-->
+		<if test="columnnumber!=null and columnnumber!=''">,columnnumber</if> <!--列号-->
+		<if test="visible!=null and visible!=''">,visible</if> <!--是否可见-->
+		<if test="columnwidth!=null and columnwidth!=''">,columnwidth</if> <!--列宽-->
+		<if test="horizontalalignment!=null and horizontalalignment!=''">,horizontalalignment</if> <!--对齐方式-->
+		<if test="numberformatlocal!=null and numberformatlocal!=''">,numberformatlocal</if> <!--格式-->
+	</sql>
+
+	<sql id="Insert_Parmeter">
+		<if test="exportname!=null and exportname!=''">,#{exportname}</if>	<!---->
+		<if test="iftotal!=null and iftotal!=''">,#{iftotal}</if>	<!--合计-->
+		<if test="sourcecolumnname!=null and sourcecolumnname!=''">,#{sourcecolumnname}</if>	<!--数据源列名-->
+		<if test="excelcolumnname!=null and excelcolumnname!=''">,#{excelcolumnname}</if>	<!--Excel导出列名-->
+		<if test="rownumber!=null and rownumber!=''">,#{rownumber}</if>	<!--行号-->
+		<if test="columnnumber!=null and columnnumber!=''">,#{columnnumber}</if>	<!--列号-->
+		<if test="visible!=null and visible!=''">,#{visible}</if>	<!--是否可见-->
+		<if test="columnwidth!=null and columnwidth!=''">,#{columnwidth}</if>	<!--列宽-->
+		<if test="horizontalalignment!=null and horizontalalignment!=''">,#{horizontalalignment}</if>	<!--对齐方式-->
+		<if test="numberformatlocal!=null and numberformatlocal!=''">,#{numberformatlocal}</if>	<!--格式-->
+	</sql>
+
+	<!-- 新增表信息  -->
+	<insert id="Insert_SM_ExcelItem" parameterType="com.ytxd.model.SystemManage.SM_ExcelItem" >
+		INSERT INTO sm_excelitem
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Column" />
+		</trim>
+		VALUES
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Parmeter" />
+		</trim>
+		<selectKey resultType="java.lang.String" keyProperty="id">
+			SELECT LAST_INSERT_ID() AS id FROM DUAL
+		</selectKey>
+	</insert>
+
+	<!-- 修改表  set 参数  -->
+	<sql id="Update_Parmeter">
+		<if test="exportname!=null">,exportname=#{exportname}</if>
+		<if test="iftotal!=null">,iftotal=#{iftotal}</if>
+		<if test="sourcecolumnname!=null">,sourcecolumnname=#{sourcecolumnname}</if>
+		<if test="excelcolumnname!=null">,excelcolumnname=#{excelcolumnname}</if>
+		<if test="rownumber!=null">,rownumber=CASE WHEN #{rownumber}='' THEN NULL ELSE #{rownumber} END</if>
+		<if test="columnnumber!=null">,columnnumber=CASE WHEN #{columnnumber}='' THEN NULL ELSE #{columnnumber} END</if>
+		<if test="visible!=null">,visible=#{visible}</if>
+		<if test="columnwidth!=null">,columnwidth=#{columnwidth}</if>
+		<if test="horizontalalignment!=null">,horizontalalignment=#{horizontalalignment}</if>
+		<if test="numberformatlocal!=null">,numberformatlocal=#{numberformatlocal}</if>
+	</sql>
+
+	<!-- 修改表信息 -->
+	<update id="Update_SM_ExcelItem" parameterType="com.ytxd.model.SystemManage.SM_ExcelItem">
+		UPDATE sm_excelitem
+		<set>
+			<trim prefixOverrides=",">
+			<include refid="Update_Parmeter" />
+			</trim>
+		</set>
+		WHERE id IN 
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+	        #{item}
+	    </foreach> 
+	</update>
+
+	<!-- 删除表信息 -->
+	<delete id="Delete_SM_ExcelItem" parameterType="java.lang.String">
+		DELETE FROM
+			sm_excelitem
+		WHERE
+			id IN <foreach collection="array" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+	</delete>
+	
+	<!-- 得到ID为空的记录 -->
+	<select id="Select_SM_ExcelItem_IDNULL" resultType="com.ytxd.model.SystemManage.SM_ExcelItem">
+		SELECT <include refid="Select_Column" /> 
+		FROM SM_EXCELITEM 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') visible on visible.CodeJoin=sm_excelitem.visible 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FH') horizontalalignment on horizontalalignment.CodeJoin=sm_excelitem.horizontalalignment 
+		WHERE ID IS NULL 
+		ORDER BY EXPORTNAME,COLUMNNUMBER
+	</select>
+	<update id="Update_SM_ExcelItem_ID" parameterType="com.ytxd.model.SystemManage.SM_ExcelItem">
+		UPDATE SM_EXCELITEM 
+		SET ID=SEQ_SM_EXCELITEM.Nextval 
+		WHERE EXPORTNAME=#{exportname} and SOURCECOLUMNNAME=#{sourcecolumnname} 
+	</update>
+</mapper>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.ScanErcode.ErCodeGroupJoin_Mapper">
+
+    <insert id="insertErCodeGroupJoin">
+        insert into ercode_group_join(is_destroy, is_change, is_sewage, is_drifter, device_status, interest_type, score,
+                                      suggest, user_name, phone, file_path, create_time)
+        values(#{isdestroy},#{ischange},#{issewage},#{isdrifter},#{devicestatus},#{interesttype},#{score},#{suggest},
+               #{username},#{phone},#{filepath},#{createtime})
+    </insert>
+
+</mapper>

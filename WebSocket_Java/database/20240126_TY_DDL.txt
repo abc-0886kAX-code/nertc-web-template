@@ -1,0 +1,1 @@
+alter table st_stbprp_b add representative varchar(255) comment '是否是代表站';

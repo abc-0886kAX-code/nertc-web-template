@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Subhall.Water_Culture.Water_Culture_Mapper">
+
+	<select id="Select_ZskmhList" resultType="java.util.Map">
+		select id,name,type,type01,type02,type03,type04,type05,type06,type07,type08,remark,image,file
+		from zsk_wh
+		<where>
+			<if test="type01 != null and type01 != '' ">
+				and type01 = #{type01}
+			</if>
+			<if test="type02 != null and type02 != '' ">
+				and type02 = #{type02}
+			</if>
+			<if test="type03 != null and type03 != '' ">
+				and type03 = #{type03}
+			</if>
+		</where>
+	</select>
+
+	<select id="Select_Water_Culture" resultType="java.util.Map">
+		select water_culture.id, water_culture.name, water_culture.type, water_culture.info,
+		water_culture.MP4url,water_culture.orderid,
+		water_culture.image,type_join.description typename
+		from water_culture
+		left join (select code,description  from sm_codeitem where codeid = 'WT'
+		)type_join  on type_join.code = water_culture.type
+		<where>
+			<if test="id != null and id != '' ">
+				and water_culture.id = #{id}
+			</if>
+			<if test="name != null and name != '' ">
+				and water_culture.name like concat('%',#{name},'%')
+			</if>
+			<if test="type != null and type != '' ">
+				and water_culture.type  in
+				<foreach collection="type.split(',')" item="type" open="(" separator="," close=")">
+					#{type}
+				</foreach>
+			</if>
+		</where>
+	</select>
+
+	<select id="Select_Water_Day" resultType="java.util.Map">
+		SELECT zw.id,zw.type,zw.name,zw.remark
+		FROM zsk_wh zw
+		WHERE
+			zw.type = #{type}
+	</select>
+
+
+</mapper>

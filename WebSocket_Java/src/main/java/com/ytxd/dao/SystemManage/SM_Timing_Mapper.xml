@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.SystemManage.SM_Timing_Mapper">
+	<!-- 允许缓存 -->
+	<!-- <cache /> -->
+	
+	<!-- 新增信息表字段 -->
+	<sql id="Insert_Column">
+		<if test="jobname!=null and jobname!=''">,jobname</if> <!--任务名称-->
+		<if test="createtime!=null and createtime!=''">,createtime</if> <!--创建时间-->
+		<if test="methodname!=null and methodname!=''">,methodname</if> <!--执行方法名-->
+		<if test="status!=null and status!=''">,status</if> <!--状态-->
+		<if test="fhtime!=null and fhtime!=''">,fhtime</if> <!--时间规则-->
+		<if test="timeexplain!=null and timeexplain!=''">,timeexplain</if> <!--规则说明-->
+		<if test="remark!=null and remark!=''">,remark</if> <!---->
+		<if test="parameter!=null and parameter!=''">,parameter</if> <!---->
+	</sql>
+
+	<sql id="Insert_Parmeter">
+		<if test="jobname!=null and jobname!=''">,#{jobname}</if>	<!---->
+		<if test="createtime!=null and createtime!=''">,STR_TO_DATE(#{createtime},'%Y-%m-%d hh24:mi:ss')</if>	<!---->
+		<if test="methodname!=null and methodname!=''">,#{methodname}</if>	<!---->
+		<if test="status!=null and status!=''">,#{status}</if>	<!---->
+		<if test="fhtime!=null and fhtime!=''">,#{fhtime}</if>	<!---->
+		<if test="timeexplain!=null and timeexplain!=''">,#{timeexplain}</if>	<!---->
+		<if test="remark!=null and remark!=''">,#{remark}</if>	<!---->
+		<if test="parameter!=null and parameter!=''">,#{parameter}</if>
+	</sql>
+
+	<!-- 新增表信息  -->
+	<insert id="Insert_SM_Timing" parameterType="com.ytxd.model.SystemManage.SM_Timing" >
+		INSERT INTO db_timing(id
+			<include refid="Insert_Column" />
+			)
+		VALUES(SEQ_DB_TIMING.Nextval
+			<include refid="Insert_Parmeter" />
+		)
+		<selectKey resultType="java.lang.String" keyProperty="id">
+			SELECT SEQ_DB_TIMING.CURRVAL AS id FROM DUAL
+		</selectKey>
+	</insert>
+	
+	
+		<!-- 查询表   表 字段  -->
+	<sql id="Select_Column">
+		db_timing.id,
+		db_timing.jobname,
+		date_format(db_timing.createtime,'%Y-%m-%d hh24:mi:ss') createtime,
+		db_timing.methodname,
+		db_timing.status,
+		db_timing.fhtime,
+		db_timing.timeexplain,
+		db_timing.remark,
+		db_timing.parameter
+	</sql>
+
+	<!-- 查询表   查询条件参数  -->
+	<sql id="Select_Parmeter">
+		<if test="id!=null and id!=''"> AND db_timing.id = #{id} </if>
+		<if test="methodname!=null and methodname!=''"> AND db_timing.methodname like concat('%', #{methodname} ,'%') </if>
+		<if test="startcreatetime!=null and startcreatetime!=''"> AND
+			STR_TO_DATE(date_format(db_timing.createtime,'%Y-%m-%d'),'%Y-%m-%d') &gt;=
+			STR_TO_DATE(#{startcreatetime},'%Y-%m-%d') </if>
+		<if test="endcreatetime!=null and endcreatetime!=''"> AND
+			STR_TO_DATE(date_format(db_timing.createtime,'%Y-%m-%d'),'%Y-%m-%d') &lt;=
+			STR_TO_DATE(#{endcreatetime},'%Y-%m-%d') </if>
+		<if test="timeexplain!=null and timeexplain!=''"> AND db_timing.timeexplain =#{timeexplain}</if>
+		<if test="remark!=null and remark!=''"> AND db_timing.remark like concat('%', #{remark} ,'%') </if>
+		<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> -->
+	</sql>
+
+	<!-- 查询   -->
+	<select id="Select_SM_Timing" parameterType="com.ytxd.model.SystemManage.SM_Timing" resultType="com.ytxd.model.SystemManage.SM_Timing">
+		SELECT
+		<if test="selectrowcount==null">
+			<include refid="Select_Column" />
+		</if>
+		<if test="selectrowcount!=null">
+			COUNT(1) selectrowcount 
+		</if>
+		FROM db_timing 
+		WHERE 1 = 1 
+		<include refid="Select_Parmeter" />
+		<if test="selectrowcount==null">
+			<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+		</if>
+		<if test="page!=null and rows!=null and selectrowcount==null">
+			LIMIT #{startRow},#{pageSize}
+		</if>
+	</select>
+	
+	<delete id="Delect_SM_Timing" parameterType="java.lang.String">
+		DELETE FROM db_timing
+		WHERE id IN (#{_parameter})
+	</delete>
+	<!-- 修改表  set 参数  -->
+	<sql id="Update_Parmeter">
+		<if test="jobname!=null">,jobname=#{jobname}</if>
+		<if test="createtime!=null">,createtime=STR_TO_DATE(#{createtime},'%Y-%m-%d hh24:mi:ss')</if>
+		<if test="methodname!=null">,methodname=#{methodname}</if>
+		<if test="status!=null">,status=#{status}</if>
+		<if test="fhtime!=null">,fhtime=#{fhtime}</if>
+		<if test="timeexplain!=null">,timeexplain=#{timeexplain}</if>
+		<if test="remark!=null">,remark=#{remark}</if>
+		<if test="parameter!=null">,parameter=#{parameter}</if>
+	</sql>
+
+	<!-- 修改表信息 -->
+	<update id="Update_SM_Timing" parameterType="com.ytxd.model.SystemManage.SM_Timing">
+		UPDATE db_timing
+		SET id = id
+			<include refid="Update_Parmeter" />
+		WHERE id IN 
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+	        #{item}
+	    </foreach> 
+	</update>
+</mapper>

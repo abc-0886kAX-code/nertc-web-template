@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.API.Section.knowledge_Mapper">
+	<resultMap id="KnowledgeList" type="java.util.Map" autoMapping="true">
+		<result column="id" property="id"/>
+		<association column="id"  javaType="java.util.List"  autoMapping="true" property="attribute" select="KnowledgeItemList"/>
+	</resultMap>
+	<select id="GetKnowledgeList" resultMap="KnowledgeList">
+		select * from (select id,title,type,typejoin.description as typename,titleenglish,images,zsk_name.orderid from zsk_name
+		left join (select code,description,shortname from sm_codeitem where codeid='ZK'
+		) typejoin on typejoin.code = zsk_name.type
+		<where>
+			<if test="id != null and id != '' ">
+				and id = #{id}
+			</if>
+			<if test="type != null and type != '' ">
+				and type = #{type}
+			</if>
+			<if test="title != null and title != '' ">
+				and title like concat('%',#{title},'%')
+			</if>
+			<if test="titleenglish != null and titleenglish != '' ">
+				and titleenglish like concat('%',#{titleenglish},'%')
+			</if>
+		</where>
+		    order by zsk_name.orderid
+		) zsk_name
+		<if test="sort != null and sort != '' ">
+			order by ${sort} ${order}
+		</if>
+	</select>
+	<select id="KnowledgeItemList" resultType="java.util.Map">
+		select id,pid,name,content from zsk_name_attribute where  pid = #{pid} order by orderid asc
+	</select>
+	<select id="GetBiologicalList" resultType="java.util.Map">
+		select sm_codeitem.code type,sm_codeitem.description typename,ifnull(typecount,0) typecount,shortname as images
+		from (select code,description,orderid,shortname from sm_codeitem where codeid='ZK' and flag ='01'
+		) sm_codeitem
+		left join (select type,count(id) typecount from zsk_name group by type
+		) zsk_name on zsk_name.type = sm_codeitem.code
+		order by sm_codeitem.orderid
+	</select>
+</mapper>

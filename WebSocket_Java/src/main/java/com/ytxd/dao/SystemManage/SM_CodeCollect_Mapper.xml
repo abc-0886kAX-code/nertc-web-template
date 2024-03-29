@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.SystemManage.SM_CodeCollect_Mapper">
+	<!-- 允许缓存 -->
+	<!-- <cache /> -->
+	
+	<!-- 查询表   表 字段  -->
+	<sql id="Select_Column">
+
+		sm_codecollect.codeid,
+		sm_codecollect.description 
+	</sql>
+
+	<!-- 查询表   查询条件参数  -->
+	<sql id="Select_Parmeter">
+		<if test="codeid!=null and codeid!=''"> AND sm_codecollect.codeid IN (#{codeid}) </if>
+		<if test="description!=null and description!=''"> and (Description like CONCAT('%',#{description},'%') or sm_codecollect.codeid IN (select DISTINCT CodeId from SM_CodeItem where Description like CONCAT('%',#{description},'%'))) </if>
+		<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> -->
+	</sql>
+
+	<!-- 查询  表信息  -->
+	<select id="Select_SM_CodeCollect" parameterType="com.ytxd.model.SystemManage.SM_CodeCollect" resultType="com.ytxd.model.SystemManage.SM_CodeCollect">
+		SELECT 
+		<if test="selectrowcount==null">
+			<include refid="Select_Column" />
+		</if>
+		<if test="selectrowcount!=null">
+			COUNT(1) selectrowcount 
+		</if>
+		FROM sm_codecollect 
+		<where> 1 = 1 <include refid="Select_Parmeter" /> </where>
+		<if test="selectrowcount==null">
+			<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if> 
+		</if>
+		<if test="page!=null and rows!=null and selectrowcount==null">
+			LIMIT #{startRow},#{pageSize}
+		</if>
+	</select>
+    <select id="GetListForTree" resultType="HashMap">
+		select codeId,description from SM_CodeCollect
+		<where> 
+			<if test="text != null and text != ''">
+				and (Description like CONCAT('%',#{text},'%') or CodeId IN (select DISTINCT CodeId from SM_CodeItem where Description like CONCAT('%',#{text},'%')))
+			</if>
+			<if test="tablename != null and codeid != null">
+				<if test="tablename != null">
+					and (CodeId IN (select DISTINCT CodeId from sm_builtitem where LOWER(TableName) IN 
+					<foreach collection="tablename" index="index" item="item" open="(" separator="," close=")">LOWER(#{item})</foreach>
+					and CODEID is not null)
+				</if>
+				<if test="codeid != null">
+					or codeid IN <foreach collection="codeid" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+				</if>
+				)
+			</if>
+			<if test="tablename != null or codeid != null">
+				<if test="tablename != null">
+					and CodeId IN (select DISTINCT CodeId from sm_builtitem where LOWER(TableName) IN 
+					<foreach collection="tablename" index="index" item="item" open="(" separator="," close=")">LOWER(#{item})</foreach>
+					and CODEID is not null)
+				</if>
+				<if test="codeid != null">
+					and codeid IN <foreach collection="codeid" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+				</if>
+			</if>
+			<if test="codeidnotin != null">
+				and codeid NOT IN <foreach collection="codeidnotin" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+			</if>
+		</where>
+		order by codeId
+	</select>
+
+    <!-- 新增信息表字段 -->
+	<sql id="Insert_Column">
+		<if test="description!=null and description!=''">,description</if> <!--描述-->
+	</sql>
+
+	<sql id="Insert_Parmeter">
+		<if test="description!=null and description!=''">,#{description}</if>	<!--描述-->
+	</sql>
+
+	<!-- 新增表信息  -->
+	<insert id="Insert_SM_CodeCollect" parameterType="com.ytxd.model.SystemManage.SM_CodeCollect" >
+		INSERT INTO sm_codecollect(codeid <include refid="Insert_Column" /> )
+		VALUES(#{codeid} <include refid="Insert_Parmeter" /> )
+	</insert>
+
+	<!-- 修改表  set 参数  -->
+	<sql id="Update_Parmeter">
+		<if test="description!=null">,description=#{description}</if>
+	</sql>
+
+	<!-- 修改表信息 -->
+	<update id="Update_SM_CodeCollect" parameterType="com.ytxd.model.SystemManage.SM_CodeCollect">
+		UPDATE sm_codecollect
+		<set> codeid = codeid <include refid="Update_Parmeter" /> </set>
+		WHERE codeid IN 
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+	        #{item}
+	    </foreach>
+	</update>
+
+	<!-- 删除表信息 -->
+	<delete id="Delete_SM_CodeCollect" parameterType="java.lang.String">
+		DELETE FROM sm_codecollect
+		WHERE codeid IN <foreach collection="array" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+	</delete>
+
+
+	<!-- **扩展********************************************************************** -->
+</mapper>

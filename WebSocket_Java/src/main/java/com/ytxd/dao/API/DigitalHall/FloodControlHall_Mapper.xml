@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.API.DigitalHall.FloodControlHall_Mapper">
+	<select id="Select_Prediction_RainList" resultType="java.util.Map">
+		select round(sum(pre),2) rain,'3小时' title from st_weather_r
+		where time >= STR_TO_DATE(#{tm},'%Y-%m-%d %H:%i:%s')
+		and time &lt;= ADDDATE(#{tm},interval 3 hour) and stcd ='预报'
+		union all
+		select round(sum(pre),2) rain,'1天' title from st_weather_r
+		where time >= STR_TO_DATE(#{tm},'%Y-%m-%d %H:%i:%s')
+		and time &lt;= ADDDATE(#{tm},interval 1 day) and stcd ='预报'
+		union all
+		select round(sum(pre),2) rain,'3天' title from st_weather_r
+		where time >= STR_TO_DATE(#{tm},'%Y-%m-%d %H:%i:%s')
+		and time &lt;= ADDDATE(#{tm},interval 3 day) and stcd ='预报'
+		union all
+		select round(sum(pre),2) rain,'7天' title from st_weather_r
+		where time >= STR_TO_DATE(#{tm},'%Y-%m-%d %H:%i:%s')
+		and time &lt;= ADDDATE(#{tm},interval 7 day) and stcd ='预报'
+	</select>
+	<select id="Select_StorageState_List" resultType="java.util.Map">
+		SELECT st_stbprp_b.stcd,
+			   CASE WHEN st_stbprp_b.stcd = '3212000007_01' THEN  '芙蓉溪'
+				   ELSE st_stbprp_b.stnm END    stnm,
+			   st_rsvrfcch_b.ttcp,
+			   st_rsvrfcch_b.fldcp,
+			   st_rsvr_r.TM,
+			   st_stbprp_b.sttp,
+			   ROUND(ifnull(st_rsvr_r.W, 0) / ifnull(st_rsvrfcch_b.ttcp, 1) * 100, 1) AS proportion
+		FROM st_stbprp_b
+		LEFT JOIN st_rsvrfcch_b ON st_stbprp_b.stcd = st_rsvrfcch_b.stcd
+		LEFT JOIN (
+			SELECT stcd,TM,W FROM st_rsvr_r
+				WHERE id IN (SELECT MAX(id) FROM st_rsvr_r GROUP BY STCD)
+		    	and stcd != '3212000007_01'
+		    union all
+			select stcd,tm,w from (
+				select stcd,tm,z,w,row_number() over(partition by stcd order by sub_z asc) rn
+				from (
+					select st_zvarl_b.stcd,st_river_r_view.tm,(rz-st_river_r_view.z) sub_z ,st_zvarl_b.w,st_zvarl_b.rz z from st_zvarl_b
+					left join (
+						select stcd,tm,z from (
+							select stcd,tm,z,row_number() over(partition by stcd order by tm desc) rn
+							from st_river_r_view
+						)st_river_r_view where rn = '1'
+					)st_river_r_view on st_river_r_view.stcd = st_zvarl_b.stcd
+				)st_zvarl_b where sub_z > 0
+			)st_zvarl_b where rn =1 and stcd = '3212000007_01'
+		) st_rsvr_r ON st_rsvr_r.stcd = st_stbprp_b.stcd
+
+		WHERE 1 = 1
+		  AND st_stbprp_b.stcd IN ('3212000007_01', '62914324', '62909904', '62909894', '62909914', '62909018') and st_stbprp_b.flag = '01'
+		ORDER BY - st_stbprp_b.orderid DESC
+	</select>
+</mapper>

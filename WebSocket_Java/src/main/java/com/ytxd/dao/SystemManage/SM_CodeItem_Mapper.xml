@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.SystemManage.SM_CodeItem_Mapper">
+	<!-- 允许缓存 -->
+	<!-- <cache /> -->
+	
+	<!-- 查询表   表 字段  -->
+	<sql id="Select_Column">
+		sm_codeitem.codeid,
+		sm_codeitem.code,
+		sm_codeitem.description,
+		sm_codeitem.shortname,
+		sm_codeitem.flag,
+		sm_codeitem.score,
+		sm_codeitem.orderid,
+		sm_codeitem.pptr,
+		sm_codeitem.cptr,
+		case when haschildren.pid is not null then 1 else 0 end haschildren
+	</sql>
+
+	<!-- 查询表   查询条件参数  -->
+	<sql id="Select_Parmeter">
+		<if test="codeid!=null and codeid!=''"> AND sm_codeitem.codeid IN 
+			<foreach collection="codeidarray" index="index" item="item" open="(" separator="," close=")">
+	        	#{item}
+	        </foreach> 
+        </if>
+		<if test="code!=null and code!=''"> AND sm_codeitem.code IN 
+			<foreach collection="codearray" index="index" item="item" open="(" separator="," close=")">
+	        	#{item}
+	        </foreach> 
+        </if>
+		<if test="description!=null and description!=''"> AND sm_codeitem.description like CONCAT('%',#{description},'%') </if>
+		<if test="shortname!=null and shortname!=''"> AND sm_codeitem.shortname like CONCAT('%',#{shortname},'%') </if>
+		<if test="flag!=null and flag!=''"> AND sm_codeitem.flag = #{flag} </if>
+		<if test="pptr!=null and pptr!=''"> AND sm_codeitem.pptr = #{pptr} </if>
+		<if test="cptr!=null and cptr!=''"> AND sm_codeitem.cptr = #{cptr} </if>
+		<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> -->
+	</sql>
+
+	<!-- 查询  表信息  -->
+	<select id="Select_SM_CodeItem" parameterType="com.ytxd.model.SystemManage.SM_CodeItem" resultType="com.ytxd.model.SystemManage.SM_CodeItem">
+		SELECT
+		<if test="selectrowcount==null">
+			<include refid="Select_Column" />
+		</if>
+		<if test="selectrowcount!=null">
+			COUNT(1) selectrowcount 
+		</if>
+		FROM sm_codeitem 
+		LEFT JOIN (select distinct codeid pcodeid,pptr pid from sm_codeitem where flag='1' <if test="codeid!=null and codeid!=''"> AND codeid IN
+			<foreach collection="codeidarray" index="index" item="item" open="(" separator="," close=")">
+	        	#{item}
+	        </foreach> </if>) haschildren on haschildren.pcodeid=sm_codeitem.codeid and haschildren.pid=sm_codeitem.code  
+		<where> 1 = 1 <include refid="Select_Parmeter" /> </where>
+		<if test="selectrowcount==null">
+			<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if> 
+		</if>
+		<if test="page!=null and rows!=null and selectrowcount==null">
+			LIMIT #{startRow},#{pageSize}
+		</if>
+	</select>
+
+	<!-- 新增信息表字段 -->
+	<sql id="Insert_Column">
+		<if test="codeid!=null and codeid!=''">,codeid</if> <!--参数ID-->
+		<if test="description!=null and description!=''">,description</if> <!--代码描述-->
+		<if test="shortname!=null and shortname!=''">,shortname</if> <!--备注-->
+		<if test="flag!=null and flag!=''">,flag</if> <!--是否可见-->
+		<if test="score!=null and score!=''">,score</if> <!--分数-->
+		<if test="orderid!=null and orderid!=''">,orderid</if> <!--排序-->
+		<if test="pptr!=null and pptr!=''">,pptr</if> <!--父级CodeId-->
+		<if test="cptr!=null and cptr!=''">,cptr</if> <!--是否含有子集-->
+	</sql>
+
+	<sql id="Insert_Parmeter">
+		<if test="codeid!=null and codeid!=''">,#{codeid}</if>	<!--参数ID-->
+		<if test="description!=null and description!=''">,#{description}</if>	<!--代码描述-->
+		<if test="shortname!=null and shortname!=''">,#{shortname}</if>	<!--备注-->
+		<if test="flag!=null and flag!=''">,#{flag}</if>	<!--是否可见-->
+		<if test="score!=null and score!=''">,CASE WHEN #{score}='' THEN NULL ELSE #{score} END</if>	<!--分数-->
+		<if test="orderid!=null and orderid!=''">,CASE WHEN #{orderid}='' THEN NULL ELSE #{orderid} END</if>	<!--排序-->
+		<if test="pptr!=null and pptr!=''">,#{pptr}</if>	<!--父级CodeId-->
+		<if test="cptr!=null and cptr!=''">,#{cptr}</if>	<!--是否含有子集-->
+	</sql>
+
+	<!-- 新增表信息  -->
+	<insert id="Insert_SM_CodeItem" parameterType="com.ytxd.model.SystemManage.SM_CodeItem" >
+		INSERT INTO sm_codeitem(code <include refid="Insert_Column" /> )
+		VALUES(#{code} <include refid="Insert_Parmeter" /> )
+	</insert>
+
+	<!-- 修改表  set 参数  -->
+	<sql id="Update_Parmeter">
+		<if test="codeid!=null">,codeid=#{codeid}</if>
+		<if test="description!=null">,description=#{description}</if>
+		<if test="shortname!=null">,shortname=#{shortname}</if>
+		<if test="flag!=null">,flag=#{flag}</if>
+		<if test="score!=null">,score=CASE WHEN #{score}='' THEN NULL ELSE #{score} END</if>
+		<if test="orderid!=null">,orderid=CASE WHEN #{orderid}='' THEN NULL ELSE #{orderid} END</if>
+		<if test="pptr!=null">,pptr=#{pptr}</if>
+		<if test="cptr!=null">,cptr=#{cptr}</if>
+	</sql>
+
+	<!-- 修改表信息 -->
+	<update id="Update_SM_CodeItem" parameterType="com.ytxd.model.SystemManage.SM_CodeItem">
+		UPDATE sm_codeitem
+		<set> code = code <include refid="Update_Parmeter" /> </set>
+		WHERE codeid=#{codeid} AND code IN 
+			<foreach collection="codearray" index="index" item="item" open="(" separator="," close=")">
+	        	#{item}
+	        </foreach> 
+	</update>
+
+	<!-- 删除表信息 -->
+	<delete id="Delete_SM_CodeItem" parameterType="com.ytxd.model.SystemManage.SM_CodeItem">
+		DELETE FROM sm_codeitem 
+		WHERE codeid=#{codeid} 
+		<if test="code!=null and code!=''"> AND code IN 
+			<foreach collection="codearray" index="index" item="item" open="(" separator="," close=")">
+	        	#{item}
+	        </foreach> 
+        </if>
+	</delete>
+
+
+	<!-- **扩展********************************************************************** -->
+	<select id="GetCode" parameterType="com.ytxd.model.SystemManage.SM_CodeItem" resultType="java.lang.String">
+	select CONCAT(replace(#{pptr},#{codeid},''),substr(CONCAT('00',''+(ifnull(max(substr(Code,-2)),0)+1)),-2)) Code
+	from SM_CodeItem 
+	where CodeId=#{codeid} and Pptr=#{pptr} 
+	</select>
+	
+	<!-- 查询  表信息  -->
+	<select id="SelectCodeItem" parameterType="com.ytxd.model.SystemManage.SM_CodeItem" resultType="java.util.LinkedHashMap">
+		SELECT code, description, pptr 
+		FROM sm_codeitem 
+		WHERE codeid=#{codeid} and flag=1 
+		ORDER BY orderid asc
+	</select>
+	<select id="getCodeItemByCodeIds" resultType="java.util.HashMap">
+		select * FROM sm_codeitem
+		<if test="codeIds != null and codeIds.length > 0">
+			WHERE codeId IN
+			<foreach collection="codeIds" index="index" item="item" open="(" separator="," close=")">
+				#{item}
+			</foreach>
+		</if>
+	</select>
+</mapper>

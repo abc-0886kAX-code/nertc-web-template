@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Subhall.Water_Environment_Mapper">
+<!--	and st_stbprp_b.stcd != 'K68220015-03'-->
+	<select id="Select_Water_Environment_Quality_List" resultType="java.util.HashMap">
+		select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+		st_wq_r.tm,st_wq_r.clarity clarity,st_wq_r.codcr codcr,
+		st_wq_r.cod_mn cod_mn,st_wq_r.cond cond,st_wq_r.dox dox,
+		st_wq_r.nh3n nh3n,st_wq_r.ph ph,st_wq_r.tn tn,
+		st_wq_r.tp tp,st_wq_r.wtmp wtmp,st_wq_r.chla chla,
+		st_wq_r.water_quality,water_quality_join.description water_qualityname,st_stbprp_introduce.introduce,st_stbprp_introduce.filepath
+		from st_stbprp_b
+		left join (select stcd,introduce,filepath from st_stbprp_introduce) st_stbprp_introduce on st_stbprp_introduce.stcd = st_stbprp_b.stcd
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+		left join (
+		select stcd,tm,water_quality,clarity,codcr,cod_mn,cond,dox,nh3n,ph,tn,tp,wtmp,chla from (
+		select stcd,tm,water_quality,clarity,codcr,cod_mn,cond,dox,nh3n,ph,tn,tp,wtmp,chla, row_number() over(partition by stcd order by tm desc) rn from st_wq_r
+		<where>
+			<if test="starttime != null and starttime != '' ">
+				and st_wq_r.tm >= str_to_date(#{starttime},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="endtime != null and endtime != '' ">
+				and st_wq_r.tm &lt;= str_to_date(#{endtime},'%Y-%m-%d %H:%i:%s')
+			</if>
+		    <if test="type != null and type != '' ">
+				and st_wq_r.${type} is not null
+			</if>
+		</where>
+		)st_wq_r where rn = 1
+		union all
+		select stcd,tm,water_quality,clarity,codcr,cod_mn,cond,dox,nh3n,ph,tn,tp,wtmp,chla
+			from (select stcd,tm,'3' water_quality,'' clarity,cod codcr,'' cod_mn,'' cond,'' dox,'' nh3n,'' ph,'' tn,'' tp,
+			'' wtmp,'' chla,row_number() over(partition by stcd order by tm desc) rn from st_cod_r
+		<where>
+			<if test="starttime != null and starttime != '' ">
+				and st_cod_r.tm >= str_to_date(#{starttime},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="endtime != null and endtime != '' ">
+				and st_cod_r.tm &lt;= str_to_date(#{endtime},'%Y-%m-%d %H:%i:%s')
+			</if>
+		</where> ) st_cod_r where rn = 1
+		) st_wq_r on st_wq_r.stcd = st_stbprp_b.stcd
+		left join(select code,description from sm_codeitem where codeid ='WA'
+		) water_quality_join on water_quality_join.code = st_wq_r.water_quality
+		<where>
+
+            <!--	and st_wq_r.water_quality in ('1','2','3')-->
+        and st_stbprp_b.STTP  = '03' and st_stbprp_b.stcd not in ('0012342E16')
+			<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+		</where>
+		order by -st_stbprp_b.orderid desc
+	</select>
+	<select id="Select_CodeItem_List" resultType="java.util.HashMap">
+		select code,description,codeid,pptr,shortname,orderid,flag from sm_codeitem where codeid='AF' order by orderid asc
+	</select>
+	<select id="Select_Site_Introduce" resultType="java.util.Map">
+		select stcd,introduce,filepath,submittime from st_stbprp_introduce
+		<where>
+			<if test="stcd != null and stcd != '' ">
+				and stcd in
+				<foreach collection="stcd.split(',')" item="stcd" open="(" separator="," close=")">
+					#{stcd}
+				</foreach>
+			</if>
+		</where>
+	</select>
+	<select id="Select_Cloud_Chart" resultType="java.util.Map">
+		select id,tm,ifnull(url_c,url) url from st_cloud_chart
+		<where>
+			<if test="tm != null and tm != '' ">
+				and tm &lt;= str_to_date(#{tm},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="hours != null and hours != '' ">
+				and tm >= adddate(#{tm},interval -#{hours} hour)
+			</if>
+		</where>
+	</select>
+	<select id="Select_Quality_Image_List" resultType="java.util.Map">
+		select
+			st_wq_image.id,sm_codeitem.name title,st_wq_image.filepath src
+		from
+		( select id,indexid,filepath,tm from (
+			select id,indexid,filepath,tm,ROW_NUMBER() over (partition by indexid order by tm desc) rn from st_wq_image
+			) st_wq_image where rn = 1
+		) st_wq_image
+		inner JOIN (select code,Description name from sm_codeitem where codeid='AF'
+		) sm_codeitem on sm_codeitem.code = st_wq_image.indexid
+	</select>
+	<select id="Select_Radar_Central" resultType="java.util.Map">
+		select id,tm,ifnull(url_c,url) url from st_radar_central
+		<where>
+			<if test="tm != null and tm != '' ">
+				and tm &lt;= str_to_date(#{tm},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="hours != null and hours != '' ">
+				and tm >= adddate(#{tm},interval -#{hours} hour)
+			</if>
+		</where>
+	</select>
+</mapper>

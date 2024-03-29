@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Happy_River_Lake.HP_Indicator_Library_Mapper">
+	<select id="Select_HP_Indicator_Library_List" resultType="java.util.Map">
+		select indid, indname, parentid, indtype, indrank, formuladesc, weight, formula calculation_formula, orderid, inrremake, updated_time submittime,
+			indtype_join.description indtypename,indrank_join.description indrankname
+		from HP_Indicator_Library
+		left join (select code,description from sm_codeitem where codeid ='ZT'
+		) indtype_join on indtype_join.code = HP_Indicator_Library.indtype
+				 left join (select code,description from sm_codeitem where codeid ='ZH'
+		) indrank_join on indrank_join.code = HP_Indicator_Library.indrank
+		<where>
+			<if test="indid != null and indid != '' ">
+				and HP_Indicator_Library.indid in
+				<foreach collection="indid.split(',')" item="indid" open="(" separator="," close=")">
+					#{indid}
+				</foreach>
+			</if>
+			<if test="parentid != null and parentid != '' ">
+				and HP_Indicator_Library.parentid in
+				<foreach collection="parentid.split(',')" item="parentid" open="(" separator="," close=")">
+					#{parentid}
+				</foreach>
+			</if>
+			<if test="indtype != null and indtype != '' ">
+				and HP_Indicator_Library.indtype = #{indtype}
+			</if>
+			<if test="indname != null and indname != '' ">
+				and HP_Indicator_Library.indname like concat('%',#{indname},'%')
+			</if>
+		</where>
+	</select>
+	<sql id="Insert_Columns">
+		<if test="indname != null and indname != '' ">
+			,indname
+		</if>
+		<if test="parentid != null and parentid != '' ">
+			,parentid
+		</if>
+		<if test="indtype != null and indtype != '' ">
+			,indtype
+		</if>
+		<if test="indrank != null and indrank != '' ">
+			,indrank
+		</if>
+		<if test="formuladesc != null and formuladesc != '' ">
+			,formuladesc
+		</if>
+		<if test="weight != null and weight != '' ">
+			,weight
+		</if>
+		<if test="calculation_formula != null and calculation_formula != '' ">
+			,formula
+		</if>
+		<if test="orderid != null and orderid != '' ">
+			,orderid
+		</if>
+		<if test="inrremake != null and inrremake != '' ">
+			,inrremake
+		</if>
+		<if test="submittime != null and submittime != '' ">
+			,updated_time
+		</if>
+	</sql>
+	<sql id="Insert_Params">
+		<if test="indname != null and indname != '' ">
+			,#{indname}
+		</if>
+		<if test="parentid != null and parentid != '' ">
+			,#{parentid}
+		</if>
+		<if test="indtype != null and indtype != '' ">
+			,#{indtype}
+		</if>
+		<if test="indrank != null and indrank != '' ">
+			,#{indrank}
+		</if>
+		<if test="formuladesc != null and formuladesc != '' ">
+			,#{formuladesc}
+		</if>
+		<if test="weight != null and weight != '' ">
+			,#{weight}
+		</if>
+		<if test="calculation_formula != null and calculation_formula != '' ">
+			,#{calculation_formula}
+		</if>
+		<if test="orderid != null and orderid != '' ">
+			,#{orderid}
+		</if>
+		<if test="inrremake != null and inrremake != '' ">
+			,#{inrremake}
+		</if>
+		<if test="submittime != null and submittime != '' ">
+			,#{submittime}
+		</if>
+	</sql>
+	<insert id="Insert_HP_Indicator_Library">
+		insert into HP_Indicator_Library(indid<include refid="Insert_Columns"/>) values(#{indid}<include refid="Insert_Params"/>)
+	</insert>
+	<sql id="Update_Params">
+		<if test="indname != null ">
+			,indname = #{indname}
+		</if>
+		<if test="parentid != null">
+			,parentid = #{parentid}
+		</if>
+		<if test="indtype != null">
+			,indtype = #{indtype}
+		</if>
+		<if test="indrank != null">
+			,indrank = #{indrank}
+		</if>
+		<if test="formuladesc != null">
+			,formuladesc = #{formuladesc}
+		</if>
+		<if test="weight != null">
+			,weight = #{weight}
+		</if>
+		<if test="calculation_formula != null">
+			,formula = #{calculation_formula}
+		</if>
+		<if test="orderid != null">
+			,orderid = #{orderid}
+		</if>
+		<if test="inrremake != null ">
+			,inrremake = #{inrremake}
+		</if>
+	</sql>
+	<update id="Update_HP_Indicator_Library">
+		update HP_Indicator_Library set indid = indid <include refid="Update_Params"/>
+		where indid in
+		<foreach collection="indid.split(',')" item="indid" open="(" separator="," close=")">
+			#{indid}
+		</foreach>
+	</update>
+	<delete id="Delete_HP_Indicator_Library">
+		delete from HP_Indicator_Library where indid in
+		<foreach collection="indid.split(',')" item="indid" open="(" separator="," close=")">
+			#{indid}
+		</foreach>
+	</delete>
+
+	<select id="Select_Children_HP_Indicator_List" resultType="java.util.Map">
+		select indid from HP_Indicator_Library where parentid in
+		<foreach collection="parentid.split(',')" item="parentid" open="(" separator="," close=")">
+			#{parentid}
+		</foreach>
+	</select>
+</mapper>

@@ -1,0 +1,559 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Water_Common.RealData.Water_Situation_Mapper">
+    <!-- 取最新的水情数据 取最新的一条-->
+    <select id="Select_Water_Level_List" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        FORMAT(st_river_r_view.z,2) z,st_river_r_view.tm,st_river_r_view.eigen,eigenJOin.description eigenname,st_river_r_view.q,
+        st_stbprp_introduce.introduce,st_stbprp_introduce.filepath
+        from st_stbprp_b
+        left join (select stcd,introduce,filepath from st_stbprp_introduce) st_stbprp_introduce on st_stbprp_introduce.stcd = st_stbprp_b.stcd
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        left join (
+        select stcd,z,tm,q,fun_wl_eigenvalue(stcd,z) eigen from (select *, row_number() over(partition by stcd order by tm desc) rn from st_river_r_view
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_river_r_view.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_river_r_view.tm &lt;= #{endtime}
+            </if>
+        </where>
+        ) st_river_r_view where rn = '1'
+        ) st_river_r_view on st_river_r_view.stcd = st_stbprp_b.stcd
+        left join (select code,description from sm_codeitem where codeid = 'AJ' ) eigenJOin on eigenJOin.code = st_river_r_view.eigen
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by  st_river_r_view.tm DESC , st_river_r_view.z desc , st_stbprp_b.orderid desc
+    </select>
+    <!-- 取实时水情数据 -->
+    <select id="Select_Real_Water_Level_List" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        st_river_r_view.z z,st_river_r_view.tm
+        from st_stbprp_b
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        left join (
+        select stcd,z,tm from (select stcd,z,tm from st_river_r_view
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_river_r_view.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_river_r_view.tm &lt;= #{endtime}
+            </if>
+        </where>
+        ) st_river_r_view
+        union all
+        select stcd,z,tm from (select stcd,z,tm from st_rsvr_r
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_rsvr_r.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_rsvr_r.tm &lt;= #{endtime}
+            </if>
+        </where>
+        ) st_rsvr_r
+        ) st_river_r_view on st_river_r_view.stcd = st_stbprp_b.stcd
+        <where>
+            st_river_r_view.tm is not null
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by -st_stbprp_b.orderid desc
+    </select>
+    <!-- 取实时水情数据 按小时展示 -->
+    <select id="Select_Real_Water_Level_List_Hour" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        st_river_r_view.z z, st_river_r_view.q q , timehours.tm,round(st_pptn_r.p,2) p,st_stbprp_b.minz,st_stbprp_b.maxz
+        from (select date_format(adddate(str_to_date(#{starttime},'%Y-%m-%d %H'),interval num hour),'%Y-%m-%d %H') tm from timehours
+            where num &lt;= timestampdiff(hour,#{starttime},#{endtime})
+        ) timehours
+        left join st_stbprp_b on 1=1
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        left join (
+        select stcd,z, q , tm from (select stcd,z , q ,date_format(tm,'%Y-%m-%d %H') tm,
+          row_number() over(partition by stcd,date_format(tm,'%Y-%m-%d %H') order by tm desc) rn from st_river_r_view
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_river_r_view.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_river_r_view.tm &lt;= #{endtime}
+            </if>
+        </where>
+        ) st_river_r_view where rn = 1
+        union all
+        select stcd,z  , 0 as q,tm from (select stcd,z ,date_format(tm,'%Y-%m-%d %H') tm,
+          row_number() over(partition by stcd,date_format(tm,'%Y-%m-%d %H') order by tm desc) rn from st_rsvr_r
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_rsvr_r.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_rsvr_r.tm &lt;= #{endtime}
+            </if>
+        </where>
+        ) st_rsvr_r where rn = 1
+        ) st_river_r_view on st_river_r_view.stcd = st_stbprp_b.stcd and timehours.tm = st_river_r_view.tm
+        left join (
+            select stcd,date_format(tm,'%Y-%m-%d %H') tm,sum(p) p from st_pptn_r
+            where stcd = (select TARGET_STCD from st_site_relation where soure_stcd = #{stcd})
+            <if test="starttime != null and starttime != '' ">
+                and st_pptn_r.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_pptn_r.tm &lt;= #{endtime}
+            </if>
+            group by stcd,date_format(tm,'%Y-%m-%d %H')
+        ) st_pptn_r on st_pptn_r.stcd = st_stbprp_b.stcd and timehours.tm = st_pptn_r.tm
+        <where>
+            st_river_r_view.tm is not null
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by -st_stbprp_b.orderid desc,str_to_date(timehours.tm,'%Y-%m-%d %H:%i:%s') asc
+    </select>
+    <!-- 取实时水情数据 按天展示 -->
+    <select id="Select_Real_Water_Level_List_Day" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        st_river_r_view.z z,st_river_r_view.tm
+        from st_stbprp_b
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        left join (
+        select stcd,z,tm from (select stcd,z,date_format(tm,'%Y-%m-%d') tm,
+          row_number() over(partition by stcd,date_format(tm,'%Y-%m-%d') order by tm desc) rn from st_river_r_view
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_river_r_view.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_river_r_view.tm &lt;= #{endtime}
+            </if>
+        </where>
+        ) st_river_r_view where rn = 1
+        union all
+        select stcd,z,tm from (select stcd,z,date_format(tm,'%Y-%m-%d') tm,
+        row_number() over(partition by stcd,date_format(tm,'%Y-%m-%d') order by tm desc) rn from st_rsvr_r
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_rsvr_r.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_rsvr_r.tm &lt;= #{endtime}
+            </if>
+        </where>
+        ) st_rsvr_r where rn = 1
+        ) st_river_r_view on st_river_r_view.stcd = st_stbprp_b.stcd
+        <where>
+            st_river_r_view.tm is not null
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by -st_stbprp_b.orderid desc
+    </select>
+    <resultMap id="water_Level_Info" type="java.util.Map" autoMapping="true">
+        <result column="stcd" property="stcd"/>
+        <association column="{stcd=stcd,tm=tm,days=days}" property="history" javaType="java.util.LinkedList" autoMapping="true"
+                     select="Select_History_Water_Level_Info_List"/>
+        <association column="{stcd=stcd,tm=tm,days=days}" property="prediction" javaType="java.util.LinkedList" autoMapping="true"
+                     select="Select_Prediction_Water_Level_Info_List"/>
+    </resultMap>
+    <select id="Select_Water_Level_Info_List" resultMap="water_Level_Info">
+        select stcd,stnm,lgtd,lttd,#{tm} tm,#{days} days from st_stbprp_b
+        <where>
+            <if test="stcd != null and stcd != '' ">
+                and stcd in
+                <foreach collection="stcd.split(',')" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="sttp != null and sttp != '' ">
+                and sttp in
+                <foreach collection="sttp.split(',')" item="stp" open="(" separator="," close=")">
+                    #{stp}
+                </foreach>
+            </if>
+        </where> limit 1
+    </select>
+    <select id="Select_History_Water_Level_Info_List" resultType="java.util.Map">
+        select allhour.tm,st_river_r_view.z z,round(st_pptn_r.p,2) p from (
+        select DATE_FORMAT(adddate(#{tm},interval -num hour),'%Y-%m-%d %H:00:00') tm,num from timehours
+            where num &lt;= timestampdiff(hour,#{tm},adddate(#{tm},interval #{days} day))
+        ) allhour
+        LEFT JOIN (
+        select * from (
+            select stcd,DATE_FORMAT(tm,'%Y-%m-%d %H:00:00') tm,z,row_number() over(partition  by stcd,DATE_FORMAT(tm,'%Y-%m-%d %H:00:00') order by tm desc) rn
+            from st_river_r_view WHERE stcd = #{stcd}
+        ) st_river_r_view where rn = 1
+        ) st_river_r_view on st_river_r_view.tm = allhour.tm
+        LEFT JOIN (
+        select stcd,DATE_FORMAT(tm,'%Y-%m-%d %H:00:00') tm,sum(p) p
+            from st_pptn_r WHERE stcd = #{stcd} group by stcd,DATE_FORMAT(tm,'%Y-%m-%d %H:00:00')
+        ) st_pptn_r on st_pptn_r.tm = allhour.tm
+    </select>
+
+    <select id="Select_Prediction_Water_Level_Info_List" resultType="java.util.Map">
+        select timehours.tm,round(pre,2) p,st_river_r_view.z z from (select date_format(adddate(#{tm},interval num hour),'%Y-%m-%d %H:00:00') tm
+            from timehours where num &lt;= timestampdiff(hour,#{tm},adddate(#{tm},interval #{days} day))
+        ) timehours
+        left join (
+            select time,pre from st_weather_r where exists (select weather_stcd from st_weather_relation
+            where stbprp_stcd = #{stcd} and st_weather_relation.weather_stcd = st_weather_r.stcd)
+        ) st_weather_r on st_weather_r.time = timehours.tm
+        left join (
+            select z from (
+                 select stcd,DATE_FORMAT(tm,'%Y-%m-%d %H:00:00') tm,z,row_number() over(partition  by stcd order by tm desc) rn
+                            from st_river_r_view WHERE stcd = #{stcd}
+            ) st_river_r_view where rn = 1
+        )st_river_r_view on 1=1
+    </select>
+
+    <select id = "Select_ST_Rsvr_R_List_ByHour" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        st_rsvr_r.tm,st_rsvr_r.w,st_rsvr_r.z,st_rsvrfcch_b.damel,st_rsvrfcch_b.ckflz,st_rsvrfcch_b.dsflz,st_rsvrfcch_b.normz,
+        st_rsvrfcch_b.ddz,st_rsvrfcch_b.actz, st_rsvrfcch_b.ttcp,st_rsvrfcch_b.fldcp,st_rsvrfcch_b.actcp,st_rsvrfcch_b.ddcp,
+        st_rsvrfcch_b.laz,st_rsvrfcch_b.sfq,st_rsvrfcch_b.xxsw,st_rsvrfcch_b.rbel,st_rsvrfcch_b.leel,st_rsvrfcch_b.ydgl
+        from (
+            select stcd ,tm ,w,z from (select stcd,STR_TO_DATE(tm,'%Y-%m-%d %H') tm,w,z,row_number() over(partition by stcd,STR_TO_DATE(tm,'%Y-%m-%d %H') order by tm desc ) rn
+            from st_rsvr_r) st_rsvr_r where rn ='1'
+            <if test="starttime != null and starttime != '' ">
+                and tm >= str_to_date(#{starttime},'%Y-%m-%d %H:%i:%s')
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and tm &lt; str_to_date(#{endtime},'%Y-%m-%d %H:%i:%s')
+            </if>
+            <if test="tm != null and tm != '' ">
+                and tm >= adddate(str_to_date(#{tm},'%Y-%m-%d'),interval 0 hour)
+                and tm &lt; adddate(str_to_date(#{tm},'%Y-%m-%d'),interval  24 hour)
+            </if>
+        ) st_rsvr_r
+        left join st_stbprp_b on st_stbprp_b.stcd = st_rsvr_r.stcd
+        left join st_rsvrfcch_b on st_rsvrfcch_b.stcd = st_rsvr_r.stcd
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by st_rsvr_r.tm asc
+    </select>
+
+    <select id = "Select_ST_Rsvr_RLastData" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        st_rsvr_r.tm,st_rsvr_r.w,st_rsvr_r.z,st_rsvrfcch_b.damel,st_rsvrfcch_b.ckflz,st_rsvrfcch_b.dsflz,st_rsvrfcch_b.normz,
+        st_rsvrfcch_b.ddz,st_rsvrfcch_b.actz, st_rsvrfcch_b.ttcp,st_rsvrfcch_b.fldcp,st_rsvrfcch_b.actcp,st_rsvrfcch_b.ddcp,
+        st_rsvrfcch_b.laz,st_rsvrfcch_b.sfq,st_rsvrfcch_b.xxsw,st_rsvrfcch_b.rbel,st_rsvrfcch_b.leel,st_rsvrfcch_b.ydgl
+        from (
+        select stcd ,tm ,w,z from (select stcd,STR_TO_DATE(tm,'%Y-%m-%d %H') tm,w,z,row_number() over(partition by stcd order by tm desc ) rn
+        from st_rsvr_r
+            <where>
+                <if test="starttime != null and starttime != '' ">
+                    and tm >= str_to_date(#{starttime},'%Y-%m-%d %H:%i:%s')
+                </if>
+                <if test="endtime != null and endtime != '' ">
+                    and tm &lt; str_to_date(#{endtime},'%Y-%m-%d %H:%i:%s')
+                </if>
+                <if test="tm != null and tm != '' ">
+                    and tm >= adddate(str_to_date(#{tm},'%Y-%m-%d'),interval 0 hour)
+                    and tm &lt; adddate(str_to_date(#{tm},'%Y-%m-%d'),interval  24 hour)
+                </if>
+            </where>
+            ) st_rsvr_r where rn ='1'
+        ) st_rsvr_r
+        left join st_stbprp_b on st_stbprp_b.stcd = st_rsvr_r.stcd
+        left join st_rsvrfcch_b on st_rsvrfcch_b.stcd = st_rsvr_r.stcd
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by st_rsvr_r.tm asc
+    </select>
+    <!-- 取实时水情数据 按小时展示 -->
+    <select id="Select_TQ_Real_Water_Level_List_Hour" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        st_river_r_view.z z,timehours.tm,st_stbprp_b.minz,st_stbprp_b.maxz,st_river_r_tq_view.z tqz
+        from (select date_format(adddate(str_to_date(#{starttime},'%Y-%m-%d %H'),interval num hour),'%m-%d %H') tm from timehours
+        where num &lt;= timestampdiff(hour,#{starttime},#{endtime})
+        ) timehours
+        left join st_stbprp_b on 1=1
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        left join (
+        select stcd,z,tm from (select stcd,z,date_format(tm,'%m-%d %H') tm,
+        row_number() over(partition by stcd,date_format(tm,'%m-%d %H') order by tm desc) rn from st_river_r_view
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_river_r_view.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_river_r_view.tm &lt;= #{endtime}
+            </if>
+        </where>
+        ) st_river_r_view where rn = 1
+        ) st_river_r_view on st_river_r_view.stcd = st_stbprp_b.stcd and timehours.tm = st_river_r_view.tm
+        left join (
+        select stcd,z,tm from (select stcd,z,date_format(tm,'%m-%d %H') tm,
+        row_number() over(partition by stcd,date_format(tm,'%m-%d %H') order by tm desc) rn from st_river_r_view
+        <where>
+            <if test="tqstarttime != null and tqstarttime != '' ">
+                and st_river_r_view.tm >= #{tqstarttime}
+            </if>
+            <if test="tqendtime != null and tqendtime != '' ">
+                and st_river_r_view.tm &lt;= #{tqendtime}
+            </if>
+        </where>
+        ) st_river_r_view where rn = 1
+        ) st_river_r_tq_view on st_river_r_tq_view.stcd = st_stbprp_b.stcd and timehours.tm = st_river_r_tq_view.tm
+        <where>
+            <if test="stcd != null and stcd != ''">
+                and st_stbprp_b.stcd = #{stcd}
+            </if>
+        </where>
+        order by -st_stbprp_b.orderid desc,str_to_date(timehours.tm,'%m-%d %H:%i:%s') asc
+    </select>
+
+    <select id="selectExceedLevee" resultType="java.util.Map">
+        SELECT  *
+        FROM (
+                 SELECT st_stbprp_b.*,
+                        st_rvfcch_b.LDKEL, st_rvfcch_b.RDKEL , st_rvfcch_b.WRZ , st_rvfcch_b.WRQ , st_rvfcch_b.GRZ , st_rvfcch_b.GRQ , st_rvfcch_b.OBHTZ,
+                        DATAVAL.Z
+                 FROM (SELECT * FROM st_stbprp_b WHERE state = '0' AND ( STTP = 'ZZ' OR STTP = 'ZQ' )) AS st_stbprp_b
+                          LEFT JOIN st_rvfcch_b ON st_rvfcch_b.STCD = st_stbprp_b.STCD
+                          INNER JOIN (
+                     SELECT a.STCD as idd, a.Z
+                     FROM st_river_r a
+                              INNER JOIN (
+                         SELECT STCD, MAX(TM) as MaxTM
+                         FROM st_river_r
+                         GROUP BY STCD
+                     ) b ON a.STCD = b.STCD AND a.TM = b.MaxTM
+                 ) DATAVAL ON st_stbprp_b.STCD = DATAVAL.idd
+                 WHERE DATAVAL.Z > (CASE WHEN st_rvfcch_b.LDKEL > st_rvfcch_b.RDKEL THEN st_rvfcch_b.LDKEL WHEN st_rvfcch_b.RDKEL IS NULL THEN st_rvfcch_b.LDKEL ELSE st_rvfcch_b.RDKEL END)
+             ) as ABC
+             LEFT JOIN (SELECT
+                                curr.STCD,
+                                curr.Z AS CurrentWaterLevel,
+                                prev.Z AS PreviousWaterLevel,
+                                CASE
+                                    WHEN curr.Z > prev.Z THEN '上升'
+                                    WHEN curr.Z &lt; prev.Z THEN '下降'
+                                    ELSE '不变'
+                                    END AS WaterLevelChange
+                            FROM
+                                (SELECT
+                                     STCD,
+                                     Z,
+                                     TM,
+                                     ROW_NUMBER() OVER (PARTITION BY STCD ORDER BY TM DESC) AS rn
+                                 FROM st_river_r) AS curr
+                                    JOIN
+                                (SELECT
+                                     STCD,
+                                     Z,
+                                     TM,
+                                     ROW_NUMBER() OVER (PARTITION BY STCD ORDER BY TM DESC) AS rn
+                                 FROM st_river_r) AS prev
+                                ON curr.STCD = prev.STCD AND curr.rn = 1 AND prev.rn = 2
+        ) AS LEVEL_CHANGE ON LEVEL_CHANGE.STCD = ABC.STCD
+    </select>
+
+    <select id="selectExceedGuaranteed" resultType="java.util.Map">
+        SELECT  *
+        FROM (
+                 SELECT st_stbprp_b.*,
+                        st_rvfcch_b.LDKEL, st_rvfcch_b.RDKEL , st_rvfcch_b.WRZ , st_rvfcch_b.WRQ , st_rvfcch_b.GRZ , st_rvfcch_b.GRQ , st_rvfcch_b.OBHTZ,
+                        DATAVAL.Z
+                 FROM (SELECT * FROM st_stbprp_b WHERE state = '0' AND ( STTP = 'ZZ' OR STTP = 'ZQ' )) AS st_stbprp_b
+                          LEFT JOIN st_rvfcch_b ON st_rvfcch_b.STCD = st_stbprp_b.STCD
+                          INNER JOIN (
+                     SELECT a.STCD as idd, a.Z
+                     FROM st_river_r a
+                              INNER JOIN (
+                         SELECT STCD, MAX(TM) as MaxTM
+                         FROM st_river_r
+                         GROUP BY STCD
+                     ) b ON a.STCD = b.STCD AND a.TM = b.MaxTM
+                 ) DATAVAL ON st_stbprp_b.STCD = DATAVAL.idd
+                 WHERE DATAVAL.Z > st_rvfcch_b.GRZ
+             ) as ABC
+             LEFT JOIN (SELECT
+                                curr.STCD,
+                                curr.Z AS CurrentWaterLevel,
+                                prev.Z AS PreviousWaterLevel,
+                                CASE
+                                    WHEN curr.Z > prev.Z THEN '上升'
+                                    WHEN curr.Z &lt; prev.Z THEN '下降'
+                                    ELSE '不变'
+                                    END AS WaterLevelChange
+                            FROM
+                                (SELECT
+                                     STCD,
+                                     Z,
+                                     TM,
+                                     ROW_NUMBER() OVER (PARTITION BY STCD ORDER BY TM DESC) AS rn
+                                 FROM st_river_r) AS curr
+                                    JOIN
+                                (SELECT
+                                     STCD,
+                                     Z,
+                                     TM,
+                                     ROW_NUMBER() OVER (PARTITION BY STCD ORDER BY TM DESC) AS rn
+                                 FROM st_river_r) AS prev
+                                ON curr.STCD = prev.STCD AND curr.rn = 1 AND prev.rn = 2
+        ) AS LEVEL_CHANGE ON LEVEL_CHANGE.STCD = ABC.STCD
+    </select>
+
+    <select id="selectExceedAlertLevel" resultType="java.util.Map">
+        SELECT  *
+        FROM (
+                 SELECT st_stbprp_b.*,
+                        st_rvfcch_b.LDKEL, st_rvfcch_b.RDKEL , st_rvfcch_b.WRZ , st_rvfcch_b.WRQ , st_rvfcch_b.GRZ , st_rvfcch_b.GRQ , st_rvfcch_b.OBHTZ,
+                        DATAVAL.Z
+                 FROM (SELECT * FROM st_stbprp_b WHERE state = '0' AND ( STTP = 'ZZ' OR STTP = 'ZQ' )) AS st_stbprp_b
+                          LEFT JOIN st_rvfcch_b ON st_rvfcch_b.STCD = st_stbprp_b.STCD
+                          INNER JOIN (
+                     SELECT a.STCD as idd, a.Z
+                     FROM st_river_r a
+                              INNER JOIN (
+                         SELECT STCD, MAX(TM) as MaxTM
+                         FROM st_river_r
+                         GROUP BY STCD
+                     ) b ON a.STCD = b.STCD AND a.TM = b.MaxTM
+                 ) DATAVAL ON st_stbprp_b.STCD = DATAVAL.idd
+                 WHERE DATAVAL.Z > st_rvfcch_b.WRZ
+             ) as ABC
+                 LEFT JOIN (SELECT
+                                curr.STCD,
+                                curr.Z AS CurrentWaterLevel,
+                                prev.Z AS PreviousWaterLevel,
+                                CASE
+                                    WHEN curr.Z > prev.Z THEN '上升'
+                                    WHEN curr.Z &lt; prev.Z THEN '下降'
+                                    ELSE '不变'
+                                    END AS WaterLevelChange
+                            FROM
+                                (SELECT
+                                     STCD,
+                                     Z,
+                                     TM,
+                                     ROW_NUMBER() OVER (PARTITION BY STCD ORDER BY TM DESC) AS rn
+                                 FROM st_river_r) AS curr
+                                    JOIN
+                                (SELECT
+                                     STCD,
+                                     Z,
+                                     TM,
+                                     ROW_NUMBER() OVER (PARTITION BY STCD ORDER BY TM DESC) AS rn
+                                 FROM st_river_r) AS prev
+                                ON curr.STCD = prev.STCD AND curr.rn = 1 AND prev.rn = 2
+                 ) AS LEVEL_CHANGE ON LEVEL_CHANGE.STCD = ABC.STCD
+    </select>
+
+    <select id="selectExceedNum" resultType="java.util.Map">
+        SELECT COUNT(CASE WHEN (DATAVAL.Z > (CASE WHEN st_rvfcch_b.LDKEL > st_rvfcch_b.RDKEL THEN st_rvfcch_b.LDKEL WHEN st_rvfcch_b.RDKEL IS NULL THEN st_rvfcch_b.LDKEL ELSE st_rvfcch_b.RDKEL END)) THEN 1 END) AS LEEVE_NUM,
+               COUNT(CASE WHEN (DATAVAL.Z > st_rvfcch_b.GRZ) THEN 1 END) AS GUARANTEED_NUM,
+               COUNT(CASE WHEN (DATAVAL.Z > st_rvfcch_b.WRZ) THEN 1 END) AS ALERT_LEVEL_NUM,
+               (SELECT COUNT(st_stbprp_b.STCD) FROM st_stbprp_b WHERE ( STTP = 'ZZ' OR STTP = 'ZQ' )) AS NUM
+        FROM (SELECT *  FROM st_stbprp_b WHERE  ( STTP = 'ZZ' OR STTP = 'ZQ' )) AS st_stbprp_b
+#                (SELECT COUNT(st_stbprp_b.STCD) FROM st_stbprp_b WHERE state = '0' AND ( STTP = 'ZZ' OR STTP = 'ZQ' )) AS NUM
+#         FROM (SELECT *  FROM st_stbprp_b WHERE state = '0' AND ( STTP = 'ZZ' OR STTP = 'ZQ' )) AS st_stbprp_b
+                 LEFT JOIN st_rvfcch_b ON st_rvfcch_b.STCD = st_stbprp_b.STCD
+                 INNER JOIN (
+            SELECT a.STCD as idd, a.Z
+            FROM st_river_r a
+                     INNER JOIN (
+                SELECT STCD, MAX(TM) as MaxTM
+                FROM st_river_r
+                GROUP BY STCD
+            ) b ON a.STCD = b.STCD AND a.TM = b.MaxTM
+        ) DATAVAL ON st_stbprp_b.STCD = DATAVAL.idd
+    </select>
+
+
+    <select id="selectRiverStationInfo" resultType="java.util.Map">
+        SELECT  * , (CASE WHEN ABC.SIGN = '01' THEN '自建站点' ELSE '接入站点' END) as signname
+        FROM (
+                 SELECT st_stbprp_b.*,
+                        st_rvfcch_b.LDKEL, st_rvfcch_b.RDKEL , st_rvfcch_b.WRZ , st_rvfcch_b.WRQ , st_rvfcch_b.GRZ , st_rvfcch_b.GRQ , st_rvfcch_b.OBHTZ, (CASE WHEN st_rvfcch_b.LDKEL > st_rvfcch_b.RDKEL THEN st_rvfcch_b.RDKEL WHEN st_rvfcch_b.LDKEL IS NULL THEN st_rvfcch_b.RDKEL ELSE st_rvfcch_b.LDKEL END) AS DKEL,
+                        DATAVAL.Z , MaxTM
+                 FROM (SELECT * FROM st_stbprp_b
+                                WHERE
+#                                     state = '0' AND
+                                      ( STTP = 'ZZ' OR STTP = 'ZQ' )
+                                    <if test="stnm != null" >
+                                        AND st_stbprp_b.STNM LIKE CONCAT('%', #{stnm}, '%')
+                                    </if>
+                                ) AS st_stbprp_b
+                          LEFT JOIN st_rvfcch_b ON st_rvfcch_b.STCD = st_stbprp_b.STCD
+                          LEFT JOIN (
+                     SELECT a.STCD as idd, a.Z , b.MaxTM
+                     FROM st_river_r a
+                              INNER JOIN (
+                         SELECT STCD, MAX(TM) as MaxTM
+                         FROM st_river_r
+                            <where>
+                                <if test="start_time != null">
+                                    and st_river_r.TM &gt;= #{start_time}
+                                </if>
+                                <if test="end_time != null">
+                                    and st_river_r.TM &lt;= #{end_time}
+                                </if>
+                            </where>
+                         GROUP BY STCD
+                     ) b ON a.STCD = b.STCD AND a.TM = b.MaxTM
+                 ) DATAVAL ON st_stbprp_b.STCD = DATAVAL.idd
+                 <where>
+                     <if test="rtype == 'levee'">
+                         and DATAVAL.Z > (CASE WHEN st_rvfcch_b.LDKEL > st_rvfcch_b.RDKEL THEN st_rvfcch_b.RDKEL WHEN st_rvfcch_b.LDKEL IS NULL THEN st_rvfcch_b.RDKEL ELSE st_rvfcch_b.LDKEL END)
+                     </if>
+                     <if test="rtype == 'guaranteed'">
+                         and DATAVAL.Z > st_rvfcch_b.GRZ
+                     </if>
+                     <if test="rtype == 'alert'">
+                         and DATAVAL.Z > st_rvfcch_b.WRZ
+                     </if>
+                 </where>
+             ) as ABC
+                 LEFT JOIN (SELECT
+                                curr.STCD,
+                                curr.Z AS CurrentWaterLevel,
+                                prev.Z AS PreviousWaterLevel,
+                                CASE
+                                    WHEN curr.Z > prev.Z THEN '上升'
+                                    WHEN curr.Z &lt; prev.Z THEN '下降'
+                                    ELSE '不变'
+                                    END AS WaterLevelChange
+                            FROM
+                                (SELECT
+                                     STCD,
+                                     Z,
+                                     TM,
+                                     ROW_NUMBER() OVER (PARTITION BY STCD ORDER BY TM DESC) AS rn
+                                 FROM st_river_r
+                                    <where>
+                                        <if test="start_time != null">
+                                            and st_river_r.TM &gt;= #{start_time}
+                                        </if>
+                                        <if test="end_time != null">
+                                            and st_river_r.TM &lt;= #{end_time}
+                                        </if>
+                                    </where>
+                                 ) AS curr
+                                    JOIN
+                                (SELECT
+                                     STCD,
+                                     Z,
+                                     TM,
+                                     ROW_NUMBER() OVER (PARTITION BY STCD ORDER BY TM DESC) AS rn
+                                 FROM st_river_r
+                                    <where>
+                                        <if test="start_time != null">
+                                            and st_river_r.TM &gt;= #{start_time}
+                                        </if>
+                                        <if test="end_time != null">
+                                            and st_river_r.TM &lt;= #{end_time}
+                                        </if>
+                                    </where>
+                                 ) AS prev
+                                ON curr.STCD = prev.STCD AND curr.rn = 1 AND prev.rn = 2
+        ) AS LEVEL_CHANGE ON LEVEL_CHANGE.STCD = ABC.STCD
+    </select>
+
+</mapper>

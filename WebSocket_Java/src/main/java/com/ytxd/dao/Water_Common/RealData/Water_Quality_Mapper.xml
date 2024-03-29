@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Water_Common.RealData.Water_Quality_Mapper">
+    <!-- 取最新的水质数据 取最新的一条-->
+    <select id="Select_Water_Quality_List" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        st_wq_r.tm,st_wq_r.codcr codcr,st_wq_r.nh3n nh3n,st_wq_r.tp tp,
+        st_wq_r.water_quality+0 water_quality,water_quality_join.description water_qualityname
+        from st_stbprp_b
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        left join (
+        select stcd,tm,codcr,nh3n,tp,water_quality from (
+        select stcd,tm,codcr,nh3n,tp,water_quality, row_number() over(partition by stcd order by tm desc) rn from st_wq_r
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_wq_r.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_wq_r.tm &lt;= #{endtime}
+            </if>
+        </where>
+        )st_wq_r where rn = 1
+        ) st_wq_r on st_wq_r.stcd = st_stbprp_b.stcd
+        left join(select code,description from sm_codeitem where codeid ='WA'
+        ) water_quality_join on water_quality_join.code = st_wq_r.water_quality
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by -st_stbprp_b.orderid desc
+    </select>
+    <!-- 取实时水质数据 -->
+    <select id="Select_Real_Water_Quality_List" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        st_wq_r.tm,st_wq_r.codcr codcr,st_wq_r.nh3n nh3n,st_wq_r.tp tp,st_wq_r.tm tm,
+        st_wq_r.water_quality + 0 water_quality,water_quality_join.description water_qualityname
+        from st_stbprp_b
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        left join (
+        select stcd,tm,codcr,nh3n,tp,tn,water_quality from st_wq_r
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_wq_r.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_wq_r.tm &lt;= #{endtime}
+            </if>
+        </where>
+        ) st_wq_r on st_wq_r.stcd = st_stbprp_b.stcd
+        left join(select code,description from sm_codeitem where codeid ='WA'
+        ) water_quality_join on water_quality_join.code = st_wq_r.water_quality
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by -st_stbprp_b.orderid desc
+    </select>
+    <!-- 取某时间段内的月均值统计 -->
+    <select id="Select_Real_Water_Quality_List_Month" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        st_wq_m.tm,st_wq_m.codcr codcr,st_wq_m.nh3n nh3n,st_wq_m.tp tp,st_wq_m.tn tn,
+        st_wq_m.water_quality + 0 water_quality,water_quality_join.description water_qualityname
+        from st_stbprp_b
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        left join (
+        select stcd,tm,codcr,nh3n,tp,tn,water_quality from st_wq_m
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_wq_m.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_wq_m.tm &lt;= #{endtime}
+            </if>
+        </where>
+        ) st_wq_m on st_wq_m.stcd = st_stbprp_b.stcd
+        left join(select code,description from sm_codeitem where codeid ='WA'
+        ) water_quality_join on water_quality_join.code = st_wq_m.water_quality
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by -st_stbprp_b.orderid desc
+    </select>
+
+</mapper>

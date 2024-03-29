@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Activity_Entry.Activity_Entry_Mapper">
+<!--	查询报名人员列表 -->
+	<select id="Select_Activity_Entry_List" resultType="java.util.Map">
+		select entry.entryid, info.activity_name,entry.infoid, entry.enroll_name, entry.age, entry.telphone
+		from AY_Activity_ENTRY entry
+		left join AY_ACTIVITY_info info on entry.INFOID = info.INFOID
+		<where>
+			<if test="entryid != null and entryid != '' ">
+				and entry.entryid = #{entryid}
+			</if>
+			<if test="activity_name != null and activity_name != '' ">
+				and info.activity_name like concat('%',#{activity_name},'%')
+			</if>
+			<if test="infoid != null and infoid != '' ">
+				and entry.infoid = #{infoid}
+			</if>
+			<if test="telphone != null and telphone != '' ">
+				and entry.telphone = #{telphone}
+			</if>
+		</where>
+		order by entry.created_time
+	</select>
+	<sql id="Insert_Entry_Columns">
+		<if test="infoid != null and infoid != '' ">
+			,infoid
+		</if>
+		<if test="enroll_name != null and enroll_name !='' ">
+			,enroll_name
+		</if>
+		<if test="age != null and age != '' ">
+			,age
+		</if>
+		<if test="telphone != null and telphone != '' ">
+			,telphone
+		</if>
+	</sql>
+	<sql id="Insert_Entry_Params">
+		<if test="infoid != null and infoid != '' ">
+			,#{infoid}
+		</if>
+		<if test="enroll_name != null and enroll_name != '' ">
+			,#{enroll_name}
+		</if>
+		<if test="age != null and age != '' ">
+			,#{age}
+		</if>
+		<if test="telphone != null and telphone != '' ">
+			,#{telphone}
+		</if>
+	</sql>
+	<insert id="Insert_Activity_Entry">
+		insert into AY_ACTIVITY_ENTRY(entryid,created_time<include refid="Insert_Entry_Columns"/>)
+		values(#{entryid},now()<include refid="Insert_Entry_Params"/>)
+	</insert>
+	<sql id="Update_Activity_Entry_Columns">
+		<if test="enroll_name != null">
+			,enroll_name = #{enroll_name}
+		</if>
+		<if test="age != null">
+			,age = #{age}
+		</if>
+		<if test="telphone != null">
+			,telphone = #{telphone}
+		</if>
+	</sql>
+	<update id="Update_Activity_Entry">
+		update AY_ACTIVITY_ENTRY set id = id ,infoid = infoid
+		<include refid="Update_Activity_Entry_Columns"/>
+		where entryid = #{entryid}
+	</update>
+	<delete id="Delete_Activity_Entry">
+		delete from AY_ACTIVITY_ENTRY  where entryid = #{entryid}
+	</delete>
+	<select id="Check_TelPhone_Exists" resultType="java.lang.Integer">
+		select  count(1) counts from AY_ACTIVITY_ENTRY where telphone = #{telphone}
+		<if test="entryid != null and entryid != '' ">
+			and entryid != 'entryid'
+		</if>
+		limit 1
+	</select>
+</mapper>

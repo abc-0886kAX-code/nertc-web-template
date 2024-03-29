@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.SystemManage.SM_ExcelCollect_Mapper">
+	<!-- 允许缓存 -->
+	<!-- <cache /> -->
+	
+	<!-- 查询表   表 字段  -->
+	<sql id="Select_Column">
+		sm_excelcollect.copyformat,
+		sm_excelcollect.id,
+		sm_excelcollect.exportname,
+		sm_excelcollect.description,
+		sm_excelcollect.sheetname,
+		sm_excelcollect.rownumber,
+		sm_excelcollect.columncount,
+		sm_excelcollect.templatefile,
+		sm_excelcollect.auto,ifnull(auto.DescriptionJoin,sm_excelcollect.auto) autoname
+	</sql>
+
+	<!-- 查询表   查询条件参数  -->
+	<sql id="Select_Parmeter">
+		<if test="copyformat!=null and copyformat!=''"> AND sm_excelcollect.copyformat like CONCAT('%',#{copyformat},'%') </if>
+		<if test="id!=null and id!=''"> AND sm_excelcollect.id IN (#{id}) </if>
+		<if test="exportname!=null and exportname!=''"> AND sm_excelcollect.exportname like CONCAT('%',#{exportname},'%') </if>
+		<if test="description!=null and description!=''"> AND sm_excelcollect.description like CONCAT('%',#{description},'%') </if>
+		<if test="sheetname!=null and sheetname!=''"> AND sm_excelcollect.sheetname like CONCAT('%',#{sheetname},'%') </if>
+		<if test="startrownumber!=null and startrownumber!=''"> AND sm_excelcollect.rownumber &gt;= #{startrownumber} </if>
+		<if test="endrownumber!=null and endrownumber!=''"> AND sm_excelcollect.rownumber &lt;= #{endrownumber} </if>
+		<if test="startcolumncount!=null and startcolumncount!=''"> AND sm_excelcollect.columncount &gt;= #{startcolumncount} </if>
+		<if test="endcolumncount!=null and endcolumncount!=''"> AND sm_excelcollect.columncount &lt;= #{endcolumncount} </if>
+		<if test="templatefile!=null and templatefile!=''"> AND sm_excelcollect.templatefile like CONCAT('%',#{templatefile},'%') </if>
+		<if test="auto!=null and auto!=''"> AND sm_excelcollect.auto = #{auto} </if>
+		<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> -->
+	</sql>
+
+	<!-- 查询  表信息  -->
+	<select id="Select_SM_ExcelCollect" parameterType="com.ytxd.model.SystemManage.SM_ExcelCollect" resultType="com.ytxd.model.SystemManage.SM_ExcelCollect">
+		SELECT
+		<if test="selectrowcount==null">
+			<include refid="Select_Column" />
+		</if>
+		<if test="selectrowcount!=null">
+			COUNT(1) selectrowcount 
+		</if>
+		FROM sm_excelcollect 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') auto on auto.CodeJoin=sm_excelcollect.auto 
+		WHERE 1 = 1 
+		<include refid="Select_Parmeter" />
+		<if test="selectrowcount==null">
+			<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+		</if>
+		<if test="page!=null and rows!=null and selectrowcount==null">
+			LIMIT #{startRow},#{pageSize}
+		</if>
+	</select>
+	<select id="Select_SM_ExcelCollect_All" parameterType="com.ytxd.model.SystemManage.SM_ExcelCollect" resultType="com.ytxd.model.SystemManage.SM_ExcelCollect">
+		SELECT
+			<include refid="Select_Column" />
+		FROM sm_excelcollect 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') auto on auto.CodeJoin=sm_excelcollect.auto 
+		WHERE 1 = 1
+			<include refid="Select_Parmeter" />
+			<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+	</select>
+	<!-- 查询表记录数  -->
+	<select id="Select_SM_ExcelCollect_Count" parameterType="com.ytxd.model.SystemManage.SM_ExcelCollect" resultType="java.lang.Integer">
+		SELECT
+			COUNT(1)
+		FROM sm_excelcollect
+		WHERE 1 = 1
+			<include refid="Select_Parmeter" />
+	</select>
+	<!-- 查询表信息  -->
+	<select id="Select_SM_ExcelCollect_ById" parameterType="java.lang.String" resultType="com.ytxd.model.SystemManage.SM_ExcelCollect">
+		SELECT
+			<include refid="Select_Column" />
+		FROM sm_excelcollect 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') auto on auto.CodeJoin=sm_excelcollect.auto 
+		WHERE
+			ID = #{_parameter}
+	</select>
+
+	<!-- 新增信息表字段 -->
+	<sql id="Insert_Column">
+		<if test="copyformat!=null and copyformat!=''">,copyformat</if> <!---->
+		<if test="exportname!=null and exportname!=''">,exportname</if> <!--报表标识-->
+		<if test="description!=null and description!=''">,description</if> <!--报表名称-->
+		<if test="sheetname!=null and sheetname!=''">,sheetname</if> <!--ExcelSheetName-->
+		<if test="rownumber!=null and rownumber!=''">,rownumber</if> <!--开始行号-->
+		<if test="columncount!=null and columncount!=''">,columncount</if> <!--列数-->
+		<if test="templatefile!=null and templatefile!=''">,templatefile</if> <!--模板文件-->
+		<if test="auto!=null and auto!=''">,auto</if> <!--是否自动-->
+	</sql>
+
+	<sql id="Insert_Parmeter">
+		<if test="copyformat!=null and copyformat!=''">,#{copyformat}</if>	<!---->
+		<if test="exportname!=null and exportname!=''">,#{exportname}</if>	<!--报表标识-->
+		<if test="description!=null and description!=''">,#{description}</if>	<!--报表名称-->
+		<if test="sheetname!=null and sheetname!=''">,#{sheetname}</if>	<!--ExcelSheetName-->
+		<if test="rownumber!=null and rownumber!=''">,#{rownumber}</if>	<!--开始行号-->
+		<if test="columncount!=null and columncount!=''">,#{columncount}</if>	<!--列数-->
+		<if test="templatefile!=null and templatefile!=''">,#{templatefile}</if>	<!--模板文件-->
+		<if test="auto!=null and auto!=''">,#{auto}</if>	<!--是否自动-->
+	</sql>
+
+	<!-- 新增表信息  -->
+	<insert id="Insert_SM_ExcelCollect" parameterType="com.ytxd.model.SystemManage.SM_ExcelCollect" >
+		INSERT INTO sm_excelcollect
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Column" />
+		</trim>
+		VALUES
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Parmeter" />
+		</trim>
+		<selectKey resultType="java.lang.String" keyProperty="id">
+			SELECT LAST_INSERT_ID() AS id FROM DUAL
+		</selectKey>
+	</insert>
+
+	<!-- 修改表  set 参数  -->
+	<sql id="Update_Parmeter">
+		<if test="copyformat!=null">,copyformat=#{copyformat}</if>
+		<if test="exportname!=null">,exportname=#{exportname}</if>
+		<if test="description!=null">,description=#{description}</if>
+		<if test="sheetname!=null">,sheetname=#{sheetname}</if>
+		<if test="rownumber!=null">,rownumber=CASE WHEN #{rownumber}='' THEN NULL ELSE #{rownumber} END</if>
+		<if test="columncount!=null">,columncount=CASE WHEN #{columncount}='' THEN NULL ELSE #{columncount} END</if>
+		<if test="templatefile!=null">,templatefile=#{templatefile}</if>
+		<if test="auto!=null">,auto=#{auto}</if>
+	</sql>
+
+	<!-- 修改表信息 -->
+	<update id="Update_SM_ExcelCollect" parameterType="com.ytxd.model.SystemManage.SM_ExcelCollect">
+		UPDATE sm_excelcollect
+		<set>
+			<trim prefixOverrides=",">
+			<include refid="Update_Parmeter" />
+			</trim>
+		</set>
+		WHERE id IN 
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+	        #{item}
+	    </foreach> 
+	</update>
+
+	<!-- 删除表信息 -->
+	<delete id="Delete_SM_ExcelCollect" parameterType="java.lang.String">
+		DELETE FROM
+			sm_excelcollect
+		WHERE
+			id IN <foreach collection="array" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+	</delete>
+	<!-- 得到ID为空的记录 -->
+	<select id="Select_SM_ExcelCollect_IDNULL" resultType="com.ytxd.model.SystemManage.SM_ExcelCollect">
+		SELECT <include refid="Select_Column" /> 
+		FROM SM_EXCELCOLLECT 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') auto on auto.CodeJoin=sm_excelcollect.auto 
+		WHERE ID IS NULL 
+		ORDER BY EXPORTNAME
+	</select>
+	<update id="Update_SM_ExcelCollect_ID" parameterType="java.lang.String">
+		UPDATE SM_EXCELCOLLECT 
+		SET ID=SEQ_SM_EXCELCOLLECT.Nextval 
+		WHERE EXPORTNAME=#{_parameter} 
+	</update>
+</mapper>

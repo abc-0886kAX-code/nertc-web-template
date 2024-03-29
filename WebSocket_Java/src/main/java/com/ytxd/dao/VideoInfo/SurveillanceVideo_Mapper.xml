@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.VideoInfo.SurveillanceVideo_Mapper">
+    <select id="Select_SurveillanceVideo_List" resultType="java.util.HashMap">
+        select id, video_name, brand, model_number, port, cideousername, videopassword,
+               ip, electricity_meter, stlc, riverstream, orderid
+        from ST_SURVEILLANCE_VIDEO
+        <where>
+            <if test="id != null and id != '' ">
+                and id = #{id}
+            </if>
+            <if test="video_name != null and video_name != '' ">
+                and video_name like concat('%',#{video_name},'%')
+            </if>
+        </where>
+        order by orderid
+    </select>
+</mapper>

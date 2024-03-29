@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Subhall.Aquatic_Ecology.Eval_Indicator_Library_Mapper">
+	<select id="Select_Eval_Indicator_Library_List" resultType="java.util.Map">
+		select indid, indname, parentid, indtype, indrank, formuladesc, weight, calculation_formula, orderid, inrremake, submittime,
+			indtype_join.description indtypename,indrank_join.description indrankname
+		from Eval_Indicator_Library
+		left join (select code,description from sm_codeitem where codeid ='ZT'
+		) indtype_join on indtype_join.code = Eval_Indicator_Library.indtype
+				 left join (select code,description from sm_codeitem where codeid ='ZH'
+		) indrank_join on indrank_join.code = Eval_Indicator_Library.indrank
+		<where>
+			Eval_Indicator_Library.INDRANK  = '02'
+			<if test="schemeid != null and schemeid != ''">
+				and NOT EXISTS (select 1 from Eval_Scheme_Indicator where Eval_Scheme_Indicator.indid = Eval_Indicator_Library.indid AND Eval_Scheme_Indicator.schemeid = #{schemeid})
+			</if>
+			<if test="indid != null and indid != '' ">
+				and Eval_Indicator_Library.indid in
+				<foreach collection="indid.split(',')" item="indid" open="(" separator="," close=")">
+					#{indid}
+				</foreach>
+			</if>
+			<if test="parentid != null and parentid != '' ">
+				and Eval_Indicator_Library.parentid in
+				<foreach collection="parentid.split(',')" item="parentid" open="(" separator="," close=")">
+					#{parentid}
+				</foreach>
+			</if>
+			<if test="indtype != null and indtype != '' ">
+				and Eval_Indicator_Library.indtype = #{indtype}
+			</if>
+			<if test="indname != null and indname != '' ">
+				and Eval_Indicator_Library.indname like concat('%',#{indname},'%')
+			</if>
+		</where>
+		ORDER BY Eval_Indicator_Library.PARENTID asc,Eval_Indicator_Library.orderid asc
+	</select>
+	<sql id="Insert_Columns">
+		<if test="indname != null and indname != '' ">
+			,indname
+		</if>
+		<if test="parentid != null and parentid != '' ">
+			,parentid
+		</if>
+		<if test="indtype != null and indtype != '' ">
+			,indtype
+		</if>
+		<if test="indrank != null and indrank != '' ">
+			,indrank
+		</if>
+		<if test="formuladesc != null and formuladesc != '' ">
+			,formuladesc
+		</if>
+		<if test="weight != null and weight != '' ">
+			,weight
+		</if>
+		<if test="calculation_formula != null and calculation_formula != '' ">
+			,calculation_formula
+		</if>
+		<if test="orderid != null and orderid != '' ">
+			,orderid
+		</if>
+		<if test="inrremake != null and inrremake != '' ">
+			,inrremake
+		</if>
+		<if test="submittime != null and submittime != '' ">
+			,submittime
+		</if>
+	</sql>
+	<sql id="Insert_Params">
+		<if test="indname != null and indname != '' ">
+			,#{indname}
+		</if>
+		<if test="parentid != null and parentid != '' ">
+			,#{parentid}
+		</if>
+		<if test="indtype != null and indtype != '' ">
+			,#{indtype}
+		</if>
+		<if test="indrank != null and indrank != '' ">
+			,#{indrank}
+		</if>
+		<if test="formuladesc != null and formuladesc != '' ">
+			,#{formuladesc}
+		</if>
+		<if test="weight != null and weight != '' ">
+			,#{weight}
+		</if>
+		<if test="calculation_formula != null and calculation_formula != '' ">
+			,#{calculation_formula}
+		</if>
+		<if test="orderid != null and orderid != '' ">
+			,#{orderid}
+		</if>
+		<if test="inrremake != null and inrremake != '' ">
+			,#{inrremake}
+		</if>
+		<if test="submittime != null and submittime != '' ">
+			,#{submittime}
+		</if>
+	</sql>
+	<insert id="Insert_Eval_Indicator_Library">
+		insert into Eval_Indicator_Library(indid<include refid="Insert_Columns"/>) values(#{indid}<include refid="Insert_Params"/>)
+	</insert>
+	<sql id="Update_Params">
+		<if test="indname != null ">
+			,indname = #{indname}
+		</if>
+		<if test="parentid != null">
+			,parentid = #{parentid}
+		</if>
+		<if test="indtype != null">
+			,indtype = #{indtype}
+		</if>
+		<if test="indrank != null">
+			,indrank = #{indrank}
+		</if>
+		<if test="formuladesc != null">
+			,formuladesc = #{formuladesc}
+		</if>
+		<if test="weight != null">
+			,weight = #{weight}
+		</if>
+		<if test="calculation_formula != null">
+			,calculation_formula = #{calculation_formula}
+		</if>
+		<if test="orderid != null">
+			,orderid = #{orderid}
+		</if>
+		<if test="inrremake != null ">
+			,inrremake = #{inrremake}
+		</if>
+	</sql>
+	<update id="Update_Eval_Indicator_Library">
+		update Eval_Indicator_Library set indid = indid <include refid="Update_Params"/>
+		where indid in
+		<foreach collection="indid.split(',')" item="indid" open="(" separator="," close=")">
+			#{indid}
+		</foreach>
+	</update>
+	<delete id="Delete_Eval_Indicator_Library">
+		delete from Eval_Indicator_Library where indid in
+		<foreach collection="indid.split(',')" item="indid" open="(" separator="," close=")">
+			#{indid}
+		</foreach>
+	</delete>
+
+	<select id="Select_Children_Eval_Indicator_List" resultType="java.util.Map">
+		select indid from Eval_Indicator_Library where parentid in
+		<foreach collection="parentid.split(',')" item="parentid" open="(" separator="," close=")">
+			#{parentid}
+		</foreach>
+	</select>
+</mapper>

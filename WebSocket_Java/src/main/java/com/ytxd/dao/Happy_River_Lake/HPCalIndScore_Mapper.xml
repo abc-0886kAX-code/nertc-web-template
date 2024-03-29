@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Happy_River_Lake.HPCalIndScore_Mapper">
+<!--	查询指标的计算方式-->
+	<select id="Select_Ind_Formula" resultType="java.util.Map">
+			select HP_scheme_indicator.indid,HP_scheme_indicator.formula,HP_INDICATOR_FORMULA.formula formula1
+			from HP_scheme_indicator
+			left join HP_INDICATOR_FORMULA on HP_scheme_indicator.indid = HP_INDICATOR_FORMULA.indid
+			where id = #{id}
+	</select>
+<!--	获取参数对应的指标-->
+	<select id="Select_Param_Ind_List" resultType="java.util.Map">
+		select HP_indicator_param.indid,HP_indicator_param.paramname parameter,HP_indicator_param.targetindid target_indid,
+		       HP_indicator_param.paramtype param_type, target_ind.id targetid
+		    from HP_indicator_param
+		left join HP_scheme_indicator source_ind on source_ind.indid = HP_indicator_param.indid
+		left join HP_scheme_indicator target_ind on target_ind.indid = HP_indicator_param.targetindid and target_ind.schemeid = source_ind.schemeid
+		where source_ind.id = #{id}
+	</select>
+<!--	查询赋分表-->
+	<select id="Select_HP_Score_Contrast" resultType="java.lang.Double">
+		select score from HP_score_contrast where HP_type = #{hp_type} and #{score} >= min_value and #{score} &lt; max_value limit 1
+	</select>
+</mapper>

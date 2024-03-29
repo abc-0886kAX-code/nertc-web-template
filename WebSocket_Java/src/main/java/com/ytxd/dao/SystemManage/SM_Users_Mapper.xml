@@ -1,0 +1,924 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.SystemManage.SM_Users_Mapper">
+	<!-- 允许缓存 -->
+	<!-- <cache /> -->
+	
+	<resultMap id="ResultSm_users" type="com.ytxd.model.SystemManage.SM_Users">
+	  <id property="userid" column="USERID"/>
+	  <result property="loginname" column="LOGINNAME"/>
+	  <result property="truename" column="TRUENAME"/>
+	</resultMap>
+	<!-- 查询表   表 字段  -->
+	<sql id="Select_Column">
+		ifnull(Affiliation.NodeNameJoin,SM_Users.Affiliation) AffiliationName,
+		ifnull(DepartmentId.NodeNameJoin,SM_Users.DepartmentId) DepartmentIdName,
+		ifnull(CountryTag.DescriptionJoin,SM_Users.CountryTag) CountryTagName,
+		ifnull(Degree.DescriptionJoin,SM_Users.Degree) DegreeName,
+		ifnull(Degree2.DescriptionJoin,SM_Users.Degree) Degree2Name,
+		ifnull(DegreeTag.DescriptionJoin,SM_Users.DegreeTag) DegreeTagName,
+		ifnull(DegreeTag2.DescriptionJoin,SM_Users.DegreeTag) DegreeTag2Name,
+		ifnull(DegreeTag3.DescriptionJoin,SM_Users.DegreeTag) DegreeTag3Name,
+		ifnull(DegreeTag4.DescriptionJoin,SM_Users.DegreeTag) DegreeTag4Name,
+		ifnull(Disabled.DescriptionJoin,SM_Users.Disabled) DisabledName,
+		ifnull(IsBoDao.DescriptionJoin,SM_Users.IsBoDao) IsBoDaoName,
+		ifnull(IsCount.DescriptionJoin,SM_Users.IsCount) IsCountName,
+		ifnull(IsCount2.DescriptionJoin,SM_Users.IsCount) IsCount2Name,
+		ifnull(IsRetirement.DescriptionJoin,SM_Users.IsRetirement) IsRetirementName,
+		ifnull(Language1.DescriptionJoin,SM_Users.Language1) Language1Name,
+		ifnull(Language1Lever.DescriptionJoin,SM_Users.Language1Lever) Language1LeverName,
+		ifnull(Language2.DescriptionJoin,SM_Users.Language2) Language2Name,
+		ifnull(Language2Lever.DescriptionJoin,SM_Users.Language2Lever) Language2LeverName,
+		ifnull(NationTag.DescriptionJoin,SM_Users.NationTag) NationTagName,
+		ifnull(paperworkType.DescriptionJoin,SM_Users.paperworkType) paperworkTypeName,
+		ifnull(PoliticalAppearanceTag.DescriptionJoin,SM_Users.PoliticalAppearanceTag) PoliticalAppearanceTagName,
+		ifnull(PoliticalAppearanceTag2.DescriptionJoin,SM_Users.PoliticalAppearanceTag) PoliticalAppearanceTag2Name,
+		ifnull(Sex.DescriptionJoin,SM_Users.Sex) SexName,
+		ifnull(Sex2.DescriptionJoin,SM_Users.Sex) Sex2Name,
+		ifnull(Sex3.DescriptionJoin,SM_Users.Sex) Sex3Name,
+		ifnull(Sex4.DescriptionJoin,SM_Users.Sex) Sex4Name,
+		ifnull(SystemType.DescriptionJoin,SM_Users.SystemType) SystemTypeName,
+		ifnull(Title.DescriptionJoin,SM_Users.Title) TitleName,
+		ifnull(TitleType.DescriptionJoin,SM_Users.TitleType) TitleTypeName,
+		ifnull(TitleType2.DescriptionJoin,SM_Users.TitleType) TitleType2Name,
+
+		sm_users.keysysid,
+		sm_users.loginname,
+		sm_users.truename,
+		sm_users.jobno,
+		sm_users.affiliation,
+		sm_users.departmentid,
+		sm_users.homeaddress,
+		sm_users.sex,
+		sm_users.idcard,
+		DATE_FORMAT(sm_users.birthday,'%Y-%m-%d') AS birthday,
+		sm_users.degreetag,
+		sm_users.degree,
+		sm_users.titletype,
+		DATE_FORMAT(sm_users.joborientationdate,'%Y-%m-%d') AS joborientationdate,
+		sm_users.titletag,
+		sm_users.politicalappearancetag,
+		sm_users.iscount,
+		sm_users.systemtype,
+		sm_users.subjecttype,
+		sm_users.subjecttype02,
+		sm_users.subjecttype03,
+		sm_users.subject,
+		sm_users.email,
+		sm_users.officephone,
+		sm_users.fax,
+		sm_users.mobilephone,
+		sm_users.qqaccount,
+		sm_users.address,
+		sm_users.zipcode,
+		sm_users.remark,
+		sm_users.remark2,
+		sm_users.userid,
+		sm_users.password,
+		sm_users.oldpassword,
+		sm_users.secondpassword,
+		sm_users.orderid,
+		sm_users.usertype,
+		sm_users.disabled,
+		sm_users.style,
+		sm_users.creatby,
+		sm_users.code,
+		sm_users.marrid,
+		sm_users.countrytag,
+		sm_users.nationtag,
+		sm_users.handletag,
+		sm_users.postiontag,
+		sm_users.postionname,
+		sm_users.professionaltag,
+		sm_users.workday,
+		sm_users.entersday,
+		sm_users.leavesday,
+		sm_users.familyphone,
+		sm_users.stafftype,
+		sm_users.checkdirection,
+		sm_users.fame,
+		sm_users.businessname,
+		sm_users.unitcode,
+		sm_users.permitcode,
+		sm_users.taxcode,
+		sm_users.registeradress,
+		sm_users.registermoney,
+		sm_users.unionphone,
+		sm_users.isoutside,
+		sm_users.createdate,
+		sm_users.iscenter,
+		sm_users.paperworktype,
+		sm_users.paperworknumber,
+		sm_users.paperworknumberatt,
+		sm_users.workdepartment,
+		sm_users.researchfield,
+		sm_users.other,
+		sm_users.region,
+		sm_users.resume,
+		sm_users.photo,
+		sm_users.specialty,
+		sm_users.age,
+		sm_users.participate,
+		sm_users.evaluate,
+		sm_users.isretirement,
+		sm_users.bankofdeposit,
+		sm_users.accountname,
+		sm_users.accountnumber,
+		sm_users.isexpert,
+		sm_users.number,
+		sm_users.englishname,
+		sm_users.oldname,
+		sm_users.jszwrmsj,
+		sm_users.nationality,
+		sm_users.addressphone,
+		sm_users.addressportraiture,
+		sm_users.bleeper,
+		sm_users.personweb,
+		sm_users.isbodao,
+		sm_users.language1,
+		sm_users.language1lever,
+		sm_users.language2,
+		sm_users.language2lever,
+		sm_users.learningstate,
+		sm_users.academicactivities,
+		sm_users.speciality,
+		sm_users.jszw,
+		sm_users.mqzt,
+		sm_users.score,
+		sm_users.head,
+		sm_users.approval,
+		sm_users.establishdate,
+		sm_users.contacts,
+		sm_users.telephone,
+		sm_users.mechanism,
+		sm_users.affiliationroom,
+		sm_users.personnelunit,
+		sm_users.politicslook,
+		sm_users.isstatistics,
+		sm_users.personalbrief,
+		sm_users.disciplines,
+		sm_users.termstarttime,
+		sm_users.termendtime,
+		sm_users.qq,
+		sm_users.msn,
+		sm_users.sinoss_code,
+		sm_users.subjecttype02name,
+		sm_users.subjecttype03name,
+		sm_users.subjecttypename,
+		sm_users.synchroremark,
+		sm_users.fullpinyin,
+		sm_users.simplepinyin,
+		DATE_FORMAT(sm_users.lastlogintime,'%Y-%m-%d %H:%i:%s') AS lastlogintime,<!-- 修改信息时间-->
+		ifnull(sm_users.wrongtimes,0) wrongtimes,<!-- 密码错误次数 -->
+		sm_users.islock,<!-- 是否锁死 -->
+		DATE_FORMAT(sm_users.locktime,'%Y-%m-%d') AS locktime<!-- 锁死时间 -->
+	</sql>
+
+	<!-- 查询表   查询条件参数  -->
+	<sql id="Select_Parmeter">
+		<if test="userid!=null and userid!=''"> AND sm_users.userid IN 
+			<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+	        	#{item}
+	        </foreach>
+		</if>
+		<if test="useridnot!=null and useridnot!=''"> AND sm_users.userid NOT IN 
+			<foreach collection="useridnotarray" index="index" item="item" open="(" separator="," close=")">
+	        	#{item}
+	        </foreach>
+ 		</if>
+		<if test="departmentid!=null and departmentid!=''"> AND sm_users.departmentid like CONCAT(#{departmentid},'%') </if>
+		<if test="systemtype!=null and systemtype!=''"> AND sm_users.systemtype IN 
+			<foreach collection="systemtypearray" index="index" item="item" open="(" separator="," close=")">
+	        	#{item}
+	        </foreach> 
+        </if>
+		<if test="usertype!=null and usertype!=''"> AND sm_users.usertype IN 
+			<foreach collection="usertypearray" index="index" item="item" open="(" separator="," close=")">
+	        	#{item}
+	        </foreach> 
+        </if>
+		<if test="loginname!=null and loginname!=''"> AND sm_users.loginname = #{loginname} </if>
+		<if test="truename!=null and truename!=''"> AND sm_users.truename like CONCAT('%',#{truename},'%') </if>
+		<if test="password!=null and password!=''"> AND sm_users.password=#{password} </if>
+		<if test="fullpinyin!=null and fullpinyin!=''"> AND sm_users.fullpinyin like CONCAT('%',#{fullpinyin},'%') </if>
+		<if test="simplepinyin!=null and simplepinyin!=''"> AND sm_users.simplepinyin like CONCAT('%',#{simplepinyin},'%') </if>
+		<if test="disabled!=null and disabled!=''"> AND sm_users.disabled=#{disabled} </if>
+		<if test="isoutside!=null and isoutside!=''"> AND sm_users.isoutside like CONCAT('%',#{isoutside},'%') </if>
+		<if test="jobno!=null and jobno!=''"> AND sm_users.jobno like CONCAT('%',#{jobno},'%') </if>
+		<if test="style!=null and style!=''"> AND sm_users.style = #{style} </if>
+		<if test="sex!=null and sex!=''"> AND sm_users.sex = #{sex} </if>
+		<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> -->
+		<if test="islock!=null and islock!=''"> AND sm_users.islock = #{islock} </if>
+		<if test="wrongtimes!=null and wrongtimes!=''"> AND sm_users.wrongtimes = #{wrongtimes} </if>
+	</sql>
+
+	<!-- 查询  表信息  -->
+	<select id="Select_SM_Users" parameterType="com.ytxd.model.SystemManage.SM_Users" resultType="com.ytxd.model.SystemManage.SM_Users">
+		SELECT
+		<if test="selectrowcount==null">
+			<include refid="Select_Column" />
+		</if>
+		<if test="selectrowcount!=null">
+			COUNT(1) selectrowcount 
+		</if>
+		FROM sm_users 
+		left join (select DepartmentId DepartmentIdJoin,NodeName NodeNameJoin from SM_Department) DepartmentId on DepartmentId.DepartmentIdJoin=SM_Users.DepartmentId 
+		left join (select DepartmentId DepartmentIdJoin,NodeName NodeNameJoin from SM_Department) Affiliation on Affiliation.DepartmentIdJoin=SM_Users.Affiliation 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') CountryTag on CountryTag.CodeJoin=SM_Users.CountryTag 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FJ') Degree on Degree.CodeJoin=SM_Users.Degree 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FJ') Degree2 on Degree2.CodeJoin=SM_Users.Degree 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FI') DegreeTag on DegreeTag.CodeJoin=SM_Users.DegreeTag 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FI') DegreeTag2 on DegreeTag2.CodeJoin=SM_Users.DegreeTag 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FI') DegreeTag3 on DegreeTag3.CodeJoin=SM_Users.DegreeTag 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FI') DegreeTag4 on DegreeTag4.CodeJoin=SM_Users.DegreeTag 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') Disabled on Disabled.CodeJoin=SM_Users.Disabled 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') IsBoDao on IsBoDao.CodeJoin=SM_Users.IsBoDao 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') IsCount on IsCount.CodeJoin=SM_Users.IsCount 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') IsCount2 on IsCount2.CodeJoin=SM_Users.IsCount 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') IsRetirement on IsRetirement.CodeJoin=SM_Users.IsRetirement 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FS') Language1 on Language1.CodeJoin=SM_Users.Language1 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='QD') Language1Lever on Language1Lever.CodeJoin=SM_Users.Language1Lever 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FS') Language2 on Language2.CodeJoin=SM_Users.Language2 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='QD') Language2Lever on Language2Lever.CodeJoin=SM_Users.Language2Lever 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='GC') NationTag on NationTag.CodeJoin=SM_Users.NationTag 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='QS') paperworkType on paperworkType.CodeJoin=SM_Users.paperworkType 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='QA') PoliticalAppearanceTag on PoliticalAppearanceTag.CodeJoin=SM_Users.PoliticalAppearanceTag 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='QA') PoliticalAppearanceTag2 on PoliticalAppearanceTag2.CodeJoin=SM_Users.PoliticalAppearanceTag 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FM') Sex on Sex.CodeJoin=SM_Users.Sex 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FM') Sex2 on Sex2.CodeJoin=SM_Users.Sex 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FM') Sex3 on Sex3.CodeJoin=SM_Users.Sex 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FM') Sex4 on Sex4.CodeJoin=SM_Users.Sex 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FX') SystemType on SystemType.CodeJoin=SM_Users.SystemType 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FO') Title on Title.CodeJoin=SM_Users.Title
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='GB') TitleType on TitleType.CodeJoin=SM_Users.TitleType 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='GB') TitleType2 on TitleType2.CodeJoin=SM_Users.TitleType  
+		WHERE 1 = 1 
+		<include refid="Select_Parmeter" />
+		<if test="selectrowcount==null">
+			<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+		</if>
+		<if test="page!=null and rows!=null and selectrowcount==null">
+			LIMIT #{startRow},#{pageSize}
+		</if>
+	</select>
+
+	<!-- 新增信息表字段 -->
+	<sql id="Insert_Column">
+		<if test="keysysid!=null and keysysid!=''">,keysysid</if> <!---->
+		<if test="loginname!=null and loginname!=''">,loginname</if> <!--账号-->
+		<if test="truename!=null and truename!=''">,truename</if> <!--姓名-->
+		<if test="jobno!=null and jobno!=''">,jobno</if> <!--教工号-->
+		<if test="affiliation!=null and affiliation!=''">,affiliation</if> <!--科研单位-->
+		<if test="departmentid!=null and departmentid!=''">,departmentid</if> <!--部门、院、系-->
+		<if test="homeaddress!=null and homeaddress!=''">,homeaddress</if> <!--籍贯-->
+		<if test="sex!=null and sex!=''">,sex</if> <!--性别-->
+		<if test="idcard!=null and idcard!=''">,idcard</if> <!--证件号码-->
+		<if test="birthday!=null and birthday!=''">,birthday</if> <!--出生日期-->
+		<if test="degreetag!=null and degreetag!=''">,degreetag</if> <!--最后学历-->
+		<if test="degree!=null and degree!=''">,degree</if> <!--最后学位-->
+		<if test="titlegrade!=null and titlegrade!=''">,titlegrade</if> <!--职称级别-->
+		<if test="title!=null and title!=''">,title</if> <!--职称-->
+		<if test="titletype!=null and titletype!=''">,titletype</if> <!--职务类别-->
+		<if test="joborientationdate!=null and joborientationdate!=''">,joborientationdate</if> <!--定职日期-->
+		<if test="titletag!=null and titletag!=''">,titletag</if> <!--职务-->
+		<if test="politicalappearancetag!=null and politicalappearancetag!=''">,politicalappearancetag</if> <!--政治面貌-->
+		<if test="iscount!=null and iscount!=''">,iscount</if> <!--是否统计-->
+		<if test="systemtype!=null and systemtype!=''">,systemtype</if> <!--学科门类-->
+		<if test="subjecttype!=null and subjecttype!=''">,subjecttype</if> <!--一级学科-->
+		<if test="subjecttype!=null and subjecttype!=''">,subjecttypename</if>
+		<if test="subjecttype02!=null and subjecttype02!=''">,subjecttype02</if> <!--二级学科-->
+		<if test="subjecttype02!=null and subjecttype02!=''">,subjecttype02name</if>
+		<if test="subjecttype03!=null and subjecttype03!=''">,subjecttype03</if> <!--三级学科-->
+		<if test="subjecttype03!=null and subjecttype03!=''">,subjecttype03name</if>
+		<if test="subject!=null and subject!=''">,subject</if> <!--研究方向-->
+		<if test="email!=null and email!=''">,email</if> <!--电子邮件-->
+		<if test="officephone!=null and officephone!=''">,officephone</if> <!--办公电话-->
+		<if test="fax!=null and fax!=''">,fax</if> <!--传真-->
+		<if test="mobilephone!=null and mobilephone!=''">,mobilephone</if> <!--手机-->
+		<if test="qqaccount!=null and qqaccount!=''">,qqaccount</if> <!--QQ帐号-->
+		<if test="address!=null and address!=''">,address</if> <!--联系地址-->
+		<if test="zipcode!=null and zipcode!=''">,zipcode</if> <!--邮编-->
+		<if test="remark!=null and remark!=''">,remark</if> <!--简介-->
+		<if test="remark2!=null and remark2!=''">,remark2</if> <!--获得荣誉-->
+		<if test="password!=null and password!=''">,password</if> <!--登录密码-->
+		<if test="oldpassword!=null and oldpassword!=''">,oldpassword</if> <!--旧密码  只是用于自己修改密码-->
+		<if test="secondpassword!=null and secondpassword!=''">,secondpassword</if> <!--第二次密码  只是用于自己修改密码-->
+		<if test="orderid!=null and orderid!=''">,orderid</if> <!--排序ID-->
+		<if test="usertype!=null and usertype!=''">,usertype</if> <!--用户类型00为普通用户01为外部资源02为角色用户03为内置用户-->
+		<if test="disabled!=null and disabled!=''">,disabled</if> <!--是可用00不可用01可用-->
+		<if test="style!=null and style!=''">,style</if> <!--个人样式-->
+		<if test="creatby!=null and creatby!=''">,creatby</if> <!--由谁创建 关联表SM_Users的UserId字段-->
+		<if test="code!=null and code!=''">,code</if> <!--用户编号-->
+		<if test="marrid!=null and marrid!=''">,marrid</if> <!--婚否(00为已婚，01为未婚)-->
+		<if test="countrytag!=null and countrytag!=''">,countrytag</if> <!--国籍-->
+		<if test="nationtag!=null and nationtag!=''">,nationtag</if> <!--民族-->
+		<if test="handletag!=null and handletag!=''">,handletag</if> <!--头衔-->
+		<if test="postiontag!=null and postiontag!=''">,postiontag</if> <!--职位-->
+		<if test="postionname!=null and postionname!=''">,postionname</if> <!--职位名称-->
+		<if test="professionaltag!=null and professionaltag!=''">,professionaltag</if> <!---->
+		<if test="workday!=null and workday!=''">,workday</if> <!--参加工作日期-->
+		<if test="entersday!=null and entersday!=''">,entersday</if> <!--入职日期-->
+		<if test="leavesday!=null and leavesday!=''">,leavesday</if> <!--离职日期-->
+		<if test="familyphone!=null and familyphone!=''">,familyphone</if> <!--家庭电话-->
+		<if test="stafftype!=null and stafftype!=''">,stafftype</if> <!--员工类型-->
+		<if test="checkdirection!=null and checkdirection!=''">,checkdirection</if> <!---->
+		<if test="fame!=null and fame!=''">,fame</if> <!---->
+		<if test="businessname!=null and businessname!=''">,businessname</if> <!---->
+		<if test="unitcode!=null and unitcode!=''">,unitcode</if> <!---->
+		<if test="permitcode!=null and permitcode!=''">,permitcode</if> <!---->
+		<if test="taxcode!=null and taxcode!=''">,taxcode</if> <!---->
+		<if test="registeradress!=null and registeradress!=''">,registeradress</if> <!---->
+		<if test="registermoney!=null and registermoney!=''">,registermoney</if> <!---->
+		<if test="unionphone!=null and unionphone!=''">,unionphone</if> <!---->
+		<if test="isoutside!=null and isoutside!=''">,isoutside</if> <!---->
+		<if test="createdate!=null and createdate!=''">,createdate</if> <!---->
+		<if test="iscenter!=null and iscenter!=''">,iscenter</if> <!---->
+		<if test="paperworktype!=null and paperworktype!=''">,paperworktype</if> <!--证件类型-->
+		<if test="paperworknumber!=null and paperworknumber!=''">,paperworknumber</if> <!--证件号码-->
+		<if test="paperworknumberatt!=null and paperworknumberatt!=''">,paperworknumberatt</if> <!--证件扫描件-->
+		<if test="workdepartment!=null and workdepartment!=''">,workdepartment</if> <!--工作部门-->
+		<if test="researchfield!=null and researchfield!=''">,researchfield</if> <!--研究领域-->
+		<if test="other!=null and other!=''">,other</if> <!--其他信息-->
+		<if test="region!=null and region!=''">,region</if> <!--地区-->
+		<if test="resume!=null and resume!=''">,resume</if> <!-- 工作简历-->
+		<if test="photo!=null and photo!=''">,photo</if> <!--照片-->
+		<if test="specialty!=null and specialty!=''">,specialty</if> <!--所学专长-->
+		<if test="age!=null and age!=''">,age</if> <!--年龄-->
+		<if test="participate!=null and participate!=''">,participate</if> <!--曾参与评估课题-->
+		<if test="evaluate!=null and evaluate!=''">,evaluate</if> <!--专家评价-->
+		<if test="isretirement!=null and isretirement!=''">,isretirement</if> <!--是否退休-->
+		<if test="bankofdeposit!=null and bankofdeposit!=''">,bankofdeposit</if> <!--开户行-->
+		<if test="accountname!=null and accountname!=''">,accountname</if> <!--开户名-->
+		<if test="accountnumber!=null and accountnumber!=''">,accountnumber</if> <!--银行卡号-->
+		<if test="isexpert!=null and isexpert!=''">,isexpert</if> <!---->
+		<if test="number!=null and number!=''">,number</if> <!--人员编号-->
+		<if test="englishname!=null and englishname!=''">,englishname</if> <!---->
+		<if test="oldname!=null and oldname!=''">,oldname</if> <!---->
+		<if test="jszwrmsj!=null and jszwrmsj!=''">,jszwrmsj</if> <!---->
+		<if test="nationality!=null and nationality!=''">,nationality</if> <!--国籍,YM-->
+		<if test="addressphone!=null and addressphone!=''">,addressphone</if> <!---->
+		<if test="addressportraiture!=null and addressportraiture!=''">,addressportraiture</if> <!---->
+		<if test="bleeper!=null and bleeper!=''">,bleeper</if> <!--传呼机-->
+		<if test="personweb!=null and personweb!=''">,personweb</if> <!--个人网址-->
+		<if test="isbodao!=null and isbodao!=''">,isbodao</if> <!--是否为博导-->
+		<if test="language1!=null and language1!=''">,language1</if> <!--第一外语，FS-->
+		<if test="language1lever!=null and language1lever!=''">,language1lever</if> <!--第一外语程度，QD-->
+		<if test="language2!=null and language2!=''">,language2</if> <!--第二外语，FS-->
+		<if test="language2lever!=null and language2lever!=''">,language2lever</if> <!--第二外语程度，QD-->
+		<if test="learningstate!=null and learningstate!=''">,learningstate</if> <!--进修情况-->
+		<if test="academicactivities!=null and academicactivities!=''">,academicactivities</if> <!--学术兼职-->
+		<if test="speciality!=null and speciality!=''">,speciality</if> <!--特长-->
+		<if test="jszw!=null and jszw!=''">,jszw</if> <!---->
+		<if test="mqzt!=null and mqzt!=''">,mqzt</if> <!---->
+		<if test="score!=null and score!=''">,score</if> <!---->
+		<if test="head!=null and head!=''">,head</if> <!--负责人-->
+		<if test="approval!=null and approval!=''">,approval</if> <!--批准机构-->
+		<if test="establishdate!=null and establishdate!=''">,establishdate</if> <!--成立时间-->
+		<if test="contacts!=null and contacts!=''">,contacts</if> <!--联系人-->
+		<if test="telephone!=null and telephone!=''">,telephone</if> <!--电话-->
+		<if test="mechanism!=null and mechanism!=''">,mechanism</if> <!--机构简介-->
+		<if test="affiliationroom!=null and affiliationroom!=''">,affiliationroom</if> <!--所属教研室-->
+		<if test="personnelunit!=null and personnelunit!=''">,personnelunit</if> <!--人事所在单位-->
+		<if test="politicslook!=null and politicslook!=''">,politicslook</if> <!--政治面貌-->
+		<if test="isstatistics!=null and isstatistics!=''">,isstatistics</if> <!--是否统计-->
+		<if test="personalbrief!=null and personalbrief!=''">,personalbrief</if> <!--个人简介-->
+		<if test="disciplines!=null and disciplines!=''">,disciplines</if> <!--学科门类-->
+		<if test="termstarttime!=null and termstarttime!=''">,termstarttime</if> <!--账户启用时间-->
+		<if test="termendtime!=null and termendtime!=''">,termendtime</if> <!--账户停用时间-->
+		<if test="qq!=null and qq!=''">,qq</if> <!---->
+		<if test="msn!=null and msn!=''">,msn</if> <!---->
+		<if test="sinoss_code!=null and sinoss_code!=''">,sinoss_code</if> <!---->
+		<if test="subjecttype02name!=null and subjecttype02name!=''">,subjecttype02name</if> <!---->
+		<if test="subjecttype03name!=null and subjecttype03name!=''">,subjecttype03name</if> <!---->
+		<if test="subjecttypename!=null and subjecttypename!=''">,subjecttypename</if> <!---->
+		<if test="synchroremark!=null and synchroremark!=''">,synchroremark</if> <!---->
+		<if test="lastlogintime!=null and lastlogintime!=''">,lastlogintime</if> <!---->
+		<if test="fullpinyin!=null and fullpinyin!=''">,fullpinyin</if> <!---->
+		<if test="simplepinyin!=null and simplepinyin!=''">,simplepinyin</if> <!---->
+		<if test="wrongtimes!=null and wrongtimes!=''">,wrongtimes</if> <!---->
+		<if test="islock!=null and islock!=''">,islock</if> <!---->
+		<if test="locktime!=null and locktime!=''">,locktime</if> <!---->
+	</sql>
+
+	<sql id="Insert_Parmeter">
+		<if test="keysysid!=null and keysysid!=''">,#{keysysid}</if>	<!---->
+		<if test="loginname!=null and loginname!=''">,#{loginname}</if>	<!--账号-->
+		<if test="truename!=null and truename!=''">,#{truename}</if>	<!--姓名-->
+		<if test="jobno!=null and jobno!=''">,#{jobno}</if>	<!--教工号-->
+		<if test="affiliation!=null and affiliation!=''">,#{affiliation}</if>	<!--科研单位-->
+		<if test="departmentid!=null and departmentid!=''">,#{departmentid}</if>	<!--部门、院、系-->
+		<if test="departmentid!=null and departmentid!=''">,GETCODENAME('UM',#{departmentid})</if>
+		<if test="homeaddress!=null and homeaddress!=''">,#{homeaddress}</if>	<!--籍贯-->
+		<if test="sex!=null and sex!=''">,#{sex}</if>	<!--性别-->
+		<if test="idcard!=null and idcard!=''">,#{idcard}</if>	<!--证件号码-->
+		<if test="birthday!=null and birthday!=''">,STR_TO_DATE(#{birthday},'%Y-%m-%d')</if>	<!--出生日期-->
+		<if test="degreetag!=null and degreetag!=''">,#{degreetag}</if>	<!--最后学历-->
+		<if test="degree!=null and degree!=''">,#{degree}</if>	<!--最后学位-->
+		<if test="titlegrade!=null and titlegrade!=''">,#{titlegrade}</if>	<!--职称级别-->
+		<if test="title!=null and title!=''">,#{title}</if>	<!--职称-->
+		<if test="titletype!=null and titletype!=''">,#{titletype}</if>	<!--职务类别-->
+		<if test="joborientationdate!=null and joborientationdate!=''">,STR_TO_DATE(#{joborientationdate},'%Y-%m-%d')</if>	<!--定职日期-->
+		<if test="titletag!=null and titletag!=''">,#{titletag}</if>	<!--职务-->
+		<if test="politicalappearancetag!=null and politicalappearancetag!=''">,#{politicalappearancetag}</if>	<!--政治面貌-->
+		<if test="iscount!=null and iscount!=''">,#{iscount}</if>	<!--是否统计-->
+		<if test="systemtype!=null and systemtype!=''">,#{systemtype}</if>	<!--学科门类-->
+		<if test="subjecttype!=null and subjecttype!=''">,#{subjecttype}</if>	<!--一级学科-->
+		<if test="subjecttype!=null and subjecttype!=''">,GETCODENAME('PR',#{subjecttype})</if>
+		<if test="subjecttype02!=null and subjecttype02!=''">,#{subjecttype02}</if>	<!--二级学科-->
+		<if test="subjecttype02!=null and subjecttype02!=''">,GETCODENAME('PR',#{subjecttype02})</if>
+		<if test="subjecttype03!=null and subjecttype03!=''">,#{subjecttype03}</if>	<!--三级学科-->
+		<if test="subjecttype03!=null and subjecttype03!=''">,GETCODENAME('PR',#{subjecttype03})</if>
+		<if test="subject!=null and subject!=''">,#{subject}</if>	<!--研究方向-->
+		<if test="email!=null and email!=''">,#{email}</if>	<!--电子邮件-->
+		<if test="officephone!=null and officephone!=''">,#{officephone}</if>	<!--办公电话-->
+		<if test="fax!=null and fax!=''">,#{fax}</if>	<!--传真-->
+		<if test="mobilephone!=null and mobilephone!=''">,#{mobilephone}</if>	<!--手机-->
+		<if test="qqaccount!=null and qqaccount!=''">,#{qqaccount}</if>	<!--QQ帐号-->
+		<if test="address!=null and address!=''">,#{address}</if>	<!--联系地址-->
+		<if test="zipcode!=null and zipcode!=''">,#{zipcode}</if>	<!--邮编-->
+		<if test="remark!=null and remark!=''">,#{remark}</if>	<!--简介-->
+		<if test="remark2!=null and remark2!=''">,#{remark2}</if>	<!--获得荣誉-->
+		<if test="password!=null and password!=''">,#{password}</if>	<!--登录密码-->
+		<if test="oldpassword!=null and oldpassword!=''">,#{oldpassword}</if>	<!--旧密码  只是用于自己修改密码-->
+		<if test="secondpassword!=null and secondpassword!=''">,#{secondpassword}</if>	<!--第二次密码  只是用于自己修改密码-->
+		<if test="orderid!=null and orderid!=''">,#{orderid}</if>	<!--排序ID-->
+		<if test="usertype!=null and usertype!=''">,#{usertype}</if>	<!--用户类型00为普通用户01为外部资源02为角色用户03为内置用户-->
+		<if test="disabled!=null and disabled!=''">,#{disabled}</if>	<!--是可用00不可用01可用-->
+		<if test="style!=null and style!=''">,#{style}</if>	<!--个人样式-->
+		<if test="creatby!=null and creatby!=''">,#{creatby}</if>	<!--由谁创建 关联表SM_Users的UserId字段-->
+		<if test="code!=null and code!=''">,#{code}</if>	<!--用户编号-->
+		<if test="marrid!=null and marrid!=''">,#{marrid}</if>	<!--婚否(00为已婚，01为未婚)-->
+		<if test="countrytag!=null and countrytag!=''">,#{countrytag}</if>	<!--国籍-->
+		<if test="nationtag!=null and nationtag!=''">,#{nationtag}</if>	<!--民族-->
+		<if test="handletag!=null and handletag!=''">,#{handletag}</if>	<!--头衔-->
+		<if test="postiontag!=null and postiontag!=''">,#{postiontag}</if>	<!--职位-->
+		<if test="postionname!=null and postionname!=''">,#{postionname}</if>	<!--职位名称-->
+		<if test="professionaltag!=null and professionaltag!=''">,#{professionaltag}</if>	<!---->
+		<if test="workday!=null and workday!=''">,#{workday}</if>	<!--参加工作日期-->
+		<if test="entersday!=null and entersday!=''">,#{entersday}</if>	<!--入职日期-->
+		<if test="leavesday!=null and leavesday!=''">,#{leavesday}</if>	<!--离职日期-->
+		<if test="familyphone!=null and familyphone!=''">,#{familyphone}</if>	<!--家庭电话-->
+		<if test="stafftype!=null and stafftype!=''">,#{stafftype}</if>	<!--员工类型-->
+		<if test="checkdirection!=null and checkdirection!=''">,#{checkdirection}</if>	<!---->
+		<if test="fame!=null and fame!=''">,#{fame}</if>	<!---->
+		<if test="businessname!=null and businessname!=''">,#{businessname}</if>	<!---->
+		<if test="unitcode!=null and unitcode!=''">,#{unitcode}</if>	<!---->
+		<if test="permitcode!=null and permitcode!=''">,#{permitcode}</if>	<!---->
+		<if test="taxcode!=null and taxcode!=''">,#{taxcode}</if>	<!---->
+		<if test="registeradress!=null and registeradress!=''">,#{registeradress}</if>	<!---->
+		<if test="registermoney!=null and registermoney!=''">,#{registermoney}</if>	<!---->
+		<if test="unionphone!=null and unionphone!=''">,#{unionphone}</if>	<!---->
+		<if test="isoutside!=null and isoutside!=''">,#{isoutside}</if>	<!---->
+		<if test="createdate!=null and createdate!=''">,#{createdate}</if>	<!---->
+		<if test="iscenter!=null and iscenter!=''">,#{iscenter}</if>	<!---->
+		<if test="paperworktype!=null and paperworktype!=''">,#{paperworktype}</if>	<!--证件类型-->
+		<if test="paperworknumber!=null and paperworknumber!=''">,#{paperworknumber}</if>	<!--证件号码-->
+		<if test="paperworknumberatt!=null and paperworknumberatt!=''">,#{paperworknumberatt}</if>	<!--证件扫描件-->
+		<if test="workdepartment!=null and workdepartment!=''">,#{workdepartment}</if>	<!--工作部门-->
+		<if test="researchfield!=null and researchfield!=''">,#{researchfield}</if>	<!--研究领域-->
+		<if test="other!=null and other!=''">,#{other}</if>	<!--其他信息-->
+		<if test="region!=null and region!=''">,#{region}</if>	<!--地区-->
+		<if test="resume!=null and resume!=''">,#{resume}</if>	<!-- 工作简历-->
+		<if test="photo!=null and photo!=''">,#{photo}</if>	<!--照片-->
+		<if test="specialty!=null and specialty!=''">,#{specialty}</if>	<!--所学专长-->
+		<if test="age!=null and age!=''">,#{age}</if>	<!--年龄-->
+		<if test="participate!=null and participate!=''">,#{participate}</if>	<!--曾参与评估课题-->
+		<if test="evaluate!=null and evaluate!=''">,#{evaluate}</if>	<!--专家评价-->
+		<if test="isretirement!=null and isretirement!=''">,#{isretirement}</if>	<!--是否退休-->
+		<if test="bankofdeposit!=null and bankofdeposit!=''">,#{bankofdeposit}</if>	<!--开户行-->
+		<if test="accountname!=null and accountname!=''">,#{accountname}</if>	<!--开户名-->
+		<if test="accountnumber!=null and accountnumber!=''">,#{accountnumber}</if>	<!--银行卡号-->
+		<if test="isexpert!=null and isexpert!=''">,#{isexpert}</if>	<!---->
+		<if test="number!=null and number!=''">,#{number}</if>	<!--人员编号-->
+		<if test="englishname!=null and englishname!=''">,#{englishname}</if>	<!---->
+		<if test="oldname!=null and oldname!=''">,#{oldname}</if>	<!---->
+		<if test="jszwrmsj!=null and jszwrmsj!=''">,#{jszwrmsj}</if>	<!---->
+		<if test="nationality!=null and nationality!=''">,#{nationality}</if>	<!--国籍,YM-->
+		<if test="addressphone!=null and addressphone!=''">,#{addressphone}</if>	<!---->
+		<if test="addressportraiture!=null and addressportraiture!=''">,#{addressportraiture}</if>	<!---->
+		<if test="bleeper!=null and bleeper!=''">,#{bleeper}</if>	<!--传呼机-->
+		<if test="personweb!=null and personweb!=''">,#{personweb}</if>	<!--个人网址-->
+		<if test="isbodao!=null and isbodao!=''">,#{isbodao}</if>	<!--是否为博导-->
+		<if test="language1!=null and language1!=''">,#{language1}</if>	<!--第一外语，FS-->
+		<if test="language1lever!=null and language1lever!=''">,#{language1lever}</if>	<!--第一外语程度，QD-->
+		<if test="language2!=null and language2!=''">,#{language2}</if>	<!--第二外语，FS-->
+		<if test="language2lever!=null and language2lever!=''">,#{language2lever}</if>	<!--第二外语程度，QD-->
+		<if test="learningstate!=null and learningstate!=''">,#{learningstate}</if>	<!--进修情况-->
+		<if test="academicactivities!=null and academicactivities!=''">,#{academicactivities}</if>	<!--学术兼职-->
+		<if test="speciality!=null and speciality!=''">,#{speciality}</if>	<!--特长-->
+		<if test="jszw!=null and jszw!=''">,#{jszw}</if>	<!---->
+		<if test="mqzt!=null and mqzt!=''">,#{mqzt}</if>	<!---->
+		<if test="score!=null and score!=''">,#{score}</if>	<!---->
+		<if test="head!=null and head!=''">,#{head}</if>	<!--负责人-->
+		<if test="approval!=null and approval!=''">,#{approval}</if>	<!--批准机构-->
+		<if test="establishdate!=null and establishdate!=''">,#{establishdate}</if>	<!--成立时间-->
+		<if test="contacts!=null and contacts!=''">,#{contacts}</if>	<!--联系人-->
+		<if test="telephone!=null and telephone!=''">,#{telephone}</if>	<!--电话-->
+		<if test="mechanism!=null and mechanism!=''">,#{mechanism}</if>	<!--机构简介-->
+		<if test="affiliationroom!=null and affiliationroom!=''">,#{affiliationroom}</if>	<!--所属教研室-->
+		<if test="personnelunit!=null and personnelunit!=''">,#{personnelunit}</if>	<!--人事所在单位-->
+		<if test="politicslook!=null and politicslook!=''">,#{politicslook}</if>	<!--政治面貌-->
+		<if test="isstatistics!=null and isstatistics!=''">,#{isstatistics}</if>	<!--是否统计-->
+		<if test="personalbrief!=null and personalbrief!=''">,#{personalbrief}</if>	<!--个人简介-->
+		<if test="disciplines!=null and disciplines!=''">,#{disciplines}</if>	<!--学科门类-->
+		<if test="termstarttime!=null and termstarttime!=''">,#{termstarttime}</if>	<!--账户启用时间-->
+		<if test="termendtime!=null and termendtime!=''">,#{termendtime}</if>	<!--账户停用时间-->
+		<if test="qq!=null and qq!=''">,#{qq}</if>	<!---->
+		<if test="msn!=null and msn!=''">,#{msn}</if>	<!---->
+		<if test="sinoss_code!=null and sinoss_code!=''">,#{sinoss_code}</if>	<!---->
+		<if test="subjecttype02name!=null and subjecttype02name!=''">,#{subjecttype02name}</if>	<!---->
+		<if test="subjecttype03name!=null and subjecttype03name!=''">,#{subjecttype03name}</if>	<!---->
+		<if test="subjecttypename!=null and subjecttypename!=''">,#{subjecttypename}</if>	<!---->
+		<if test="synchroremark!=null and synchroremark!=''">,#{synchroremark}</if>	<!---->
+		<if test="lastlogintime!=null and lastlogintime!=''">,#{lastlogintime}</if>	<!---->
+		<if test="fullpinyin!=null and fullpinyin!=''">,#{fullpinyin}</if>	<!---->
+		<if test="simplepinyin!=null and simplepinyin!=''">,#{simplepinyin}</if>	<!---->
+		<if test="wrongtimes!=null and wrongtimes!=''">,#{wrongtimes}</if>	<!---->
+		<if test="islock!=null and islock!=''">,#{islock}</if>	<!---->
+		<if test="locktime!=null and locktime!=''">,#{locktime}</if>	<!---->
+	</sql>
+
+	<!-- 新增表信息  -->
+	<insert id="Insert_SM_Users" parameterType="com.ytxd.model.SystemManage.SM_Users" >
+		INSERT INTO sm_users
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Column" />
+		</trim>
+		VALUES
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Parmeter" />
+		</trim>
+		<selectKey resultType="java.lang.String" keyProperty="userid">
+			SELECT LAST_INSERT_ID() AS userid FROM DUAL
+		</selectKey>
+	</insert>
+
+	<!-- 修改表  set 参数  -->
+	<sql id="Update_Parmeter">
+		<if test="keysysid!=null">,keysysid=#{keysysid}</if>
+		<if test="loginname!=null">,loginname=#{loginname}</if>
+		<if test="truename!=null">,truename=#{truename}</if>
+		<if test="jobno!=null">,jobno=#{jobno}</if>
+		<if test="affiliation!=null">,affiliation=#{affiliation}</if>
+		<if test="departmentid!=null">,departmentid=#{departmentid}</if>
+		<if test="homeaddress!=null">,homeaddress=#{homeaddress}</if>
+		<if test="sex!=null">,sex=#{sex}</if>
+		<if test="idcard!=null">,idcard=#{idcard}</if>
+		<if test="birthday!=null">,birthday=STR_TO_DATE(#{birthday},'%Y-%m-%d')</if>
+		<if test="degreetag!=null">,degreetag=#{degreetag}</if>
+		<if test="degree!=null">,degree=#{degree}</if>
+		<if test="titlegrade!=null">,titlegrade=#{titlegrade}</if>
+		<if test="title!=null">,title=#{title}</if>
+		<if test="titletype!=null">,titletype=#{titletype}</if>
+		<if test="joborientationdate!=null">,joborientationdate=STR_TO_DATE(#{joborientationdate},'%Y-%m-%d')</if>
+		<if test="titletag!=null">,titletag=#{titletag}</if>
+		<if test="politicalappearancetag!=null">,politicalappearancetag=#{politicalappearancetag}</if>
+		<if test="iscount!=null">,iscount=#{iscount}</if>
+		<if test="systemtype!=null">,systemtype=#{systemtype}</if>
+		<if test="subjecttype!=null">,subjecttype=#{subjecttype}</if>
+		<if test="subjecttype!=null">,subjecttypename=GETCODENAME('PR',#{subjecttype})</if>
+		<if test="subjecttype02!=null">,subjecttype02=#{subjecttype02}</if>
+		<if test="subjecttype02!=null">,subjecttype02name=GETCODENAME('PR',#{subjecttype02})</if>
+		<if test="subjecttype03!=null">,subjecttype03=#{subjecttype03}</if>
+		<if test="subjecttype03!=null">,subjecttype03name=GETCODENAME('PR',#{subjecttype03})</if>
+		<if test="subject!=null">,subject=#{subject}</if>
+		<if test="email!=null">,email=#{email}</if>
+		<if test="officephone!=null">,officephone=#{officephone}</if>
+		<if test="fax!=null">,fax=#{fax}</if>
+		<if test="mobilephone!=null">,mobilephone=#{mobilephone}</if>
+		<if test="qqaccount!=null">,qqaccount=#{qqaccount}</if>
+		<if test="address!=null">,address=#{address}</if>
+		<if test="zipcode!=null">,zipcode=#{zipcode}</if>
+		<if test="remark!=null">,remark=#{remark}</if>
+		<if test="remark2!=null">,remark2=#{remark2}</if>
+		<if test="password!=null">,password=#{password}</if>
+		<if test="oldpassword!=null">,oldpassword=#{oldpassword}</if>
+		<if test="secondpassword!=null">,secondpassword=#{secondpassword}</if>
+		<if test="orderid!=null">,orderid=#{orderid}</if>
+		<if test="usertype!=null">,usertype=#{usertype}</if>
+		<if test="disabled!=null">,disabled=#{disabled}</if>
+		<if test="style!=null">,style=#{style}</if>
+		<if test="creatby!=null">,creatby=#{creatby}</if>
+		<if test="code!=null">,code=#{code}</if>
+		<if test="marrid!=null">,marrid=#{marrid}</if>
+		<if test="countrytag!=null">,countrytag=#{countrytag}</if>
+		<if test="nationtag!=null">,nationtag=#{nationtag}</if>
+		<if test="handletag!=null">,handletag=#{handletag}</if>
+		<if test="postiontag!=null">,postiontag=#{postiontag}</if>
+		<if test="postionname!=null">,postionname=#{postionname}</if>
+		<if test="professionaltag!=null">,professionaltag=#{professionaltag}</if>
+		<if test="workday!=null">,workday=#{workday}</if>
+		<if test="entersday!=null">,entersday=#{entersday}</if>
+		<if test="leavesday!=null">,leavesday=#{leavesday}</if>
+		<if test="familyphone!=null">,familyphone=#{familyphone}</if>
+		<if test="stafftype!=null">,stafftype=#{stafftype}</if>
+		<if test="checkdirection!=null">,checkdirection=#{checkdirection}</if>
+		<if test="fame!=null">,fame=#{fame}</if>
+		<if test="businessname!=null">,businessname=#{businessname}</if>
+		<if test="unitcode!=null">,unitcode=#{unitcode}</if>
+		<if test="permitcode!=null">,permitcode=#{permitcode}</if>
+		<if test="taxcode!=null">,taxcode=#{taxcode}</if>
+		<if test="registeradress!=null">,registeradress=#{registeradress}</if>
+		<if test="registermoney!=null">,registermoney=#{registermoney}</if>
+		<if test="unionphone!=null">,unionphone=#{unionphone}</if>
+		<if test="isoutside!=null">,isoutside=#{isoutside}</if>
+		<if test="createdate!=null">,createdate=#{createdate}</if>
+		<if test="iscenter!=null">,iscenter=#{iscenter}</if>
+		<if test="paperworktype!=null">,paperworktype=#{paperworktype}</if>
+		<if test="paperworknumber!=null">,paperworknumber=#{paperworknumber}</if>
+		<if test="paperworknumberatt!=null">,paperworknumberatt=#{paperworknumberatt}</if>
+		<if test="workdepartment!=null">,workdepartment=#{workdepartment}</if>
+		<if test="researchfield!=null">,researchfield=#{researchfield}</if>
+		<if test="other!=null">,other=#{other}</if>
+		<if test="region!=null">,region=#{region}</if>
+		<if test="resume!=null">,resume=#{resume}</if>
+		<if test="photo!=null">,photo=#{photo}</if>
+		<if test="specialty!=null">,specialty=#{specialty}</if>
+		<if test="age!=null">,age=#{age}</if>
+		<if test="participate!=null">,participate=#{participate}</if>
+		<if test="evaluate!=null">,evaluate=#{evaluate}</if>
+		<if test="isretirement!=null">,isretirement=#{isretirement}</if>
+		<if test="bankofdeposit!=null">,bankofdeposit=#{bankofdeposit}</if>
+		<if test="accountname!=null">,accountname=#{accountname}</if>
+		<if test="accountnumber!=null">,accountnumber=#{accountnumber}</if>
+		<if test="isexpert!=null">,isexpert=#{isexpert}</if>
+		<if test="number!=null">,number=#{number}</if>
+		<if test="englishname!=null">,englishname=#{englishname}</if>
+		<if test="oldname!=null">,oldname=#{oldname}</if>
+		<if test="jszwrmsj!=null">,jszwrmsj=#{jszwrmsj}</if>
+		<if test="nationality!=null">,nationality=#{nationality}</if>
+		<if test="addressphone!=null">,addressphone=#{addressphone}</if>
+		<if test="addressportraiture!=null">,addressportraiture=#{addressportraiture}</if>
+		<if test="bleeper!=null">,bleeper=#{bleeper}</if>
+		<if test="personweb!=null">,personweb=#{personweb}</if>
+		<if test="isbodao!=null">,isbodao=#{isbodao}</if>
+		<if test="language1!=null">,language1=#{language1}</if>
+		<if test="language1lever!=null">,language1lever=#{language1lever}</if>
+		<if test="language2!=null">,language2=#{language2}</if>
+		<if test="language2lever!=null">,language2lever=#{language2lever}</if>
+		<if test="learningstate!=null">,learningstate=#{learningstate}</if>
+		<if test="academicactivities!=null">,academicactivities=#{academicactivities}</if>
+		<if test="speciality!=null">,speciality=#{speciality}</if>
+		<if test="jszw!=null">,jszw=#{jszw}</if>
+		<if test="mqzt!=null">,mqzt=#{mqzt}</if>
+		<if test="score!=null">,score=#{score}</if>
+		<if test="head!=null">,head=#{head}</if>
+		<if test="approval!=null">,approval=#{approval}</if>
+		<if test="establishdate!=null">,establishdate=#{establishdate}</if>
+		<if test="contacts!=null">,contacts=#{contacts}</if>
+		<if test="telephone!=null">,telephone=#{telephone}</if>
+		<if test="mechanism!=null">,mechanism=#{mechanism}</if>
+		<if test="affiliationroom!=null">,affiliationroom=#{affiliationroom}</if>
+		<if test="personnelunit!=null">,personnelunit=#{personnelunit}</if>
+		<if test="politicslook!=null">,politicslook=#{politicslook}</if>
+		<if test="isstatistics!=null">,isstatistics=#{isstatistics}</if>
+		<if test="personalbrief!=null">,personalbrief=#{personalbrief}</if>
+		<if test="disciplines!=null">,disciplines=#{disciplines}</if>
+		<if test="termstarttime!=null">,termstarttime=#{termstarttime}</if>
+		<if test="termendtime!=null">,termendtime=#{termendtime}</if>
+		<if test="qq!=null">,qq=#{qq}</if>
+		<if test="msn!=null">,msn=#{msn}</if>
+		<if test="sinoss_code!=null">,sinoss_code=#{sinoss_code}</if>
+		<if test="subjecttype02name!=null">,subjecttype02name=#{subjecttype02name}</if>
+		<if test="subjecttype03name!=null">,subjecttype03name=#{subjecttype03name}</if>
+		<if test="subjecttypename!=null">,subjecttypename=#{subjecttypename}</if>
+		<if test="synchroremark!=null">,synchroremark=#{synchroremark}</if>
+		<if test="lastlogintime!=null">,lastlogintime=#{lastlogintime}</if>
+		<if test="fullpinyin!=null">,fullpinyin=#{fullpinyin}</if>
+		<if test="simplepinyin!=null">,simplepinyin=#{simplepinyin}</if>
+		<if test="wrongtimes!=null">,wrongtimes=#{wrongtimes}</if>
+		<if test="islock!=null">,islock=#{islock}</if>
+		<if test="locktime!=null">,locktime=#{locktime}</if>
+	</sql>
+
+	<!-- 修改表信息 -->
+	<update id="Update_SM_Users" parameterType="com.ytxd.model.SystemManage.SM_Users">
+		UPDATE sm_users set truename=truename WHERE userid=#{userid}
+	</update>
+	<!-- <update id="Update_SM_Users" parameterType="com.ytxd.model.SystemManage.SM_Users">
+		UPDATE sm_users
+		<set>
+			<trim prefixOverrides=",">
+			<include refid="Update_Parmeter" />
+			</trim>
+		</set>
+		WHERE userid IN 
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+	        #{item}
+	    </foreach> 
+	</update> -->
+
+	<!-- 删除表信息 -->
+	<delete id="Delete_SM_Users" parameterType="java.lang.String">
+		DELETE FROM sm_users
+		WHERE userid IN 
+		<foreach collection="userid" index="index" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach> 
+	</delete>
+
+
+	<!-- **扩展********************************************************************** -->
+	<!-- <select id="Login" parameterType="com.ytxd.model.SystemManage.SM_Users" resultType="com.ytxd.model.SystemManage.SM_Users">
+	select * 
+	from SM_Users 
+	where (DepartmentId in (select DepartmentId from SM_Department where Status='00') or DepartmentId is null) 
+	and Disabled in ('01','11') 
+	and LoginName=#{_parameter} 
+	</select> -->
+	
+	<select id="Select_Power_Logo" parameterType="java.lang.String" resultType="java.util.HashMap">
+	select distinct logo 
+	from sm_functiontree 
+	where logo is not null and type='02' and disabled='01' 
+	and id in (select functionid from sm_users_function where (userid=#{userid} or userid in (select roleid from sm_users_role where userid=#{userid}))) 
+	order by logo
+	</select>
+	<select id="Select_User_Role" parameterType="java.lang.String" resultType="java.lang.String">
+	select GROUP_CONCAT(distinct roleid) roleid from sm_users_role where userid=#{userid}
+	</select>
+	
+	
+	<!-- 模糊查询用户 -->
+	<select id="Select_SM_Users_Combobox" resultType="java.util.LinkedHashMap">
+		select * from (
+		select userid,truename,ifnull(jobno,'') jobno,sm_users.departmentid,ifnull(sm_department.nodename,'') departmentidname,
+		sm_users.sex,sm_users.Birthday,sm_users.DegreeTag,sm_users.Degree
+		from sm_users 
+		left join sm_department on sm_department.departmentid=sm_users.departmentid 
+		where usertype='00' and disabled in ('01','10') 
+		<if test="userid!=null and userid.length>0"> and sm_users.userid in
+			<foreach collection="userid" index="index" item="item" open="(" separator="," close=")">
+	        	#{item}
+	        </foreach> 
+		</if>
+		<if test="truename!=null and truename!=''"> and (truename like CONCAT('%',#{truename},'%') or fullpinyin like CONCAT('%',#{truename},'%') or simplepinyin like CONCAT('%',#{truename},'%')) </if>
+		order by fullpinyin) sm_users 
+		LIMIT 0, 100 
+	</select>
+	<select id="Select_SM_Users_Selected" resultType="java.util.LinkedHashMap">
+		select * from (
+		select userid id,userid,truename,ifnull(jobno,'') jobno,sm_users.departmentid,ifnull(sm_department.nodename,'') departmentidname,
+		sm_users.sex,sm_users.birthday,sm_users.degreetag,sm_users.Degree,sm_users.handletag,sm_users.professionaltag,titletagname1,unittype
+		,school
+		from sm_users
+		left join sm_department on sm_department.departmentid=sm_users.departmentid
+		where usertype='00' and disabled in ('01','10')
+		<if test="userid!=null and userid != '' "> and sm_users.userid in
+			<foreach collection="userid.split(',')" index="index" item="item" open="(" separator="," close=")">
+				#{item}
+			</foreach>
+		</if>
+		<if test="truename!=null and truename!=''"> and (truename like CONCAT('%',#{truename},'%') or fullpinyin like CONCAT('%',#{truename},'%') or simplepinyin like CONCAT('%',#{truename},'%')) </if>
+		<if test="departmentid!=null and departmentid!=''"> and sm_users.departmentid in
+		 <foreach collection="departmentid.split(',')" item="departmentid" open="(" separator="," close=")">
+			 #{departmentid}
+		 </foreach> </if>
+		<if test="personcode!=null and personcode!=''"> and sm_users.personcode = #{personcode}</if>
+		order by fullpinyin) sm_users
+		LIMIT 0, 100
+	</select>
+	
+	<!-- 删除用户角色权限  -->
+	<delete id="Delete_SM_Users_Role" parameterType="com.ytxd.model.SystemManage.SM_Users" >
+		DELETE FROM sm_users_role 
+		WHERE userid=#{userid} 
+		<if test="useridnotarray!=null and useridnotarray!=''">
+			and roleid IN 
+			<foreach collection="useridnotarray" index="index" item="item" open="(" separator="," close=")">
+	        	#{item}
+	        </foreach> 
+        </if>
+		and roleid not IN 
+		<foreach collection="allrolearray" index="index" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach>  
+	</delete>
+	<!-- 给用户角色权限  -->
+	<insert id="Insert_SM_Users_Role" parameterType="com.ytxd.model.SystemManage.SM_Users" >
+		INSERT INTO sm_users_role(userid,roleid)
+		SELECT #{userid} userid,userid roleid 
+		FROM sm_users 
+		WHERE userid IN 
+		<foreach collection="allrolearray" index="index" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach> and userid not in (select roleid from sm_users_role where userid=#{userid}) 
+	</insert>
+	
+	<!-- 给多个用户赋一个角色权限  -->
+	<insert id="Insert_More_Users_Role" parameterType="com.ytxd.model.SystemManage.SM_Users" >
+		INSERT INTO sm_users_role(userid,roleid)
+		SELECT userid userid,#{allrole} roleid 
+		FROM sm_users 
+		WHERE userid in <!-- (#{userid}) -->
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach> 
+		 and userid not in (select userid from sm_users_role where roleid IN 
+		<foreach collection="allrolearray" index="index" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach> ) 
+	</insert>
+	<!-- 删除多个用户的同一个角色权限  -->
+	<delete id="Delete_More_Users_Role" parameterType="com.ytxd.model.SystemManage.SM_Users" >
+		DELETE FROM sm_users_role 
+		WHERE userid in 
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach> 
+        and roleid = #{allrole} 
+	</delete>
+	
+	<!-- 删除用户角色权限RDM  -->
+	<delete id="Delete_SM_Users_Role_RDM" parameterType="com.ytxd.model.SystemManage.SM_Users" >
+		DELETE FROM rdm.t_sec_userrol  
+		WHERE userid=#{rdmid} and roleid not IN 
+		<foreach collection="rdmallrolearray" index="index" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach> 
+	</delete>
+	<!-- 给用户角色权限RDM  -->
+	<insert id="Insert_SM_Users_Role_RDM" parameterType="com.ytxd.model.SystemManage.SM_Users" >
+		INSERT INTO rdm.t_sec_userrol(id, userid, roleid, isvalid, creatorid, createdtime, modifyid, modifytime, objecttype)
+		SELECT lower(substr(SYS_GUID(),1,8)||'-'||substr(SYS_GUID(),9,4)||'-'||substr(SYS_GUID(),13,4)||'-'||substr(SYS_GUID(),17,4)||'-'||substr(SYS_GUID(),21,12)) guid,
+		#{rdmid} userid,id roleid,'Y' isvalid, '33ba99dc-dc20-4b4b-b398-9c5e78e5735f' creatorid, now createdtime, '33ba99dc-dc20-4b4b-b398-9c5e78e5735f' modifyid, now modifytime, '0' objecttype
+		FROM rdm.t_sec_rol 
+		WHERE id IN 
+		<foreach collection="rdmallrolearray" index="index" item="item" open="(" separator="," close=")">
+        	#{item}
+        </foreach>  and id not in (select roleid from rdm.t_sec_userrol where userid=#{rdmid}) 
+	</insert>
+	
+	<!--  查询 SM_USERS表信息  适用于需要到用户表中选择用户，同时会将已经选择的了的用户用mark标记出来  -->
+	<select id="Select_ChooseUser" parameterType="com.ytxd.model.SystemManage.SM_Users" resultType="com.ytxd.model.SystemManage.SM_Users">
+	<if test="page!=null and rows!=null and selectrowcount==null">
+		SELECT sm_users.* FROM 
+		(
+			SELECT sm_users.*, ROWNUM rownumauto 
+			FROM (
+	</if>
+				SELECT
+				<if test="selectrowcount==null">
+					<include refid="Select_Column" />,ifnull(mark.result,'00') mark <!-- 此用户是否一倍选择-->
+				</if>
+				<if test="selectrowcount!=null">
+					COUNT(1) selectrowcount 
+				</if>
+				FROM sm_users 
+				left join (select departmentid departmentidjoin,nodename nodenamejoin,orderid orderidjoin,status statusjoin from sm_department) departmentid on departmentid.departmentidjoin=sm_users.departmentid
+				left join (select code codejoin,description descriptionjoin,orderid orderidjoin from sm_codeitem where codeid='RN') systemtype on systemtype.codejoin=sm_users.systemtype
+				left join (select code codejoin,description descriptionjoin,orderid orderidjoin from sm_codeitem where codeid='FE') style on style.codejoin=sm_users.style 
+				left join (select code codejoin,description descriptionjoin,orderid orderidjoin from sm_codeitem where codeid='PC') sex on sex.codejoin=sm_users.sex 
+				left join (select code codejoin,description descriptionjoin,orderid orderidjoin from sm_codeitem where codeid='FJ') degreetag on degreetag.codejoin=sm_users.degreetag 
+				left join (select code codejoin,description descriptionjoin,orderid orderidjoin from sm_codeitem where codeid='QM') handletag on handletag.codejoin=sm_users.handletag
+				left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='DF') ExpertJob on ExpertJob.CodeJoin=SM_Users.ExpertJob 
+				left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='DE') ExpertTitle on ExpertTitle.CodeJoin=SM_Users.ExpertTitle 
+				left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='YV') ExpertType on ExpertType.CodeJoin=SM_Users.ExpertType  
+				left join (select userid idJoin,'01' result from ${mark}) mark on mark.idJoin = sm_users.userid <!-- #{mark}:封装了左连接的剩余SQL语句 -->
+				WHERE 1 = 1 
+					<include refid="Select_Parmeter" />
+					<if test="selectrowcount==null">
+						<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+					</if>
+	<if test="page!=null and rows!=null and selectrowcount==null">
+			) sm_users
+			WHERE ROWNUM &lt;= (#{page}*#{rows})
+		) sm_users
+		WHERE sm_users.rownumauto &gt;  (#{page}-1)*#{rows}
+	</if>
+	</select>
+	
+	<!--  查询评审专家表列表数据，属于特殊订制。  -->
+	<select id="Select_ReviewExpert" parameterType="com.ytxd.model.SystemManage.SM_Users" resultType="com.ytxd.model.SystemManage.SM_Users">
+	<if test="page!=null and rows!=null and selectrowcount==null">
+		SELECT sm_users.* FROM 
+		(
+			SELECT sm_users.*, ROWNUM rownumauto 
+			FROM (
+	</if>
+				SELECT
+				<if test="selectrowcount==null">
+					sm_users.userid,sm_users.truename,sm_users.mobilephone,sm_users.bankname,sm_users.banknumber,
+					sm_checklog.subject,sm_checklog.jobno 
+				</if>
+				<if test="selectrowcount!=null">
+					COUNT(1) selectrowcount 
+				</if>
+				FROM sm_users 
+				right join (select expertid,count(1) subject,GROUP_CONCAT(typeid) jobno from sm_checklog WHERE type=#{systemtype} and checktype=#{systemtypename} 
+				 <if test="mark!=null and mark!=''"> ${mark} </if>
+				 group by expertid) sm_checklog on sm_checklog.expertid=sm_users.Userid 
+				WHERE userid in (select userid from sm_users_role where roleid=3)
+					<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> -->
+					<if test="truename!=null and truename!=''"> and sm_users.truename like CONCAT('%',#{truename},'%') </if>
+					<if test="selectrowcount==null">
+						<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+					</if>
+	<if test="page!=null and rows!=null and selectrowcount==null">
+			) sm_users
+			WHERE ROWNUM &lt;= (#{page}*#{rows})
+		) sm_users
+		WHERE sm_users.rownumauto &gt;  (#{page}-1)*#{rows}
+	</if>
+	</select>
+</mapper>

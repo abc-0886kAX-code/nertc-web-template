@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Happy_River_Lake.HP_Scheme_Mapper">
+<!--	查询方案列表-->
+	<select id="Select_HP_Scheme_List" resultType="java.util.HashMap">
+		select * from (
+			select schemeid,schemeyear,schemename,remark,schemetips,score from HP_Scheme
+			<where>
+				<if test="schemeid != null and schemeid != '' ">and schemeid in
+					<foreach collection="schemeid.split(',')" item="id" open="(" separator="," close=")">
+						#{id}
+					</foreach>
+				</if>
+				<if test="schemeyear != null and schemeyear != '' ">
+					and schemeyear in
+					<foreach collection="schemeyear.split(',')" item="year" open="(" separator="," close=")">
+						#{year}
+					</foreach>
+				</if>
+				<if test="schemename != null and schemename != '' ">
+					and schemename like concat('%',#{schemename},'%')
+				</if>
+			</where>
+			order by schemeyear desc
+		) HP_Scheme
+	</select>
+<!--	插入方案-->
+	<sql id="Insert_Columns">
+		<if test="schemeyear != null and schemeyear != '' ">
+			,schemeyear
+		</if>
+		<if test="schemename != null and schemename != '' ">
+			,schemename
+		</if>
+		<if test="remark != null and remark != '' ">
+			,remark
+		</if>
+		<if test="schemetips != null and schemetips != '' ">
+			,schemetips
+		</if>
+	</sql>
+	<sql id="Insert_Params">
+		<if test="schemeyear != null and schemeyear != '' ">
+			,#{schemeyear}
+		</if>
+		<if test="schemename != null and schemename != '' ">
+			,#{schemename}
+		</if>
+		<if test="remark != null and remark != '' ">
+			,#{remark}
+		</if>
+		<if test="schemetips != null and schemetips != '' ">
+			,#{schemetips}
+		</if>
+	</sql>
+	<insert id="Insert_HP_Scheme">
+		insert into HP_Scheme(schemeid<include refid="Insert_Columns"/>) values(#{schemeid}<include refid="Insert_Params"/>)
+	</insert>
+<!--	修改-->
+	<sql id="Update_Params">
+		<if test="schemeyear != null  ">
+			,schemeyear = #{schemeyear}
+		</if>
+		<if test="schemename != null  ">
+			,schemename = #{schemename}
+		</if>
+		<if test="remark != null ">
+			,remark = #{remark}
+		</if>
+		<if test="schemetips != null ">
+			,schemetips = #{schemetips}
+		</if>
+	</sql>
+	<update id="Update_HP_Scheme">
+		update HP_Scheme set schemeid =schemeid <include refid="Update_Params"/>
+		where schemeid in
+		<foreach collection="schemeid.split(',')" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</update>
+<!--	删除-->
+	<delete id="Delete_HP_Scheme">
+		delete from HP_Scheme where schemeid in
+		<foreach collection="schemeid.split(',')" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+	<insert id="Insert_Initialization_Scheme_Ind">
+		insert into HP_Scheme_Indicator(schemeid,indid,indname,parentid,indtype,indrank,formuladesc,weight,formula,orderid,inrremake)
+		select #{schemeid},indid,indname,parentid,indtype,indrank,formuladesc,weight,formula,orderid,inrremake from HP_indicator_library
+		where  not exists (select 1 from HP_Scheme_Indicator where HP_Scheme_Indicator.indid = HP_indicator_library.indid and schemeid = #{schemeid})
+	</insert>
+	<insert id="Insert_HP_Scheme_Bulk">
+		insert into hp_scheme_bulk(schemeid,bulkid) select #{schemeid},bulkid from hp_eval_bulk limit 1
+	</insert>
+
+
+	<update id="Update_Default_Scheme_Score">
+		with temp  as (
+			select score from hp_scheme where schemeid != #{schemeid} order by schemeyear desc limit 1
+			)
+		update hp_scheme set score = (select score from temp limit 1 ) where schemeid = #{schemeid}
+	</update>
+
+	<update id="Update_Default_ind_Score">
+		with temp as (select id,schemeid,indid,score,otherscore from hp_scheme_indicator where schemeid = (select schemeid from hp_scheme where schemeid != #{schemeid} order by schemeyear desc limit 1 )
+			)
+		update hp_scheme_indicator set score = (select score from temp where temp.indid = hp_scheme_indicator.indid),
+		                               otherscore = (select otherscore from temp where temp.indid = hp_scheme_indicator.indid)
+		where schemeid = #{schemeid}
+	</update>
+
+	<insert id="Insert_Default_Bulk_Score">
+		insert into hp_scheme_bulk_score(schemeid,bulkid,hpsciid,score)
+		select hp_scheme_bulk.schemeid,hp_scheme_bulk.bulkid,hp_scheme_indicator.id,hp_scheme_bulk_score.score from hp_scheme_bulk
+		left join hp_scheme_indicator on hp_scheme_indicator.schemeid = hp_scheme_bulk.schemeid
+		inner join (
+			select hp_scheme_bulk_score.schemeid,hp_scheme_bulk_score.score,hp_scheme_indicator.indid from hp_scheme_bulk_score
+			left join hp_scheme_indicator on hp_scheme_indicator.schemeid = hp_scheme_bulk_score.schemeid and hp_scheme_bulk_score.hpsciid = hp_scheme_indicator.id
+			where hp_scheme_bulk_score.schemeid = (select schemeid from hp_scheme where schemeid != #{schemeid} order by schemeyear desc limit 1)
+			) hp_scheme_bulk_score on hp_scheme_bulk_score.indid = hp_scheme_indicator.indid
+		where hp_scheme_bulk.schemeid = #{schemeid}
+	</insert>
+</mapper>

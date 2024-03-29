@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Subhall.Aquatic_Ecology.CalIndScore_Mapper">
+<!--	查询指标的计算方式-->
+	<select id="Select_Ind_Formula" resultType="java.util.Map">
+		select eval_scheme_indicator.indid,eval_scheme_indicator.calculation_formula,eval_indicator_format.formula
+		from eval_scheme_indicator
+		left join eval_indicator_format on eval_scheme_indicator.indid = eval_indicator_format.indid
+		where id = #{id}
+	</select>
+<!--	获取参数对应的指标-->
+	<select id="Select_Param_Ind_List" resultType="java.util.Map">
+		select eval_indicator_param.indid,eval_indicator_param.parameter,eval_indicator_param.target_indid target_indid,
+		       eval_indicator_param.param_type, target_ind.id targetid
+		    from eval_indicator_param
+		left join eval_scheme_indicator source_ind on source_ind.indid = eval_indicator_param.indid
+		left join eval_scheme_indicator target_ind on target_ind.indid = eval_indicator_param.target_indid and target_ind.schemeid = source_ind.schemeid
+		where source_ind.id = #{id}
+	</select>
+<!--	查询赋分表-->
+	<select id="Select_Eval_Score_Contrast" resultType="java.lang.Double">
+		select score from eval_score_contrast where eval_type = #{eval_type} and #{score} >= min_value and #{score} &lt; max_value limit 1
+	</select>
+</mapper>

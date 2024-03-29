@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Structure.Structure_Mapper">
+	<select id="Select_RL_Structure_Info" resultType="java.util.Map">
+		select structureid,structuretype,full_name,duties,structuretype_join.description structuretypename,
+			   rl_structure.telephone,rl_structure.rivers_lakes,rl_structure.river_patrol,RL_Structure.orderid
+		from RL_Structure
+		left join (select code,description from sm_codeitem where codeid ='BE'
+		) structuretype_join on structuretype_join.code = RL_Structure.structuretype
+		<where>
+			<if test="structureid != null and structureid != ''">
+				and RL_Structure.structureid = #{structureid}
+			</if>
+			<if test="structuretype != null and structuretype != ''">
+				and RL_Structure.structuretype = #{structuretype}
+			</if>
+			<if test="full_name != null and full_name != ''">
+				and RL_Structure.full_name like concat('%',#{full_name},'%')
+			</if>
+		</where>
+		order by ifnull(ORDERID,999999)
+	</select>
+	<sql id="Insert_Structure_Columns">
+		<if test="structuretype != null and structuretype != '' ">
+			,structuretype
+		</if>
+		<if test="full_name != null and full_name != '' ">
+			,full_name
+		</if>
+		<if test="duties != null and duties != '' ">
+			,duties
+		</if>
+		<if test="telephone != null and telephone != '' ">
+			,telephone
+		</if>
+		<if test="rivers_lakes != null and rivers_lakes != '' ">
+			,rivers_lakes
+		</if>
+		<if test="river_patrol != null and river_patrol != '' ">
+			,river_patrol
+		</if>
+		<if test="orderid != null and orderid != '' ">
+			,orderid
+		</if>
+		<if test="submitman != null and submitman != '' ">
+			,submitman
+		</if>
+		<if test="submittime != null and submittime != '' ">
+			,submittime
+		</if>
+	</sql>
+	<sql id="Insert_Structure_Params">
+		<if test="structuretype != null and structuretype != '' ">
+			,#{structuretype}
+		</if>
+		<if test="full_name != null and full_name != '' ">
+			,#{full_name}
+		</if>
+		<if test="duties != null and duties != '' ">
+			,#{duties}
+		</if>
+		<if test="telephone != null and telephone != '' ">
+			,#{telephone}
+		</if>
+		<if test="rivers_lakes != null and rivers_lakes != '' ">
+			,#{rivers_lakes}
+		</if>
+		<if test="river_patrol != null and river_patrol != '' ">
+			,#{river_patrol}
+		</if>
+		<if test="orderid != null and orderid != '' ">
+			,#{orderid}
+		</if>
+		<if test="submitman != null and submitman != '' ">
+			,#{submitman}
+		</if>
+		<if test="submittime != null and submittime != '' ">
+			,#{submittime}
+		</if>
+	</sql>
+	<insert id="Insert_Structure">
+		insert into rl_structure(structureid<include refid="Insert_Structure_Columns"/>)
+		values(#{structureid}<include refid="Insert_Structure_Params"/>)
+	</insert>
+	<sql id="Update_Structure_Params">
+		<if test="structuretype != null">
+			,structuretype = #{structuretype}
+		</if>
+		<if test="full_name != null">
+			,full_name = #{full_name}
+		</if>
+		<if test="duties != null">
+			,duties = #{duties}
+		</if>
+		<if test="telephone != null">
+			,telephone = #{telephone}
+		</if>
+		<if test="rivers_lakes != null ">
+			,rivers_lakes = #{rivers_lakes}
+		</if>
+		<if test="river_patrol != null ">
+			,river_patrol = #{river_patrol}
+		</if>
+		<if test="orderid != null">
+			,orderid = #{orderid}
+		</if>
+		<if test="submitman != null">
+			,submitman = #{submitman}
+		</if>
+		<if test="submittime != null">
+			,submittime = #{submittime}
+		</if>
+	</sql>
+	<update id="Update_Structure">
+		update rl_structure set structureid = structureid
+		<include refid="Update_Structure_Params"/>
+		where structureid = #{structureid}
+	</update>
+	<delete id="Delete_Structure">
+		delete from rl_structure where structureid in
+		<foreach collection="structureid.split(',')" item="structureid" open="(" separator="," close=")">
+			#{structureid}
+		</foreach>
+	</delete>
+</mapper>

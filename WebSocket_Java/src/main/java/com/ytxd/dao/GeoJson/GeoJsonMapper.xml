@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.GeoJson.GeoJsonMapper">
+
+	<select id="getWeatherForecastList" resultType="java.util.Map">
+		SELECT wr.stcd, wr.time, wr.tem, wr.rhu, wr.wns, wr.prs_qfe, wr.clo
+		FROM st_weather_r wr
+		WHERE wr.stcd = '预报' AND wr.time >= #{startTime}
+		ORDER BY ABS(TIMESTAMPDIFF(MINUTE, wr.time, #{startTime})) ASC
+			LIMIT 1
+	</select>
+
+<!--	获取雨量站点的经度-->
+	<select id="getRealRainSiteLgtd" resultType="java.lang.Double">
+		select distinct lgtd
+		from st_stbprp_b
+		where sttp in ('PP','ZQ') and lgtd is not null
+		order by lgtd asc
+	</select>
+	<!--    获取雨量站点的纬度-->
+	<select id="getRealRainSiteLttd" resultType="java.lang.Double">
+		select distinct lttd
+		from st_stbprp_b
+		where sttp in ('PP','ZQ') and lttd is not null
+		order by lttd asc
+	</select>
+	<select id="getRealDataInfoList" resultType="java.util.HashMap">
+		select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,st_pptn_r.p
+		from  st_stbprp_b
+		left join (
+		    select stcd,sum(p) p from st_pptn_r
+			<where>
+				<if test="starttime != null and starttime != '' ">
+					and st_pptn_r.tm >= #{starttime}
+				</if>
+				<if test="endtime != null and endtime != '' ">
+					and st_pptn_r.tm &lt;= #{endtime}
+				</if>
+			</where>
+		    group by stcd
+		) st_pptn_r  on st_stbprp_b.stcd = st_pptn_r.stcd
+		<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+		<where>
+		    and st_stbprp_b.sttp in ('ZQ','PP')
+			<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+		</where>
+		order by -st_stbprp_b.orderid desc
+	</select>
+
+</mapper>

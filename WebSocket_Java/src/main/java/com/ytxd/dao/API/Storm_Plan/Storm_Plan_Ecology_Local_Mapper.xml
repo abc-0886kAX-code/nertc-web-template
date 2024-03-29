@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.API.Storm_Plan.Storm_Plan_Ecology_Local_Mapper">
+
+
+    <select id="Select_Storm_Plan_Ecology_Local_List" resultType="java.util.Map">
+        select storm_plan_ecology_local.*
+        from storm_plan_ecology_local
+        <where>
+            <if test="mh_wl != null and mh_wl != '' ">
+                and (storm_plan_ecology_local.mh_wl = #{mh_wl} or storm_plan_ecology_local.mh_wl_t = #{mh_wl})
+            </if>
+            <if test="flow != null and flow != '' ">
+                and storm_plan_ecology_local.flow = #{flow}
+            </if>
+            <if test="temp != null and temp != '' ">
+                and storm_plan_ecology_local.temp = #{temp}
+            </if>
+        </where>
+        order by submittime desc
+    </select>
+    <sql id="Insert_Column">
+        <if test="plan_name != null and plan_name != '' ">
+            ,plan_name
+        </if>
+        <if test="mh_wl != null and mh_wl != '' ">
+            ,mh_wl
+        </if>
+        <if test="mh_wl_t != null and mh_wl_t != '' ">
+            ,mh_wl_t
+        </if>
+        <if test="flow != null and flow != '' ">
+            ,flow
+        </if>
+        <if test="temp != null and temp != '' ">
+            ,temp
+        </if>
+        <if test="evaporation != null and evaporation != '' ">
+            ,evaporation
+        </if>
+        <if test="duration != null and duration != '' ">
+            ,duration
+        </if>
+    </sql>
+    <sql id="Insert_Param">
+        <if test="plan_name != null and plan_name != '' ">
+            ,#{plan_name}
+        </if>
+        <if test="mh_wl != null and mh_wl != '' ">
+            ,#{mh_wl}
+        </if>
+        <if test="mh_wl_t != null and mh_wl_t != '' ">
+            ,#{mh_wl_t}
+        </if>
+        <if test="flow != null and flow != '' ">
+            ,#{flow}
+        </if>
+        <if test="temp != null and temp != '' ">
+            ,#{temp}
+        </if>
+        <if test="evaporation != null and evaporation != '' ">
+            ,#{evaporation}
+        </if>
+        <if test="duration != null and duration != '' ">
+            ,#{duration}
+        </if>
+    </sql>
+    <insert id="Insert_Storm_Plan_Ecology_Local">
+        insert into storm_plan_ecology_local(plan_id,submittime<include refid="Insert_Column"/>)
+        values(#{plan_id},#{submittime}<include refid="Insert_Param"/>)
+    </insert>
+    <sql id="Update_Param">
+        <if test="plan_id != null">
+            ,plan_id = #{plan_id}
+        </if>
+        <if test="plan_name != null">
+            ,plan_name = #{plan_name}
+        </if>
+        <if test="mh_wl != null">
+            ,mh_wl = #{mh_wl}
+        </if>
+        <if test="mh_wl_t != null">
+            ,mh_wl_t = #{mh_wl_t}
+        </if>
+        <if test="flow != null">
+            ,flow = #{flow}
+        </if>
+        <if test="temp != null">
+            ,temp = #{temp}
+        </if>
+        <if test="evaporation != null">
+            ,evaporation = #{evaporation}
+        </if>
+        <if test="duration != null">
+            ,duration = #{duration}
+        </if>
+        <if test="submittime != null">
+            ,submittime = #{submittime}
+        </if>
+    </sql>
+    <update id="Update_Storm_Plan_Ecology_Local">
+        update storm_plan_ecology_local set id=id <include refid="Update_Param"/>
+        where id in
+        <foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    <delete id="Delete_Storm_Plan_Ecology_Local">
+        delete from storm_plan_ecology_local where id in
+        <foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <!-- 根据水位找最近库容 根据温度查询蒸发量和蒸发量当量流量 计算所需时间   -->
+    <select id="Select_Duration_Evaporation" resultType="java.util.Map">
+        -- (芙蓉溪目标库容（m³）-芙蓉溪现在库容（m³）)/(流量（m³/s）-蒸发量当量流量（m³/s）)/86400
+        select ROUND((w2-w1)/(#{flow}-e_flow)/86400,2) duration,ROUND(evaporation,2) evaporation from (
+            select
+            (select w*10000 from st_zvarl_b where stcd = 'K68220015-01' order by abs(rz-#{mh_wl}) LIMIT 1) w1,
+            (select w*10000 from st_zvarl_b where stcd = 'K68220015-01' order by abs(rz-#{mh_wl_t}) LIMIT 1) w2,
+            (select evaporation from st_temp_e order by abs(temp-#{temp}) LIMIT 1) evaporation,
+            (select e_flow from st_temp_e order by abs(temp-#{temp}) LIMIT 1) e_flow
+        ) z
+    </select>
+
+    <select id="Get_Most_Suitable_Plan" resultType="java.util.Map">
+        select storm_plan_ecology.plan_id,left_flow.flow_rn,left_temp.temp_rn,(left_flow.flow_rn+left_temp.temp_rn) rn from storm_plan_ecology
+        left join (select plan_id,RANK() over(order by abs(flow-#{flow})) flow_rn,flow from storm_plan_ecology ) left_flow on storm_plan_ecology.plan_id = left_flow.plan_id
+        left join (select plan_id,RANK() over(order by abs(temp-#{temp})) temp_rn,temp from storm_plan_ecology ) left_temp on storm_plan_ecology.plan_id = left_temp.plan_id
+        order by rn asc LIMIT 1;
+    </select>
+
+    <select id="Get_Default" resultType="java.util.Map">
+        select Z,14 z_t,4.5 flow from st_river_r_view where stcd in ('3212000007_01','3212000008_01') order by tm desc LIMIT 1;
+    </select>
+</mapper>

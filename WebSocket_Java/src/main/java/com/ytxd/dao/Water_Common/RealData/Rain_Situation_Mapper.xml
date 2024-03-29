@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Water_Common.RealData.Rain_Situation_Mapper">
+    <!-- 取所有站点或者某些站点某一段时间内的累计雨量-->
+    <select id="Select_Rain_Cumulative_List" resultType="java.util.Map">
+        select st_stbprp_b.stcd,
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>
+        ,st_pptn_r.p p ,
+        CASE
+        WHEN st_pptn_r.p BETWEEN 0.00000001 AND 0.1 THEN '微量降雨'
+        WHEN st_pptn_r.p BETWEEN 0.1 AND 9.9 THEN '小雨'
+        WHEN st_pptn_r.p BETWEEN 10 AND 24.9 THEN '中雨'
+        WHEN st_pptn_r.p BETWEEN 25 AND 49.9 THEN '大雨'
+        WHEN st_pptn_r.p BETWEEN 50 AND 99.9 THEN '暴雨'
+        WHEN st_pptn_r.p BETWEEN 100 AND 199.9 THEN '大暴雨'
+        WHEN st_pptn_r.p >= 200 THEN '特大暴雨'
+        ELSE '无降雨'
+        END AS level_label ,st_pptn_r.tm,st_pptn_r.code,st_pptn_r.nm,
+        st_stbprp_introduce.introduce,st_stbprp_introduce.filepath
+        from st_stbprp_b
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        left join (select stcd,introduce,filepath from st_stbprp_introduce) st_stbprp_introduce on st_stbprp_introduce.stcd = st_stbprp_b.stcd
+        left join (
+            select st_pptn_r.*,st_pptn_l.nm,st_pptn_l.code from (
+                select stcd,format(sum(p),1) p,GetPptnName(ifnull(#{hour},24),round( sum( p ), 2 )) pptnid,max(tm) tm from st_pptn_r
+                where 1=1
+                <if test="starttime != null and starttime != '' ">
+                    and tm >= str_to_date(#{starttime},'%Y-%m-%d %H:%i:%s')
+                </if>
+                <if test="endtime != null and endtime != '' ">
+                    and tm &lt;= str_to_date(#{endtime},'%Y-%m-%d %H:%i:%s')
+                </if>
+                group by stcd
+            ) st_pptn_r LEFT JOIN st_pptn_l on st_pptn_r.pptnid = st_pptn_l.id
+        ) st_pptn_r on st_pptn_r.stcd = st_stbprp_b.stcd
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by st_pptn_r.p DESC , st_pptn_r.tm DESC ,-st_stbprp_b.orderid desc
+    </select>
+    <!-- 根据站点获取某一段时间内实时降雨数据 -->
+    <select id="Select_Real_Rain_List" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        st_pptn_r.tm,st_pptn_r.p
+        from  st_stbprp_b
+        left join st_pptn_r on st_stbprp_b.stcd = st_pptn_r.stcd
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+            <if test="starttime != null and starttime != '' ">
+                and st_pptn_r.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_pptn_r.tm &lt;= #{endtime}
+            </if>
+        </where>
+        order by st_pptn_r.tm asc,-st_stbprp_b.orderid desc
+    </select>
+    <select id="Select_Real_Rain_ListByYear" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,st_pptn_r.p
+        from  st_stbprp_b
+        left join (select stcd,round(sum(p),2) p from  st_pptn_r
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_pptn_r.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_pptn_r.tm &lt;= #{endtime}
+            </if>
+        </where>
+        group by stcd
+        ) st_pptn_r on st_stbprp_b.stcd = st_pptn_r.stcd
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by -st_stbprp_b.orderid desc
+    </select>
+    <!-- 根据站点获取某一段时间内实时降雨数据以小时进行展示 -->
+    <select id="Select_Real_Rain_List_Hour" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        st_pptn_r.tm,st_pptn_r.p
+        from st_stbprp_b
+        left join (
+        select stcd,date_format(tm,'%Y-%m-%d %H') tm,round(sum(p),2) p from st_pptn_r
+        <where>
+            <if test="tm != null and tm != '' ">
+                and st_pptn_r.tm &lt; adddate(date_format(#{tm},'%Y-%m-%d'),interval 8+24 hour)
+                and st_pptn_r.tm >= adddate(date_format(#{tm},'%Y-%m-%d'),interval 8 hour)
+            </if>
+            <if test="starttime != null and starttime != '' ">
+                and st_pptn_r.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_pptn_r.tm &lt;= #{endtime}
+            </if>
+        </where>
+        group by stcd,date_format(st_pptn_r.tm,'%Y-%m-%d %H')
+        ) st_pptn_r on st_stbprp_b.stcd = st_pptn_r.stcd
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by st_pptn_r.tm asc,-st_stbprp_b.orderid desc
+    </select>
+    <!-- 根据站点获取某一段时间内实时降雨数据按天进行展示 -->
+    <select id="Select_Real_Rain_List_Day" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        st_pptn_r.tm,st_pptn_r.p
+        from st_stbprp_b
+        left join (
+        select stcd,date_format(tm,'%Y-%m-%d') tm,round(sum(p),2) p from st_pptn_r
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_pptn_r.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_pptn_r.tm &lt;= #{endtime}
+            </if>
+        </where>
+        group by stcd,date_format(st_pptn_r.tm,'%Y-%m-%d')
+        ) st_pptn_r on st_stbprp_b.stcd = st_pptn_r.stcd
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by st_pptn_r.tm asc,-st_stbprp_b.orderid desc
+    </select>
+    <select id="Select_Selection_Item_List" resultType="java.util.Map">
+        select code,description,shortname,min,max from sm_codeitem where codeid ='AI' order by orderid asc
+    </select>
+    <select id="Select_Early_Warning_List" resultType="java.util.Map">
+        select timehours.tm,round(st_pptn_r.p,2) p from (select date_format(adddate(#{tm},interval -num hour),'%Y-%m-%d %H:00:00') tm
+            from timehours where num &lt;= timestampdiff(hour,#{tm},adddate(#{tm},interval 23 hour))
+            union all
+           select date_format(adddate(#{tm},interval num hour),'%Y-%m-%d %H:00:00') tm
+            from timehours where num &lt;= timestampdiff(hour,#{tm},adddate(#{tm},interval 23 hour))
+        ) timehours
+        left join (
+            select DATE_FORMAT(tm,'%Y-%m-%d %H:00:00') tm,sum(p) p from st_pptn_r
+                where tm >= adddate(#{tm},interval -25 hour) and tm &lt;=  adddate(#{tm},interval 1 hour)
+                  and stcd = #{stcd}
+            group by  stcd ,DATE_FORMAT(tm,'%Y-%m-%d %H:00:00')
+            union all
+            select DATE_FORMAT(time,'%Y-%m-%d %H:00:00') tm,sum(pre) p from st_weather_r where
+            exists (select weather_stcd from st_weather_relation
+            where stbprp_stcd = #{stcd} and st_weather_relation.weather_stcd = st_weather_r.stcd)
+            and time >= adddate(#{tm},interval -1 hour) and time &lt;=  adddate(#{tm},interval 25 hour)
+            group by  stcd ,DATE_FORMAT(tm,'%Y-%m-%d %H:00:00')
+        ) st_pptn_r on st_pptn_r.tm = timehours.tm
+        order by timehours.tm asc
+    </select>
+
+    <resultMap id="rains_Level_Info" type="java.util.Map" autoMapping="true">
+        <result column="stcd" property="stcd"/>
+        <association column="{stcd=stcd,tm=tm}" property="history" javaType="java.util.LinkedList" autoMapping="true" select="Select_History_Rain_Level_Info_List"/>
+        <association column="{stcd=stcd,tm=tm}" property="prediction" javaType="java.util.LinkedList" autoMapping="true" select="Select_Prediction_Rain_Level_Info_List"/>
+    </resultMap>
+    <select id="Select_Rain_Level_Info_List" resultMap="rains_Level_Info">
+        select stcd,stnm,lgtd,lttd,#{tm} tm from st_stbprp_b
+        <where>
+            <if test="stcd != null and stcd != '' ">
+                and stcd in
+                <foreach collection="stcd.split(',')" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="sttp != null and sttp != '' ">
+                and sttp in
+                <foreach collection="sttp.split(',')" item="stp" open="(" separator="," close=")">
+                    #{stp}
+                </foreach>
+            </if>
+        </where> limit 1
+    </select>
+    <select id="Select_History_Rain_Level_Info_List" resultType="java.util.Map">
+        select
+            allhour.tm,st_pptn_r.stcd,st_pptn_r.p,sum(st_pptn_r.p) over(order by allhour.num desc) sum_p
+        from (
+            select
+                DATE_FORMAT(adddate(#{tm},interval -num hour),'%Y-%m-%d %H:00:00') tm,num
+            from
+                timehours where num &lt;= timestampdiff(hour,#{tm},adddate(#{tm},interval 3 day))
+        ) allhour LEFT JOIN (
+            select
+                stcd,DATE_FORMAT(tm,'%Y-%m-%d %H:00:00') tm,sum(p) p
+            from
+                st_pptn_r WHERE stcd = #{stcd} GROUP BY stcd,DATE_FORMAT(tm,'%Y-%m-%d %H:00:00')
+        ) st_pptn_r on st_pptn_r.tm = allhour.tm
+        ORDER BY allhour.num desc
+    </select>
+    <select id="Select_Prediction_Rain_Level_Info_List" resultType="java.util.Map">
+        select
+            allhour.tm,st_weather_r.stcd,st_weather_r.pre p,sum(st_weather_r.pre) over(order by allhour.num) sum_p
+        from (
+            select
+                DATE_FORMAT(adddate(#{tm},interval num hour),'%Y-%m-%d %H:00:00') tm,num
+            from
+                timehours where num &lt;= timestampdiff(hour,#{tm},adddate(#{tm},interval 3 day))
+        ) allhour
+        LEFT JOIN (
+            select
+                stcd,DATE_FORMAT(time,'%Y-%m-%d %H:00:00') time,sum(pre) pre
+            from
+                st_weather_r WHERE stcd = #{stcd} GROUP BY stcd,DATE_FORMAT(time,'%Y-%m-%d %H:00:00')
+        ) st_weather_r on st_weather_r.time = allhour.tm
+        ORDER BY allhour.num
+    </select>
+
+    <select id="Select_Rain_Day_Statistics" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        st_pptn_r.tm,st_pptn_r.p
+        from (
+        select stcd,date_format(adddate(tm,interval -8 hour),'%Y-%m-%d') tm,round(sum(p),2) p from st_pptn_r
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_pptn_r.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_pptn_r.tm &lt;= #{endtime}
+            </if>
+        </where>
+        group by stcd,date_format(adddate(tm,interval -8 hour),'%Y-%m-%d')
+        ) st_pptn_r
+        left join st_stbprp_b on st_stbprp_b.stcd = st_pptn_r.stcd
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by -st_pptn_r.tm desc,-st_stbprp_b.orderid desc
+    </select>
+    <insert id="Insert_WaterLevel_Warning">
+        insert into early_warning(stcd,warningtype,warninginfo,flag,state,submittime)
+        values(#{stcd},#{warningtype},#{warninginfo},'01','01',now())
+    </insert>
+
+    <select id="Select_RealRainListByRepresentative" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        st_pptn_r.p,st_pptn_r_tq.p tqp,st_pptn_r_avg.p avgp
+        from st_stbprp_b
+        left join (
+        select stcd,round(sum(p),2) p from st_pptn_r
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_pptn_r.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_pptn_r.tm &lt; #{endtime}
+            </if>
+        </where>
+        group by stcd
+        ) st_pptn_r on st_stbprp_b.stcd = st_pptn_r.stcd
+        left join (
+        select stcd,round(sum(p),2) p from st_pptn_r
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and st_pptn_r.tm >= adddate(str_to_date(#{starttime},'%%Y-%m-%d %H:%i:%s'),interval -1 year)
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and st_pptn_r.tm &lt; adddate(str_to_date(#{endtime},'%%Y-%m-%d %H:%i:%s'),interval -1 year)
+            </if>
+        </where>
+        group by stcd
+        ) st_pptn_r_tq on st_stbprp_b.stcd = st_pptn_r_tq.stcd
+        left join (
+        select stcd,round(avg(p),2) p from st_pptn_r
+        group by stcd
+        ) st_pptn_r_avg on  st_stbprp_b.stcd = st_pptn_r_avg.stcd
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by -st_stbprp_b.orderid desc
+    </select>
+</mapper>

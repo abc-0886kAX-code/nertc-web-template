@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.SystemManage.SM_Department_Mapper">
+	<!-- 允许缓存 -->
+	<!-- <cache /> -->
+	
+	<!-- 查询表   表 字段  -->
+	<sql id="Select_Column">
+		ifnull(approval.DescriptionJoin,SM_Department.approval) approvalName,
+		ifnull(approval2.DescriptionJoin,SM_Department.approval) approval2Name,
+		ifnull(DeptType.DescriptionJoin,SM_Department.DeptType) DeptTypeName,
+		ifnull(DeptType2.DescriptionJoin,SM_Department.DeptType) DeptType2Name,
+		ifnull(ParentId.NodeNameJoin,SM_Department.ParentId) ParentIdName,
+
+		sm_department.keysysid,
+		sm_department.parentid,
+		sm_department.depttype,
+		sm_department.nodename,
+		sm_department.departmentnumber,
+		sm_department.disciplines,
+		sm_department.responsible,
+		sm_department.approval,
+		DATE_FORMAT(sm_department.setuptime,'%Y-%m-%d') AS setuptime,
+		sm_department.zipcode,
+		sm_department.address,
+		sm_department.contacts,
+		sm_department.fax,
+		sm_department.phone,
+		sm_department.telephone,
+		sm_department.email,
+		sm_department.website,
+		sm_department.doctorcount,
+		sm_department.mastercount,
+		sm_department.schoolcount,
+		sm_department.bookcncount,
+		sm_department.bookencount,
+		sm_department.journalcncount,
+		sm_department.journalencount,
+		sm_department.mechanism,
+		sm_department.departmentid,
+		sm_department.remark,
+		sm_department.bmgzfw,
+		sm_department.orderid,
+		sm_department.status,
+		sm_department.number,
+		sm_department.systemtype,
+		sm_department.sinoss_code,
+		sm_department.disciplinesname,
+		sm_department.synchroremark,
+		case when haschildren.pid is not null then 1 else 0 end haschildren 
+	</sql>
+
+	<!-- 查询表   查询条件参数  -->
+	<sql id="Select_Parmeter">
+		<if test="keysysid!=null and keysysid!=''"> AND sm_department.keysysid like CONCAT('%',#{keysysid},'%') </if>
+		<if test="parentid!=null and parentid!=''"> AND sm_department.parentid like CONCAT(#{parentid},'%') </if>
+		<if test="depttype!=null and depttype!=''"> AND sm_department.depttype = #{depttype} </if>
+		<if test="nodename!=null and nodename!=''"> AND sm_department.nodename like CONCAT('%',#{nodename},'%') </if>
+		<if test="departmentnumber!=null and departmentnumber!=''"> AND sm_department.departmentnumber like CONCAT('%',#{departmentnumber},'%') </if>
+		<if test="disciplines!=null and disciplines!=''"> AND sm_department.disciplines = #{disciplines} </if>
+		<if test="responsible!=null and responsible!=''"> AND sm_department.responsible like CONCAT('%',#{responsible},'%') </if>
+		<if test="approval!=null and approval!=''"> AND sm_department.approval = #{approval} </if>
+		<if test="zipcode!=null and zipcode!=''"> AND sm_department.zipcode like CONCAT('%',#{zipcode},'%') </if>
+		<if test="address!=null and address!=''"> AND sm_department.address like CONCAT('%',#{address},'%') </if>
+		<if test="contacts!=null and contacts!=''"> AND sm_department.contacts like CONCAT('%',#{contacts},'%') </if>
+		<if test="fax!=null and fax!=''"> AND sm_department.fax like CONCAT('%',#{fax},'%') </if>
+		<if test="phone!=null and phone!=''"> AND sm_department.phone like CONCAT('%',#{phone},'%') </if>
+		<if test="telephone!=null and telephone!=''"> AND sm_department.telephone like CONCAT('%',#{telephone},'%') </if>
+		<if test="email!=null and email!=''"> AND sm_department.email like CONCAT('%',#{email},'%') </if>
+		<if test="website!=null and website!=''"> AND sm_department.website like CONCAT('%',#{website},'%') </if>
+		<if test="mechanism!=null and mechanism!=''"> AND sm_department.mechanism like CONCAT('%',#{mechanism},'%') </if>
+		<if test="departmentid!=null and departmentid!=''"> AND sm_department.departmentid IN ('${departmentid}') </if>
+		<if test="remark!=null and remark!=''"> AND sm_department.remark like CONCAT('%',#{remark},'%') </if>
+		<if test="bmgzfw!=null and bmgzfw!=''"> AND sm_department.bmgzfw like CONCAT('%',#{bmgzfw},'%') </if>
+		<if test="orderid!=null and orderid!=''"> AND sm_department.orderid like CONCAT('%',#{orderid},'%') </if>
+		<if test="status!=null and status!=''"> AND sm_department.status = #{status} </if>
+		<if test="number!=null and number!=''"> AND sm_department.number like CONCAT('%',#{number},'%') </if>
+		<if test="systemtype!=null and systemtype!=''"> AND sm_department.systemtype like CONCAT('%',#{systemtype},'%') </if>
+		<if test="sinoss_code!=null and sinoss_code!=''"> AND sm_department.sinoss_code like CONCAT('%',#{sinoss_code},'%') </if>
+		<if test="disciplinesname!=null and disciplinesname!=''"> AND sm_department.disciplinesname like CONCAT('%',#{disciplinesname},'%') </if>
+		<if test="synchroremark!=null and synchroremark!=''"> AND sm_department.synchroremark like CONCAT('%',#{synchroremark},'%') </if>
+		<if test="whereString!=null and whereString!=''"> ${whereString} </if>
+	</sql>
+
+	<!-- 查询  表信息  -->
+	<select id="Select_SM_Department" parameterType="com.ytxd.model.SystemManage.SM_Department" resultType="com.ytxd.model.SystemManage.SM_Department">
+		SELECT <include refid="Select_Column" />
+		FROM sm_department 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='YS') approval on approval.CodeJoin=SM_Department.approval 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='YS') approval2 on approval2.CodeJoin=SM_Department.approval 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='GA') DeptType on DeptType.CodeJoin=SM_Department.DeptType 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='GA') DeptType2 on DeptType2.CodeJoin=SM_Department.DeptType 
+		left join (select DepartmentId DepartmentIdJoin,NodeName NodeNameJoin from SM_Department) ParentId on ParentId.DepartmentIdJoin=SM_Department.ParentId 
+		LEFT JOIN (select distinct parentid pid from sm_department where status='01' <include refid="Select_Parmeter" />) haschildren on haschildren.pid=sm_department.departmentid 
+		WHERE 1 = 1 
+		<include refid="Select_Parmeter" />
+		<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+		LIMIT #{startRow},#{pageSize}
+	</select>
+	<select id="Select_SM_Department_All" parameterType="com.ytxd.model.SystemManage.SM_Department" resultType="com.ytxd.model.SystemManage.SM_Department">
+		SELECT departmentid, parentid, nodename, case when pid is not null then 1 else 0 end haschildren 
+		FROM sm_department 
+		LEFT JOIN (select distinct parentid pid from sm_department 
+		where status='01' 
+		<if test="departmentid!=null and departmentid!=''"> AND departmentid IN ('${departmentid}') </if>
+		<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> -->
+		) haschildren on haschildren.pid=sm_department.departmentid 
+		WHERE status='01'
+		<if test="departmentid!=null and departmentid!=''"> AND departmentid IN ('${departmentid}') </if>
+<!--		<if test="parentid!=null and parentid!=''"> AND parentid = #{parentid} </if>-->
+		<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> -->
+		<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+	</select>
+	<select id="Select_SM_Department_Unit"  resultType="com.ytxd.model.EasyTree">
+		WITH RECURSIVE RecursiveHierarchy AS (
+		SELECT DepartmentId,ParentId
+		FROM sm_department
+		<where>
+			<if test="parentid!=null and parentid!=''"> AND parentid = #{parentid} </if>
+		</where>
+		UNION ALL
+		SELECT d.DepartmentId, d.ParentId
+		FROM sm_department d
+		INNER JOIN RecursiveHierarchy r ON d.ParentId = r.DepartmentId
+		)
+		SELECT sm_department.departmentid id, nodename "text"
+		FROM sm_department
+		inner join RecursiveHierarchy on RecursiveHierarchy.DepartmentId = sm_department.DepartmentId
+		WHERE status='01'
+		<if test="departmentid!=null and departmentid!=''"> AND sm_department.departmentid IN ('${departmentid}') </if>
+		<if test="id!=null and id!=''"> AND sm_department.departmentid in
+		 <foreach collection="id.split(',')" item="item" open="(" separator="," close=")">
+			 #{item}
+		 </foreach>
+		  </if>
+
+		<if test="text!=null and text!=''"> AND nodename like concat('%',#{text},'%') </if>
+		<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> -->
+		<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+		order by orderid
+	</select>
+	<select id="Select_SM_DeParUnit"  resultType="com.ytxd.model.EasyTree">
+		SELECT SM_DeParUnit.departmentid id, nodename "text"
+		FROM SM_DeParUnit
+		WHERE status='01'
+		<if test="departmentid!=null and departmentid!=''"> AND SM_DeParUnit.departmentid IN ('${departmentid}') </if>
+		<if test="parentid!=null and parentid!=''"> AND SM_DeParUnit.parentid = #{parentid} </if>
+		<if test="id!=null and id!=''"> AND SM_DeParUnit.departmentid in
+		 <foreach collection="id.split(',')" item="item" open="(" separator="," close=")">
+			 #{item}
+		 </foreach>
+		  </if>
+		<if test="text!=null and text!=''"> AND nodename like concat('%',#{text},'%') </if>
+		order by SM_DeParUnit.OrderId
+	</select>
+	<!-- 获取本节点和子节点数据 -->
+	<select id="Select_ParentAndChild" parameterType="com.ytxd.model.SystemManage.SM_Department" resultType="com.ytxd.model.SystemManage.SM_Department">
+		SELECT
+			<include refid="Select_Column" />
+		FROM sm_department 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='YS') approval on approval.CodeJoin=SM_Department.approval 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='YS') approval2 on approval2.CodeJoin=SM_Department.approval 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='GA') DeptType on DeptType.CodeJoin=SM_Department.DeptType 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='GA') DeptType2 on DeptType2.CodeJoin=SM_Department.DeptType 
+		left join (select DepartmentId DepartmentIdJoin,NodeName NodeNameJoin from SM_Department) ParentId on ParentId.DepartmentIdJoin=SM_Department.ParentId 
+		LEFT JOIN (select distinct parentid pid from sm_department where status='01' <include refid="Select_Parmeter" />) haschildren on haschildren.pid=sm_department.departmentid 
+		WHERE 1 = 1 
+			<if test="parentid!=null and parentid!=''"> and sm_department.departmentid like #{parentid},'%') </if> 
+			<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+	</select>
+	
+	<!-- 查询表记录数  -->
+	<select id="Select_SM_Department_Count" parameterType="com.ytxd.model.SystemManage.SM_Department" resultType="java.lang.Integer">
+		SELECT
+			COUNT(1)
+		FROM sm_department
+		WHERE 1 = 1
+			<include refid="Select_Parmeter" />
+	</select>
+	<!-- 查询表信息  -->
+	<select id="Select_SM_Department_ById" parameterType="java.lang.String" resultType="com.ytxd.model.SystemManage.SM_Department">
+		SELECT
+			<include refid="Select_Column" />
+		FROM sm_department 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='YS') approval on approval.CodeJoin=SM_Department.approval 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='YS') approval2 on approval2.CodeJoin=SM_Department.approval 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='GA') DeptType on DeptType.CodeJoin=SM_Department.DeptType 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='GA') DeptType2 on DeptType2.CodeJoin=SM_Department.DeptType 
+		left join (select DepartmentId DepartmentIdJoin,NodeName NodeNameJoin from SM_Department) ParentId on ParentId.DepartmentIdJoin=SM_Department.ParentId 
+		LEFT JOIN (select distinct parentid pid from sm_department where status='01') haschildren on haschildren.pid=sm_department.departmentid 
+		WHERE
+			DEPARTMENTID = #{_parameter}
+	</select>
+
+	<!-- 新增信息表字段 -->
+	<sql id="Insert_Column">
+		<if test="keysysid!=null and keysysid!=''">,keysysid</if> <!---->
+		<if test="parentid!=null and parentid!=''">,parentid</if> <!--所属学校-->
+		<if test="depttype!=null and depttype!=''">,depttype</if> <!--机构类型-->
+		<if test="nodename!=null and nodename!=''">,nodename</if> <!--院系名称-->
+		<if test="departmentnumber!=null and departmentnumber!=''">,departmentnumber</if> <!--机构编号-->
+		<if test="disciplines!=null and disciplines!=''">,disciplines</if> <!--一级学科-->
+		<if test="disciplines!=null and disciplines!=''">,disciplinesname</if>
+		<if test="responsible!=null and responsible!=''">,responsible</if> <!--负责人-->
+		<if test="approval!=null and approval!=''">,approval</if> <!--批准机构-->
+		<if test="setuptime!=null and setuptime!=''">,setuptime</if> <!--成立时间-->
+		<if test="zipcode!=null and zipcode!=''">,zipcode</if> <!--邮编-->
+		<if test="address!=null and address!=''">,address</if> <!--地址-->
+		<if test="contacts!=null and contacts!=''">,contacts</if> <!--联系人-->
+		<if test="fax!=null and fax!=''">,fax</if> <!--传真-->
+		<if test="phone!=null and phone!=''">,phone</if> <!--电话-->
+		<if test="telephone!=null and telephone!=''">,telephone</if> <!--手机-->
+		<if test="email!=null and email!=''">,email</if> <!--电子邮件-->
+		<if test="website!=null and website!=''">,website</if> <!--网址-->
+		<if test="doctorcount!=null and doctorcount!=''">,doctorcount</if> <!--博士生人数-->
+		<if test="mastercount!=null and mastercount!=''">,mastercount</if> <!--硕士生人数-->
+		<if test="schoolcount!=null and schoolcount!=''">,schoolcount</if> <!--研究生班人数-->
+		<if test="bookcncount!=null and bookcncount!=''">,bookcncount</if> <!--中文图书数-->
+		<if test="bookencount!=null and bookencount!=''">,bookencount</if> <!--外文图书数-->
+		<if test="journalcncount!=null and journalcncount!=''">,journalcncount</if> <!--中文期刊-->
+		<if test="journalencount!=null and journalencount!=''">,journalencount</if> <!--外文期刊-->
+		<if test="mechanism!=null and mechanism!=''">,mechanism</if> <!--机构简介-->
+		<if test="remark!=null and remark!=''">,remark</if> <!--备注-->
+		<if test="bmgzfw!=null and bmgzfw!=''">,bmgzfw</if> <!---->
+		<if test="orderid!=null and orderid!=''">,orderid</if> <!--排序ID-->
+		<if test="status!=null and status!=''">,status</if> <!--状态 00为可用01为删除-->
+		<if test="number!=null and number!=''">,number</if> <!--机构编号-->
+		<if test="systemtype!=null and systemtype!=''">,systemtype</if> <!---->
+		<if test="sinoss_code!=null and sinoss_code!=''">,sinoss_code</if> <!---->
+		<if test="disciplinesname!=null and disciplinesname!=''">,disciplinesname</if> <!---->
+		<if test="synchroremark!=null and synchroremark!=''">,synchroremark</if> <!---->
+	</sql>
+
+	<sql id="Insert_Parmeter">
+		<if test="keysysid!=null and keysysid!=''">,#{keysysid}</if>	<!---->
+		<if test="parentid!=null and parentid!=''">,#{parentid}</if>	<!--所属学校-->
+		<if test="depttype!=null and depttype!=''">,#{depttype}</if>	<!--机构类型-->
+		<if test="nodename!=null and nodename!=''">,#{nodename}</if>	<!--院系名称-->
+		<if test="departmentnumber!=null and departmentnumber!=''">,#{departmentnumber}</if>	<!--机构编号-->
+		<if test="disciplines!=null and disciplines!=''">,#{disciplines}</if>	<!--一级学科-->
+		<if test="disciplines!=null and disciplines!=''">,GETCODENAME('PR',#{disciplines})</if>
+		<if test="responsible!=null and responsible!=''">,#{responsible}</if>	<!--负责人-->
+		<if test="approval!=null and approval!=''">,#{approval}</if>	<!--批准机构-->
+		<if test="setuptime!=null and setuptime!=''">,STR_TO_DATE(#{setuptime},'%Y-%m-%d')</if>	<!--成立时间-->
+		<if test="zipcode!=null and zipcode!=''">,#{zipcode}</if>	<!--邮编-->
+		<if test="address!=null and address!=''">,#{address}</if>	<!--地址-->
+		<if test="contacts!=null and contacts!=''">,#{contacts}</if>	<!--联系人-->
+		<if test="fax!=null and fax!=''">,#{fax}</if>	<!--传真-->
+		<if test="phone!=null and phone!=''">,#{phone}</if>	<!--电话-->
+		<if test="telephone!=null and telephone!=''">,#{telephone}</if>	<!--手机-->
+		<if test="email!=null and email!=''">,#{email}</if>	<!--电子邮件-->
+		<if test="website!=null and website!=''">,#{website}</if>	<!--网址-->
+		<if test="doctorcount!=null and doctorcount!=''">,#{doctorcount}</if>	<!--博士生人数-->
+		<if test="mastercount!=null and mastercount!=''">,#{mastercount}</if>	<!--硕士生人数-->
+		<if test="schoolcount!=null and schoolcount!=''">,#{schoolcount}</if>	<!--研究生班人数-->
+		<if test="bookcncount!=null and bookcncount!=''">,#{bookcncount}</if>	<!--中文图书数-->
+		<if test="bookencount!=null and bookencount!=''">,#{bookencount}</if>	<!--外文图书数-->
+		<if test="journalcncount!=null and journalcncount!=''">,#{journalcncount}</if>	<!--中文期刊-->
+		<if test="journalencount!=null and journalencount!=''">,#{journalencount}</if>	<!--外文期刊-->
+		<if test="mechanism!=null and mechanism!=''">,#{mechanism}</if>	<!--机构简介-->
+		<if test="remark!=null and remark!=''">,#{remark}</if>	<!--备注-->
+		<if test="bmgzfw!=null and bmgzfw!=''">,#{bmgzfw}</if>	<!---->
+		<if test="orderid!=null and orderid!=''">,#{orderid}</if>	<!--排序ID-->
+		<if test="status!=null and status!=''">,#{status}</if>	<!--状态 00为可用01为删除-->
+		<if test="number!=null and number!=''">,#{number}</if>	<!--机构编号-->
+		<if test="systemtype!=null and systemtype!=''">,#{systemtype}</if>	<!---->
+		<if test="sinoss_code!=null and sinoss_code!=''">,#{sinoss_code}</if>	<!---->
+		<if test="disciplinesname!=null and disciplinesname!=''">,#{disciplinesname}</if>	<!---->
+		<if test="synchroremark!=null and synchroremark!=''">,#{synchroremark}</if>	<!---->
+	</sql>
+
+	<!-- 新增表信息  -->
+	<insert id="Insert_SM_Department" parameterType="com.ytxd.model.SystemManage.SM_Department" >
+		INSERT INTO sm_department(departmentid
+			<include refid="Insert_Column" />
+			)
+		VALUES(#{departmentid}
+			<include refid="Insert_Parmeter" />
+		)
+		<selectKey resultType="java.lang.String" keyProperty="departmentid">
+			SELECT #{departmentid} AS departmentid FROM DUAL
+		</selectKey>
+	</insert>
+
+	<!-- 修改表  set 参数  -->
+	<sql id="Update_Parmeter">
+		<if test="keysysid!=null">,keysysid=#{keysysid}</if>
+		<if test="parentid!=null">,parentid=#{parentid}</if>
+		<if test="depttype!=null">,depttype=#{depttype}</if>
+		<if test="nodename!=null">,nodename=#{nodename}</if>
+		<if test="departmentnumber!=null">,departmentnumber=#{departmentnumber}</if>
+		<if test="disciplines!=null">,disciplines=#{disciplines}</if>
+		<if test="disciplines!=null">,disciplinesname=GETCODENAME('PR',#{disciplines})</if>
+		<if test="responsible!=null">,responsible=#{responsible}</if>
+		<if test="approval!=null">,approval=#{approval}</if>
+		<if test="setuptime!=null">,setuptime=STR_TO_DATE(#{setuptime},'%Y-%m-%d')</if>
+		<if test="zipcode!=null">,zipcode=#{zipcode}</if>
+		<if test="address!=null">,address=#{address}</if>
+		<if test="contacts!=null">,contacts=#{contacts}</if>
+		<if test="fax!=null">,fax=#{fax}</if>
+		<if test="phone!=null">,phone=#{phone}</if>
+		<if test="telephone!=null">,telephone=#{telephone}</if>
+		<if test="email!=null">,email=#{email}</if>
+		<if test="website!=null">,website=#{website}</if>
+		<if test="doctorcount!=null">,doctorcount=CASE WHEN #{doctorcount}='' THEN NULL ELSE #{doctorcount} END</if>
+		<if test="mastercount!=null">,mastercount=CASE WHEN #{mastercount}='' THEN NULL ELSE #{mastercount} END</if>
+		<if test="schoolcount!=null">,schoolcount=CASE WHEN #{schoolcount}='' THEN NULL ELSE #{schoolcount} END</if>
+		<if test="bookcncount!=null">,bookcncount=CASE WHEN #{bookcncount}='' THEN NULL ELSE #{bookcncount} END</if>
+		<if test="bookencount!=null">,bookencount=CASE WHEN #{bookencount}='' THEN NULL ELSE #{bookencount} END</if>
+		<if test="journalcncount!=null">,journalcncount=CASE WHEN #{journalcncount}='' THEN NULL ELSE #{journalcncount} END</if>
+		<if test="journalencount!=null">,journalencount=CASE WHEN #{journalencount}='' THEN NULL ELSE #{journalencount} END</if>
+		<if test="mechanism!=null">,mechanism=#{mechanism}</if>
+		<if test="remark!=null">,remark=#{remark}</if>
+		<if test="bmgzfw!=null">,bmgzfw=#{bmgzfw}</if>
+		<if test="orderid!=null">,orderid=#{orderid}</if>
+		<if test="status!=null">,status=#{status}</if>
+		<if test="number!=null">,number=#{number}</if>
+		<if test="systemtype!=null">,systemtype=#{systemtype}</if>
+		<if test="sinoss_code!=null">,sinoss_code=#{sinoss_code}</if>
+		<if test="disciplinesname!=null">,disciplinesname=#{disciplinesname}</if>
+		<if test="synchroremark!=null">,synchroremark=#{synchroremark}</if>
+	</sql>
+
+	<!-- 修改表信息 -->
+	<update id="Update_SM_Department" parameterType="com.ytxd.model.SystemManage.SM_Department">
+		UPDATE
+			sm_department
+		SET
+			departmentid = departmentid
+			<include refid="Update_Parmeter" />
+		WHERE departmentid IN 
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+	        #{item}
+	    </foreach> 
+	</update>
+
+	<!-- 删除表信息 -->
+	<delete id="Delete_SM_Department" parameterType="java.lang.String">
+		DELETE FROM
+			sm_department
+		WHERE
+			departmentid IN <foreach collection="array" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+	</delete>
+	
+	
+	<select id="GetDepartmentId" parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT ifnull(CONCAT(CASE WHEN #{_parameter}='0' THEN '' ELSE #{_parameter} END,SUBSTR(CONCAT('000',''+(ifnull(MAX(SUBSTR(DepartmentId,-3,3)),0)+1)),-3,3)),CONCAT(CASE WHEN #{_parameter}='0' THEN '' ELSE #{_parameter} END,'001')) DepartmentId
+		FROM SM_DEPARTMENT 
+		WHERE PARENTID=#{_parameter}
+	</select>
+	<!-- 查询表记录数  -->
+	<select id="Select_SM_User_Count" parameterType="java.lang.String" resultType="java.lang.Integer">
+		SELECT COUNT(1) 
+		FROM sm_users 
+		WHERE disabled='01' and departmentid IN (#{_parameter})
+	</select>
+</mapper>

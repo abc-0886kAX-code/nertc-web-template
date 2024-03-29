@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Applet.Applet_Mapper">
+    <!--	查询实时的闸门水情信息-->
+    <select id="Select_st_was_r_list" resultType="java.util.HashMap">
+        select st_was_r.stcd,st_was_r.tm,st_was_r.upz,st_was_r.dwz,st_was_r.tgtq
+        ,st_stbprp_b.stnm,st_stbprp_b.lgtd,st_stbprp_b.lttd
+        from st_was_r
+        left join st_stbprp_b on st_stbprp_b.stcd = st_was_r.stcd
+        <where>
+            <if test="tm != null and tm != '' ">
+                and st_was_r.tm >= adddate(#{tm},interval 0 hour)
+                and st_was_r.tm &lt; adddate(#{tm},interval 24 hour)
+            </if>
+			<if test="starttime != null and starttime != '' ">
+				and  st_was_r.tm >= str_to_date(#{starttime},'%Y-%d-%m %H:%i:%s')
+			</if>
+			<if test="endtime != null and endtime != '' ">
+				and  st_was_r.tm &lt; str_to_date(#{endtime},'%Y-%d-%m %H:%i:%s')
+			</if>
+			<if test="stcd != null and stcd != '' ">
+				and  st_was_r.stcd = #{stcd}
+			</if>
+			<if test="stnm != null and stnm != '' ">
+				and  st_was_r.stnm like concat('%',#{stnm},'%')
+			</if>
+        </where>
+		order by tm asc
+    </select>
+<!--	查询15天内天气预报的数据，按降雨场次分组-->
+	<select id="Select_Applet_Prediction_Rain_List" resultType="java.util.Map">
+		SELECT date_format(adddate(time,interval -8 hour),'%Y-%m-%d') as tm, SUM(pre) AS p
+		FROM st_weather_r
+		WHERE time >= STR_TO_DATE(#{tm},'%Y-%m-%d %H:%i:%s') and time &lt;= ADDDATE(#{tm},interval 15 day)
+			and stcd = '预报'
+		GROUP BY DATE_FORMAT(ADDDATE(time,interval -8 hour),'%Y-%m-%d')
+		order by date_format(adddate(time,interval -8 hour),'%Y-%m-%d') asc
+	</select>
+<!--	按年月日查询每小时的预报数据-->
+	<select id="Select_Applet_Prediction_Rain_Hour_List" resultType="java.util.Map">
+		SELECT str_to_date(time,'%Y-%m-%d %H') as tm, SUM(pre) AS p
+		FROM st_weather_r
+		WHERE time >= adddate(#{tm},interval 8 hour) and time &lt; ADDDATE(#{tm},interval 24+8 hour)
+		  and stcd = '预报'
+		GROUP BY str_to_date(time,'%Y-%m-%d %H')
+		order by str_to_date(time,'%Y-%m-%d %H') asc
+	</select>
+<!--   获取今日降雨量、年初至今降雨量、去年同期降水、多年平均降水 以 3212000007 -->
+	<select id="Select_Static_Info_List" resultType="java.util.Map">
+		select
+		round((select sum(p) from st_pptn_r where stcd ='3212000007' and tm >= ADDDATE(#{tm},interval 0 hour)
+		        and  tm &lt; ADDDATE(#{tm},interval 24 hour)),2) todayp,
+		round((select sum(p) from st_pptn_r where stcd ='3212000007' and tm >= adddate(concat(year(#{tm}),'-01-01'),interval 0 hour)
+		        and tm &lt; ADDDATE(#{tm},interval 24 hour)),2) toyearp,
+		round((select sum(p) from st_pptn_r where stcd ='3212000007' and tm >= adddate(concat(year(#{tm})-1,'-01-01'),interval 0 hour)
+                and tm &lt; ADDDATE(ADDDATE(#{tm},interval 24 hour),interval 24 hour)),2) lastyearp,
+		(select round(avg(p),2) p from (select year(tm) tm,sum(p) p from st_pptn_r where stcd ='3212000007'  group by year(tm)) st_pptn_r) avgp
+		from dual
+	</select>
+</mapper>

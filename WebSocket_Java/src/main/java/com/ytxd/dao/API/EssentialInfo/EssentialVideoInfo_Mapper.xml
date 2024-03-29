@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.API.EssentialInfo.EssentialVideoInfo_Mapper">
+	<resultMap id="VideoList" type="java.util.Map" autoMapping="true">
+		<result column="id" property="id"/>
+		<association column="stcd"  javaType="java.util.List"  autoMapping="true" property="attribute" select="Select_VideoInfoItem_List"/>
+	</resultMap>
+
+	<select id="Select_VideoInfo_List" resultMap="VideoList">
+		select * from (select stcd,stnm,lgtd,lttd,sttp,sttpjoin.description sttpname from st_stbprp_b
+			left join (select code ,description from sm_codeitem where codeid='TP') sttpjoin on sttpjoin.code = st_stbprp_b.sttp
+		<where>
+			<if test="stcd != null and stcd != '' ">
+				and stcd = #{stcd}
+			</if>
+			<if test="stnm != null and stnm != '' ">
+				and stnm = #{stnm}
+			</if>
+			and sttp = '06'
+		</where>
+		order by stcd
+		) st_stbprp_b
+		<if test="sort != null and sort != '' ">
+			order by ${sort} ${order}
+		</if>
+	</select>
+
+	<select id="Select_VideoInfoItem_List" resultType="java.util.HashMap">
+		select mf_Video_recording.* from (select id,stcd,eq_code,filepath,filepath1,starttime,endtime from mf_Video_recording where stcd =#{stcd} order by starttime desc
+		    ) mf_Video_recording group by stcd
+		order by stcd asc
+	</select>
+
+</mapper>

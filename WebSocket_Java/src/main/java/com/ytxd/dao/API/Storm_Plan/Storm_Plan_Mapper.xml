@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.API.Storm_Plan.Storm_Plan_Mapper">
+    <select id="Select_Storm_Plan_List" resultType="java.util.Map">
+        select storm_plan.*
+        from storm_plan
+        <where>
+            <if test="plan_id != null and plan_id != ''">
+                and plan_id in
+                <foreach collection="plan_id.split(',')" item="plan_id" open="(" separator="," close=")">
+                    #{plan_id}
+                </foreach>
+            </if>
+            <if test="period != null and period != ''">
+                and period = #{period}
+            </if>
+            <if test="starttime != null and starttime != ''">
+                and submittime >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != ''">
+                and submittime &lt;= #{endtime}
+            </if>
+            <if test="p != null and p != '' ">
+                and exists (
+                select plan_id from (
+                select plan_id,RANK() over(order by abs(p-#{p})) rn from storm_plan order by abs(p-#{p}) asc
+                ) sp where rn = 1 and sp.plan_id = storm_plan.plan_id
+                )
+            </if>
+            <if test="mh_wl != null and mh_wl != '' ">
+                and exists (select plan_id from (
+                select plan_id,RANK() over(order by abs(mh_wl-#{mh_wl})) rn from storm_plan order by abs(mh_wl-#{mh_wl}) asc
+                ) sp where rn = 1 and sp.plan_id = storm_plan.plan_id
+                )
+            </if>
+            <if test="sth_wl != null and sth_wl != '' ">
+                and exists (select plan_id from (
+                select plan_id,RANK() over(order by abs(sth_wl-#{sth_wl})) rn from storm_plan order by abs(sth_wl-#{sth_wl}) asc
+                ) sp where rn = 1 and sp.plan_id = storm_plan.plan_id
+                )
+            </if>
+        </where>
+        order by replace(replace(period,'h',''),'d','100') + 0 asc,p asc,mh_wl asc ,sth_wl asc,submittime asc
+    </select>
+
+    <select id="Select_Storm_Plan_List_Local" resultType="java.util.Map">
+        select storm_plan_local.*
+        from storm_plan_local
+        <where>
+            <if test="plan_id != null and plan_id != ''">
+                and plan_id in
+                <foreach collection="plan_id.split(',')" item="plan_id" open="(" separator="," close=")">
+                    #{plan_id}
+                </foreach>
+            </if>
+            <if test="period != null and period != ''">
+                and period = #{period}
+            </if>
+            <if test="starttime != null and starttime != ''">
+                and submittime >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != ''">
+                and submittime &lt;= #{endtime}
+            </if>
+            <if test="p != null and p != '' ">
+                and exists (
+                select plan_id from (
+                select plan_id,RANK() over(order by abs(p-#{p})) rn from storm_plan_local order by abs(p-#{p}) asc
+                ) sp where rn = 1 and sp.plan_id = storm_plan_local.plan_id
+                )
+            </if>
+            <if test="mh_wl != null and mh_wl != '' ">
+                and exists (select plan_id from (
+                select plan_id,RANK() over(order by abs(mh_wl-#{mh_wl})) rn from storm_plan_local order by abs(mh_wl-#{mh_wl}) asc
+                ) sp where rn = 1 and sp.plan_id = storm_plan_local.plan_id
+                )
+            </if>
+            <if test="sth_wl != null and sth_wl != '' ">
+                and exists (select plan_id from (
+                select plan_id,RANK() over(order by abs(sth_wl-#{sth_wl})) rn from storm_plan_local order by abs(sth_wl-#{sth_wl}) asc
+                ) sp where rn = 1 and sp.plan_id = storm_plan_local.plan_id
+                )
+            </if>
+        </where>
+        order by submittime asc,replace(replace(period,'h',''),'d','100') + 0 asc,p asc,mh_wl asc ,sth_wl asc
+    </select>
+    <sql id="Insert_Column">
+        <if test="plan_name != null and plan_name != '' ">
+            ,plan_name
+        </if>
+        <if test="period != null and period != '' ">
+            ,period
+        </if>
+        <if test="reproduce != null and reproduce != '' ">
+            ,reproduce
+        </if>
+        <if test="mh_wl != null and mh_wl != '' ">
+            ,mh_wl
+        </if>
+        <if test="sth_wl != null and sth_wl != '' ">
+            ,sth_wl
+        </if>
+        <if test="st_desc != null and st_desc != '' ">
+            ,st_desc
+        </if>
+        <if test="remake != null and remake != '' ">
+            ,remake
+        </if>
+        <if test="measures != null and measures != '' ">
+            ,measures
+        </if>
+        <if test="p != null and p != '' ">
+            ,p
+        </if>
+        <if test="dispatch_desc != null and dispatch_desc != '' ">
+            ,dispatch_desc
+        </if>
+        <if test="preventive_desc != null and preventive_desc != '' ">
+            ,preventive_desc
+        </if>
+        <if test="pre_desc != null and pre_desc != '' ">
+            ,pre_desc
+        </if>
+        <if test="pid != null and pid != '' ">
+            ,pid
+        </if>
+    </sql>
+    <sql id="Insert_Param">
+        <if test="plan_name != null and plan_name != '' ">
+            ,#{plan_name}
+        </if>
+        <if test="period != null and period != '' ">
+            ,#{period}
+        </if>
+        <if test="reproduce != null and reproduce != '' ">
+            ,#{reproduce}
+        </if>
+        <if test="mh_wl != null and mh_wl != '' ">
+            ,#{mh_wl}
+        </if>
+        <if test="sth_wl != null and sth_wl != '' ">
+            ,#{sth_wl}
+        </if>
+        <if test="st_desc != null and st_desc != '' ">
+            ,#{st_desc}
+        </if>
+        <if test="remake != null and remake != '' ">
+            ,#{remake}
+        </if>
+        <if test="measures != null and measures != '' ">
+            ,#{measures}
+        </if>
+        <if test="p != null and p != '' ">
+            ,#{p}
+        </if>
+        <if test="dispatch_desc != null and dispatch_desc != '' ">
+            ,#{dispatch_desc}
+        </if>
+        <if test="preventive_desc != null and preventive_desc != '' ">
+            ,#{preventive_desc}
+        </if>
+        <if test="pre_desc != null and pre_desc != '' ">
+            ,#{pre_desc}
+        </if>
+        <if test="pid != null and pid != '' ">
+            ,#{pid}
+        </if>
+    </sql>
+    <insert id="Insert_Storm_Plan">
+        insert into Storm_Plan(plan_id,submittime<include refid="Insert_Column"/>)
+        values(#{plan_id},#{submittime}<include refid="Insert_Param"/>)
+    </insert>
+    <insert id="Insert_Storm_Plan_Local">
+        insert into Storm_Plan_Local(plan_id,submittime<include refid="Insert_Column"/>)
+        values(#{plan_id},#{submittime}<include refid="Insert_Param"/>)
+    </insert>
+    <sql id="Update_Param">
+        <if test="plan_name != null">
+            ,plan_name = #{plan_name}
+        </if>
+        <if test="period != null">
+            ,period = #{period}
+        </if>
+        <if test="reproduce != null">
+            ,reproduce = #{reproduce}
+        </if>
+        <if test="mh_wl != null">
+            ,mh_wl = #{mh_wl}
+        </if>
+        <if test="sth_wl != null">
+            ,sth_wl = #{sth_wl}
+        </if>
+        <if test="st_desc != null">
+            ,st_desc = #{st_desc}
+        </if>
+        <if test="remake != null">
+            ,remake = #{remake}
+        </if>
+        <if test="measures != null">
+            ,measures = #{measures}
+        </if>
+        <if test="p != null">
+            ,p = #{p}
+        </if>
+        <if test="dispatch_desc != null">
+            ,dispatch_desc = #{dispatch_desc}
+        </if>
+        <if test="preventive_desc != null ">
+            ,preventive_desc = #{preventive_desc}
+        </if>
+        <if test="pre_desc != null">
+            ,pre_desc = #{pre_desc}
+        </if>
+        <if test="pid != null">
+            ,pid = #{pid}
+        </if>
+    </sql>
+    <update id="Update_Storm_Plan">
+        update Storm_Plan set plan_id=plan_id <include refid="Update_Param"/>
+        where plan_id in
+        <foreach collection="plan_id.split(',')" item="plan_id" open="(" separator="," close=")">
+            #{plan_id}
+        </foreach>
+    </update>
+    <update id="Update_Storm_Plan_Local">
+        update Storm_Plan_Local set plan_id=plan_id <include refid="Update_Param"/>
+        where plan_id in
+        <foreach collection="plan_id.split(',')" item="plan_id" open="(" separator="," close=")">
+            #{plan_id}
+        </foreach>
+    </update>
+    <delete id="Delete_Storm_Plan">
+        delete from Storm_Plan where plan_id in
+        <foreach collection="plan_id.split(',')" item="plan_id" open="(" separator="," close=")">
+            #{plan_id}
+        </foreach>
+    </delete>
+    <delete id="Delete_Storm_Plan_Local">
+        delete from Storm_Plan_Local where plan_id in
+        <foreach collection="plan_id.split(',')" item="plan_id" open="(" separator="," close=")">
+            #{plan_id}
+        </foreach>
+    </delete>
+
+    <select id="Get_Forecast_Rainfall" resultType="java.util.Map">
+        select (select sum(pre) from st_weather_r where stcd = 'W00' and time BETWEEN now() and DATE_ADD(now(), interval 24 hour)) rainfall,
+            '1d' period,
+            (select IFNULL(Z, 0) from st_river_r_view where stcd = '3212000007_01' order by TM desc LIMIT 1) mh_wl,
+            (select IFNULL(Z, 0) from st_river_r_view where stcd = '40235960' order by TM desc LIMIT 1) sth_wl
+    </select>
+
+    <select id="Get_Most_Suitable_Plan" resultType="java.util.Map">
+        select storm_plan.plan_id,left_p.p_rn,left_mh.mh_rn,left_sth.sth_rn,(left_p.p_rn+left_mh.mh_rn+left_sth.sth_rn) rn,storm_plan.pre_desc,
+               storm_plan.preventive_desc, storm_plan.dispatch_desc,storm_plan.st_desc
+        from storm_plan
+        left join (select plan_id,RANK() over(order by abs(p-#{p})) p_rn,p from storm_plan  where storm_plan.PERIOD = #{period}) left_p on storm_plan.plan_id = left_p.plan_id
+        left join (select plan_id,RANK() over(order by abs(mh_wl-#{mh_wl})) mh_rn,mh_wl from storm_plan where storm_plan.PERIOD = #{period}) left_mh on storm_plan.plan_id = left_mh.plan_id
+        left join (select plan_id,RANK() over(order by abs(sth_wl-#{sth_wl})) sth_rn,sth_wl from storm_plan where storm_plan.PERIOD = #{period}) left_sth on storm_plan.plan_id = left_sth.plan_id
+        where storm_plan.PERIOD = #{period} order by rn asc, p_rn asc, mh_rn asc,sth_rn asc LIMIT 1;
+    </select>
+    <select id="Select_Storm_Plan_Regular_List" resultType="java.util.Map">
+        SELECT
+            storm_plan_regular.id,
+            storm_plan_regular.plan_name,
+            storm_plan_regular.tm plan_time,
+            storm_plan_regular.plan_id,
+            ifnull(storm_plan.pre_desc,storm_plan_info_msg.pre_desc) pre_desc,
+            ifnull(storm_plan.preventive_desc,replace(storm_plan_info_msg.preventive_desc,'14.5',ifnull(
+
+        (select round(z,2) from st_river_r_view where stcd ='3212000007_01' and DATE_FORMAT(st_river_r_view.tm,'%Y-%m-%d %H') = STR_TO_DATE(storm_plan_regular.tm,'%Y-%m-%d %H') order by tm desc limit 1)
+        ,ifnull(
+        (select round(z,2) from st_river_r_view where stcd ='3212000008_01' and DATE_FORMAT(st_river_r_view.tm,'%Y-%m-%d %H') = STR_TO_DATE(storm_plan_regular.tm,'%Y-%m-%d %H') order by tm desc limit 1)
+        ,14.5)))) preventive_desc,
+            /*ifnull(storm_plan.st_desc,CONCAT('预降措施：',storm_plan_info_msg.pre_desc,'\n调度措施：',storm_plan_info_msg.dispatch_desc,'\n防范措施：',storm_plan_info_msg.preventive_desc)) st_desc*/
+            ifnull(storm_plan.dispatch_desc,storm_plan_info_msg.dispatch_desc) dispatch_desc
+        FROM
+            storm_plan_regular
+            left join storm_plan on storm_plan_regular.plan_id = storm_plan.plan_id
+            LEFT JOIN storm_plan_info_msg on 1=1
+        <where>
+            <if test="tm != null and tm != '' ">
+                and DATE_FORMAT(storm_plan_regular.tm,'%Y-%m-%d') = STR_TO_DATE(#{tm},'%Y-%m-%d')
+            </if>
+        </where>
+        order by tm desc
+    </select>
+    <delete id="Delete_storm_node_r">
+        delete from storm_node_r where plan_id = #{plan_id}
+    </delete>
+    <insert id="Insert_storm_node_r" >
+        insert into storm_node_r(plan_id, nodeid, nodename, tm, z, q, timestep) select #{plan_id}, nodeid, nodename, tm, z, q, timestep
+        from storm_node_r where plan_id = #{tmpplan_id}
+    </insert>
+</mapper>

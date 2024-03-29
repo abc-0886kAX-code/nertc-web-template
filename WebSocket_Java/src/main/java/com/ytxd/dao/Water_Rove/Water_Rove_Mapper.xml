@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Water_Rove.Water_Rove_Mapper">
+	<!--获取几个弹窗信息-->
+	<select id="Select_Storm_Plan_Info" resultType="java.util.Map">
+		select storm_plan.plan_id,plan_name,concat('预报未来',replace(replace(period,'h','小时'),'d','天'),'降雨',p,'mm') perrain,pre_desc,dispatch_desc,Preventive_desc,
+		round(storm_node_r.minz,2) minz,round(storm_node_r.maxz,2) maxz
+		from storm_plan
+		left join (
+		    select plan_id,min(z) minz,14.5 maxz from storm_node_r where nodeid = #{nodeid}
+		<if test="plan_id != null and plan_id != '' ">
+			and plan_id = #{plan_id}
+		</if>
+		    group by plan_id
+		) storm_node_r on storm_plan.plan_id = storm_node_r.plan_id
+		<where>
+			<if test="plan_id != null and plan_id != '' ">
+				and storm_plan.plan_id = #{plan_id}
+			</if>
+			<if test="plan_name != null and plan_name != '' ">
+				and plan_name like concat('%',#{plan_name},'%')
+			</if>
+		</where>
+		limit 1
+	</select>
+	<!--获取预案为空的几个弹窗信息-->
+	<select id="Select_Storm_Plan_Info_NullPlan" resultType="java.util.Map">
+		SELECT id,perrain,pre_desc,dispatch_desc,replace(storm_plan_info_msg.preventive_desc,'14.5',ifnull(
+				(select round(z,2) from st_river_r_view where stcd ='3212000007_01' and DATE_FORMAT(st_river_r_view.tm,'%Y-%m-%d %H') = STR_TO_DATE(#{plan_time},'%Y-%m-%d %H') order by tm desc limit 1)
+        ,ifnull(
+        (select round(z,2) from st_river_r_view where stcd ='3212000008_01' and DATE_FORMAT(st_river_r_view.tm,'%Y-%m-%d %H') = STR_TO_DATE(#{plan_time},'%Y-%m-%d %H') order by tm desc limit 1)
+        ,14.5))) preventive_desc,minz,maxz FROM storm_plan_info_msg where id = '1'
+	</select>
+
+	<select id="Select_Init_Site_Info_List" resultType="java.util.Map">
+		select
+		    st_stbprp_b.stcd,
+			<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>
+			-- ,str_to_date(now(),'%Y-%m-%d %H') tm
+			<if test="plan_id != null and plan_id != '' ">
+			,round(diff_storm_node_r.z,2) z,diff_storm_node_r.pre_24_tm,diff_storm_node_r.pre_24_z,diff_storm_node_r.pre_24_tm tm
+			</if>
+		<if test="plan_id == null or plan_id == '' ">
+			,round(st_river_r_view.z,2) z,st_river_r_view.tm pre_24_tm,st_river_r_view.z pre_24_z,st_river_r_view.tm tm
+		</if>
+		from
+		    st_stbprp_b
+			<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+			inner join (select distinct nodeid,stcd from storm_node_contrast where type ='01') storm_node_contrast on storm_node_contrast.stcd  = st_stbprp_b.stcd
+		<if test="plan_id != null and plan_id != '' ">
+			left join (select plan_id,nodeid,starttm,start_z z,pre_24_z,adddate(SYSDATE(),INTERVAL IFNULL(pre_24_tm,0)/3600 hour) pre_24_tm from STORM_NODE_R_STATIC)
+				 diff_storm_node_r on storm_node_contrast.nodeid = diff_storm_node_r.nodeid
+		</if>
+		<if test="plan_id == null or plan_id == '' ">
+			left join (select tm,z,stcd from (select tm,z,stcd,row_number() over(partition by stcd order by tm desc) rn from st_river_r_view
+			where DATE_FORMAT(st_river_r_view.tm,'%Y-%m-%d %H')= DATE_FORMAT(#{plan_time},'%Y-%m-%d %H')
+			    	) st_river_r_view where rn = '1'
+			) st_river_r_view on st_river_r_view.stcd = st_stbprp_b.stcd
+		</if>
+		<where>
+			<if test="plan_id != null and plan_id != '' ">
+				and diff_storm_node_r.plan_id = #{plan_id}
+			</if>
+			<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+		</where>
+		order by -st_stbprp_b.orderid desc
+	</select>
+	<select id="Select_TMAxis_Info_List" resultType="java.util.Map">
+		select timehours.tm,step,round(storm_node_r.z,2) z,storm_node_r.stcd,st_stbprp_b.stnm,st_stbprp_b.sttp from
+		      (select ADDDATE(date_format(ifnull(#{tm},now()),'%Y-%m-%d %H'),interval num hour) tm,num step from timehours
+		      	where num &lt; (select case when locate('h',REPRODUCE) > 0 then replace(reproduce,'h','')
+		      	    when locate('d',REPRODUCE) > 0 then replace(reproduce,'d','') * 24 else reproduce end
+			from storm_plan where plan_id = #{plan_id})
+		) timehours
+		left join (
+			select storm_node_r.z,round(storm_node_r.timestep/60/60,0) timestep,stcd from storm_node_r
+			left join (select distinct nodeid,stcd from storm_node_contrast where type ='01')storm_node_contrast on storm_node_contrast.NODEID = storm_node_r.nodeid
+			where plan_id = #{plan_id}
+		) storm_node_r on storm_node_r.timestep = timehours.step
+		left join st_stbprp_b on st_stbprp_b.stcd = storm_node_r.stcd
+		order by step asc
+	</select>
+	<select id="Select_TMAxis_Info_List_NullPlan" resultType="java.util.Map">
+		select
+			timehours.tm,
+			step,
+			round(st_river_r_view.z,2) z,
+			storm_node_r.stcd,
+			storm_node_r.stnm,
+			storm_node_r.sttp
+		from
+			(select ADDDATE(date_format(ifnull(#{tm},now()),'%Y-%m-%d %H'),interval num hour) tm,num step from timehours where num &lt; 24*3) timehours
+			left join (
+				SELECT DISTINCT nodeid,st_stbprp_b.stcd,st_stbprp_b.stnm,st_stbprp_b.sttp FROM storm_node_contrast JOIN st_stbprp_b ON st_stbprp_b.stcd = storm_node_contrast.stcd WHERE type = '01'
+			) storm_node_r on 1=1
+		left join(select stcd,z from (select stcd ,z ,row_number() over(partition by stcd order by tm desc) rn from  st_river_r_view where str_to_date(tm,'%Y-%m-%d %H') = ADDDATE(date_format(ifnull(#{tm},now()),'%Y-%m-%d %H'),interval 0 hour) ) st_river_r_view where rn = '1'
+		) st_river_r_view on st_river_r_view.stcd = storm_node_r.stcd
+		order by step asc
+	</select>
+
+	<select id="Select_TMAxis_Section_List" resultType="java.util.Map">
+		select timehours.tm,step,round(storm_node_r.z,2) z from
+			(select ADDDATE(date_format(ifnull(#{tm},now()),'%Y-%m-%d %H'),interval num hour) tm,num step from timehours
+			 where num &lt; (select case when locate('h',REPRODUCE) > 0 then replace(reproduce,'h','')
+										 when locate('d',REPRODUCE) > 0 then replace(reproduce,'d','') * 24 else reproduce end
+							 from storm_plan where plan_id = #{plan_id})
+			) timehours
+			left join (
+				select storm_node_r.z,round(storm_node_r.timestep/60/60,0) timestep from storm_node_r
+				where plan_id = #{plan_id} and nodeid = #{nodeid}
+			) storm_node_r on storm_node_r.timestep = timehours.step
+		order by step asc
+	</select>
+	<select id="Select_TMAxis_Section_List_NullPlan" resultType="java.util.Map">
+		select
+		    ADDDATE(date_format(ifnull(#{tm},now()),'%Y-%m-%d %H'),interval num hour) tm,
+		    num step,
+		    format(14,2) z
+		from timehours where num &lt; 24*3 order by num asc
+	</select>
+
+	<select id = "Select_TMAxis_Site_List" resultType="java.util.Map">
+		select
+		    timehours.tm,timehours.step,round(storm_node_r.z,2) z,st_stbprp_b.stcd,st_stbprp_b.stnm,ST_RAIN_DIST.p
+		from
+		    (
+				select
+				    ADDDATE(date_format(ifnull(#{tm},now()),'%Y-%m-%d %H'),interval num hour) tm,num step
+				from timehours where num &lt; (
+				    select case when locate('h',REPRODUCE) > 0 then replace(reproduce,'h','') when locate('d',REPRODUCE) > 0 then replace(reproduce,'d','') * 24 else reproduce end from storm_plan where plan_id = #{plan_id}
+				)
+			) timehours
+			left join (
+				select
+				    storm_node_r.z,round(storm_node_r.timestep/60/60,0) timestep,stcd
+				from
+				    storm_node_r
+						left join (select distinct nodeid,stcd from storm_node_contrast where type ='01')storm_node_contrast on storm_node_contrast.nodeid = storm_node_r.nodeid
+				where plan_id = #{plan_id} and storm_node_contrast.stcd = #{stcd}
+			) storm_node_r on storm_node_r.timestep = timehours.step
+			<!-- left join (select round(p / if(period like '%d%',replace(period,'d','') * 24 , replace(period,'h',''))) p,if(period like '%d%',replace(period,'d','') * 24 , replace(period,'h','')) timestep from storm_plan where plan_id = #{plan_id}
+			)storm_plan_p on storm_plan_p.timestep >= timehours.step -->
+		        left join (select round(storm_plan.p*ST_RAIN_DIST.rote / 100) p ,ST_RAIN_DIST.step from storm_plan
+		left join ST_RAIN_DIST on ST_RAIN_DIST.period = storm_plan.period
+		where plan_id =#{plan_id} ) ST_RAIN_DIST on ST_RAIN_DIST.step = timehours.step
+			left join st_stbprp_b on st_stbprp_b.stcd = storm_node_r.stcd
+
+		<where>
+			<if test="step != null and step != '' ">
+				and timehours.step &lt;= #{step}
+			</if>
+		</where>
+		order by timehours.step asc
+	</select>
+	<select id = "Select_TMAxis_Site_List_NullPlan" resultType="java.util.Map">
+		select * from (
+			select
+				ADDDATE(date_format(ifnull(#{tm},now()),'%Y-%m-%d %H'),interval num hour) tm,
+				num step,
+				st_stbprp_b.stnm,
+				st_stbprp_b.stcd,
+			       case when st_stbprp_b.stcd = '3212000008_01' then round(ifnull(st_river_r_view.z,ifnull(st_river_r_view_a.z,ifnull(st_river_r_view_b.z,14.0))),2) else
+				round(ifnull(st_river_r_view.z,0),2) end z,st_weather_r.p
+			from
+				timehours
+				LEFT JOIN st_stbprp_b on 1=1 and st_stbprp_b.stcd = #{stcd}
+				LEFT JOIN (
+					select
+						row_number() over(ORDER BY tm desc) px,st_river_r_view.*
+					from
+						st_river_r_view
+					where
+					    stcd = #{stcd} and DATE_FORMAT(st_river_r_view.tm,'%Y-%m-%d %H') = STR_TO_DATE(#{tm},'%Y-%m-%d %H')
+				)st_river_r_view on 1=1 and st_river_r_view.px = 1
+			left join (select z from st_river_r_view where stcd ='3212000007_01'
+			      and DATE_FORMAT(st_river_r_view.tm,'%Y-%m-%d %H') = STR_TO_DATE(#{tm},'%Y-%m-%d %H') order by tm desc limit 1
+			)st_river_r_view_a on 1=1
+			left join (select z from st_river_r_view where stcd ='K68220015-01'
+			     and DATE_FORMAT(st_river_r_view.tm,'%Y-%m-%d %H') = STR_TO_DATE(#{tm},'%Y-%m-%d %H') order by tm desc limit 1
+			)st_river_r_view_b on 1=1
+			left join (select pre p,time tm from st_weather_r where stcd ='W00' ) st_weather_r on st_weather_r.tm = ADDDATE(date_format(ifnull(#{tm},now()),'%Y-%m-%d %H'),interval num hour)
+		where
+				timehours.num &lt; 24*3
+		) timehours
+		<where>
+			<if test="step != null and step != '' ">
+				and timehours.step &lt;= #{step}
+			</if>
+		</where>
+		order by step asc
+	</select>
+
+	<select id="Select_Sluice_Gate_List" resultType="java.util.Map">
+		select timehours.tm,step,round(gate_one.q,2) one_q,round(gate_two.q,2) two_q from
+		(select ADDDATE(date_format(ifnull(#{tm},now()),'%Y-%m-%d %H'),interval num hour) tm,num step from timehours
+		where num &lt; (select case when locate('h',REPRODUCE) > 0 then replace(reproduce,'h','')
+		when locate('d',REPRODUCE) > 0 then replace(reproduce,'d','') * 24 else reproduce end
+		from storm_plan where plan_id = #{plan_id})
+		) timehours
+		left join (
+			select storm_node_r.q,round(storm_node_r.timestep/60/60,0) timestep from storm_node_r
+			where plan_id = #{plan_id} and nodeid = 'a6b5d076b134b03a105b327d7d816e16'
+		) gate_one on gate_one.timestep = timehours.step
+		left join (
+			select storm_node_r.q,round(storm_node_r.timestep/60/60,0) timestep from storm_node_r
+			where plan_id = #{plan_id} and nodeid = '397046359134b03a105b32795e91ba59'
+		) gate_two on gate_two.timestep = timehours.step
+		<where>
+			<if test="step != null and step != '' ">
+				and timehours.step &lt;= #{step}
+			</if>
+		</where>
+		order by step asc
+	</select>
+	<select id="Select_Sluice_Gate_List_NullPlan" resultType="java.util.Map">
+		select
+			ADDDATE(date_format(ifnull(#{tm},now()),'%Y-%m-%d %H'),interval num hour) tm,
+			num step,
+			0 one_q,
+			0 tow_q
+		from
+			timehours
+		where
+			timehours.num &lt; 24*3
+			<if test="step != null and step != '' ">
+				and timehours.num &lt;= #{step}
+			</if>
+		order by num asc
+	</select>
+
+	<select id="Select_Default_Wind_Info" resultType="java.util.Map">
+		select * from (select storm_plan_wind.*,abs(ifnull(storm_plan_wind.mh_wl,0) - ifnull(storm_plan.mh_wl,st_river_r_view.z)) abs_z,
+		                      abs(ifnull(storm_plan_wind.speed,0) - ifnull(st_wdwv_r.wndv,0)) abs_wndv
+					from  storm_plan_wind
+					inner join (select code,Description,shortname from sm_codeitem where codeid = 'WI'
+					) wnddir_join on storm_plan_wind.DIRECTION = wnddir_join.shortname
+					inner join (select wnddir,wndv from st_wdwv_r where stcd ='3212000007' order by tm desc limit 1
+					) st_wdwv_r on st_wdwv_r.WNDDIR = wnddir_join.code
+					left join (select z from st_river_r_view where stcd ='3212000007_01' order by tm desc limit 1 )st_river_r_view  on 1=1
+		    		left join (select mh_wl from storm_plan where plan_id = #{plan_id}) storm_plan on 1=1
+		) storm_plan_wind order by abs_wndv asc ,abs_z asc limit 1
+	</select>
+	<select id="Select_Default_wind_r_List" resultType="java.util.Map">
+		select plan_id,x,y,xv,yv,tm from storm_plan_wind_r where plan_id= #{plan_id}
+	</select>
+</mapper>

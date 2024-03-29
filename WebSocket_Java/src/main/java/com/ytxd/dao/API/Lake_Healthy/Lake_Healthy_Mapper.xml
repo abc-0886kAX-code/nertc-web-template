@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.API.Lake_Healthy.Lake_Healthy_Mapper">
+	<select id="Select_Lake_Healthy_List" resultType="java.util.Map">
+		select * from (
+		    select Lake_Healthy.*,indextype_join.description indextypename,Healthy_level_join.description Healthy_levelname,
+			Healthy_level_join.rgb
+		    from Lake_Healthy
+		    left join (select code,description,orderid from sm_codeitem where codeid ='AD' and pptr='AD'
+		    ) indextype_join on indextype_join.code = Lake_Healthy.indextype
+			left join (select code,description,rgb from sm_codeitem where codeid ='AE'
+			) Healthy_level_join on Healthy_level_join.code = Lake_Healthy.Healthy_level
+			<where>
+				exists (select 1 from (select max(tm) tm,indexid,indextype from Lake_Healthy group by indextype,indexid)
+					t2 where t2.tm = Lake_Healthy.tm and t2.indexid = Lake_Healthy.indexid and Lake_Healthy.indextype = t2.indextype
+				)
+				<if test="id != null and id != ''">
+					and Lake_Healthy.id in
+		    		<foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+						#{id}
+					</foreach>
+				</if>
+				<if test="indexid != null and indexid != ''">
+					and Lake_Healthy.indexid in
+					<foreach collection="indexid.split(',')" item="indexid" open="(" separator="," close=")">
+						#{indexid}
+					</foreach>
+				</if>
+				<if test="indextype != null and indextype != ''">
+					and Lake_Healthy.indextype in
+					<foreach collection="indextype.split(',')" item="indextype" open="(" separator="," close=")">
+						#{indextype}
+					</foreach>
+				</if>
+			</where>
+			order by indextype_join.orderid asc,Lake_Healthy.tm desc
+		) Lake_Healthy
+		<if test="sort != null and sort != '' ">
+			order by ${sort} ${order}
+		</if>
+	</select>
+	<select id="Select_People_Statistics" resultType="java.util.Map">
+		select *
+		from (select sum(pn) lable_value, '入园游览人数' label from st_epn
+			  union all
+			  select count(id) lable_value, '巡湖打卡人数' label from ST_lake_way
+			  union all
+			  select count(id) lable_value, '公众互动人数' label from st_satisfaction
+			 ) People_Statistics
+		<if test="sort != null and sort != '' ">
+			order by ${sort} ${order}
+		</if>
+	</select>
+	<select id="Select_Water_Resource_List" resultType="java.util.Map">
+		select id,tm,avg_p,water_ratio,water_sum from mook_water_resource order by tm desc limit 1
+	</select>
+	<select id="Select_Lake_Bliss_List" resultType="java.util.Map">
+		select lake_bliss.*,indextype_join.description indextypename,bliss_level_join.description bliss_levelname,
+		bliss_level_join.rgb,lake_bliss.bliss_level Healthy_level ,bliss_level_join.description Healthy_levelname
+		from lake_bliss
+		left join (select code,description,orderid from sm_codeitem where codeid ='AG' and pptr='AG'
+		) indextype_join on indextype_join.code = lake_bliss.indextype
+		left join (select code,description,rgb from sm_codeitem where codeid ='AH'
+		) bliss_level_join on bliss_level_join.code = lake_bliss.bliss_level
+		<where>
+			exists (select 1 from (select max(tm) tm,indexid,indextype from lake_bliss group by indextype,indexid)
+			t2 where t2.tm = lake_bliss.tm and t2.indexid = lake_bliss.indexid and lake_bliss.indextype = t2.indextype
+			)
+			<if test="id != null and id != ''">
+				and lake_bliss.id in
+				<foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+					#{id}
+				</foreach>
+			</if>
+			<if test="indexid != null and indexid != ''">
+				and lake_bliss.indexid in
+				<foreach collection="indexid.split(',')" item="indexid" open="(" separator="," close=")">
+					#{indexid}
+				</foreach>
+			</if>
+			<if test="indextype != null and indextype != ''">
+				and lake_bliss.indextype in
+				<foreach collection="indextype.split(',')" item="indextype" open="(" separator="," close=")">
+					#{indextype}
+				</foreach>
+			</if>
+		</where>
+		order by indextype_join.orderid asc,lake_bliss.tm desc
+	</select>
+	<select id="Select_RemoteSensing_List" resultType="java.util.Map">
+		select id,title,tm,src,type from st_remotesensing_r
+		<where>
+			<if test="flag != null and flag  != '' ">
+				and flag = #{flag}
+			</if>
+			<if test="type != null and type  != '' ">
+				and type = #{type}
+			</if>
+			<if test="starttime != null and starttime  != '' ">
+				and tm >= #{starttime}
+			</if>
+			<if test="endtime != null and endtime  != '' ">
+				and tm &lt;= #{endtime}
+			</if>
+
+		</where>
+		order by tm desc
+	</select>
+	<select id="Select_RemoteSensing_ListByMonth" resultType="java.util.Map">
+		select id,title,tm,src,type from st_remotesensing_r
+		<where>
+			<if test="flag != null and flag  != '' ">
+				and flag = #{flag}
+			</if>
+			<if test="type != null and type  != '' ">
+				and type = #{type}
+			</if>
+			<if test="starttime != null and starttime  != '' ">
+				and tm >= date_add(last_day(#{starttime}),interval -1 month)
+			</if>
+			<if test="endtime != null and endtime  != '' ">
+				and tm &lt; last_day(#{endtime})
+			</if>
+
+		</where>
+		order by tm desc
+	</select>
+	<select id="Select_Last_RemoteSensing_List" resultType="java.util.Map">
+		select id, title, tm, src,type
+		from (
+				 select id, title, tm, src,type, row_number() over(partition by type order by tm desc) rn
+				 from st_remotesensing_r
+		    	<where>
+					<if test="type != null and type  != '' ">
+						and type = #{type}
+					</if>
+					<if test="flag != null and flag  != '' ">
+						and flag = #{flag}
+					</if>
+					<if test="starttime != null and starttime  != '' ">
+						and tm >= #{starttime}
+					</if>
+					<if test="endtime != null and endtime  != '' ">
+						and tm &lt;= #{endtime}
+					</if>
+				</where>
+		) st_remotesensing_r where rn = 1 order by title
+	</select>
+</mapper>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Statistics.St_river_rMapper">
+    <select id="GetData" resultType="java.util.HashMap">
+        select st_stbprp_b.stcd,stnm,stlc,st_river_r.tm,st_river_r.q,st_river_r.z ,
+               st_rvfcch_b.LDKEL,RDKEL,WRZ,GRZ
+        from st_stbprp_b
+        left join (
+            select stcd,tm,z,q from (select stcd,tm,z,q,row_number() over (partition by stcd order by tm) rn from st_river_r
+                                     where tm between #{starttime} and#{endtime}
+            )st_river_r where rn = 1
+        )st_river_r on st_river_r.stcd = st_stbprp_b.stcd
+                 left join(select STCD,LDKEL,RDKEL,WRZ,GRZ from st_rvfcch_b)st_rvfcch_b on st_rvfcch_b.STCD = st_stbprp_b.STCD
+        where sttp in ('ZZ','ZQ') and flag ='01' order by ifnull(z,-999) desc,ifnull(tm,'2000-01-01 00:00:00') desc,stcd desc
+    limit 5
+    </select>
+
+    <select id="GetCount" resultType="java.util.HashMap">
+        select case when(srr.Z>join0.LDKEL or srr.Z>join0.RDKEL) then '漫堤'
+        when(srr.Z>join0.WRZ or srr.Q>WRQ) then '超警戒'
+        when(srr.Z>join0.GRZ or srr.Q>GRQ) then '超保证'
+        else '正常'
+        end as title,count(*)value from
+        (select STCD,TM,Z,Q from st_river_r where (STCD,TM) IN
+        (select STCD,MAX(TM) from st_river_r GROUP BY STCD))srr
+        left join (select STCD,LDKEL,RDKEL,WRZ,WRQ,GRZ,GRQ from st_rvfcch_b)join0 on join0.STCD=srr.STCD
+        group by title
+    </select>
+    <select id="GetTotal" resultType="java.util.HashMap">
+        select '总数量' as title,count(*)value from st_stbprp_b where STTP in ('ZQ','ZZ')
+    </select>
+</mapper>

@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.SystemManage.SM_ExcelImportItem_Mapper">
+	<!-- 允许缓存 -->
+	<!-- <cache /> -->
+	
+	<!-- 查询表   表 字段  -->
+	<sql id="Select_Column">
+		sm_excelimportitem.id,
+		sm_excelimportitem.importname,
+		sm_excelimportitem.fieldname,
+		sm_excelimportitem.excelcolumnname,
+		sm_excelimportitem.visible,ifnull(visible.DescriptionJoin,sm_excelimportitem.visible) visibleName,
+		sm_excelimportitem.columnnumber,
+		sm_excelimportitem.notnull,ifnull(notnull.DescriptionJoin,sm_excelimportitem.notnull) notnullName,
+		sm_excelimportitem.fieldtype,ifnull(fieldtype.DescriptionJoin,sm_excelimportitem.fieldtype) fieldtypeName,
+		sm_excelimportitem.fieldshortestlen,
+		sm_excelimportitem.fieldlen,
+		sm_excelimportitem.codeid,
+		sm_excelimportitem.codename,ifnull(codename.DescriptionJoin,sm_excelimportitem.codename) codenameName,
+		sm_excelimportitem.onlyflag,ifnull(onlyflag.DescriptionJoin,sm_excelimportitem.onlyflag) onlyflagName,
+		sm_excelimportitem.amuserimporttype,ifnull(amuserimporttype.DescriptionJoin,sm_excelimportitem.amuserimporttype) amuserimporttypeName
+	</sql>
+
+	<!-- 查询表   查询条件参数  -->
+	<sql id="Select_Parmeter">
+		<if test="id!=null and id!=''"> AND sm_excelimportitem.id IN (#{id}) </if>
+		<if test="importname!=null and importname!=''"> AND sm_excelimportitem.importname = #{importname} </if>
+		<if test="fieldname!=null and fieldname!=''"> AND sm_excelimportitem.fieldname like CONCAT('%',#{fieldname},'%') </if>
+		<if test="excelcolumnname!=null and excelcolumnname!=''"> AND sm_excelimportitem.excelcolumnname like CONCAT('%',#{excelcolumnname},'%') </if>
+		<if test="visible!=null and visible!=''"> AND sm_excelimportitem.visible = #{visible} </if>
+		<if test="startcolumnnumber!=null and startcolumnnumber!=''"> AND sm_excelimportitem.columnnumber &gt;= #{startcolumnnumber} </if>
+		<if test="endcolumnnumber!=null and endcolumnnumber!=''"> AND sm_excelimportitem.columnnumber &lt;= #{endcolumnnumber} </if>
+		<if test="notnull!=null and notnull!=''"> AND sm_excelimportitem.notnull = #{notnull} </if>
+		<if test="fieldtype!=null and fieldtype!=''"> AND sm_excelimportitem.fieldtype = #{fieldtype} </if>
+		<if test="startfieldshortestlen!=null and startfieldshortestlen!=''"> AND sm_excelimportitem.fieldshortestlen &gt;= #{startfieldshortestlen} </if>
+		<if test="endfieldshortestlen!=null and endfieldshortestlen!=''"> AND sm_excelimportitem.fieldshortestlen &lt;= #{endfieldshortestlen} </if>
+		<if test="startfieldlen!=null and startfieldlen!=''"> AND sm_excelimportitem.fieldlen &gt;= #{startfieldlen} </if>
+		<if test="endfieldlen!=null and endfieldlen!=''"> AND sm_excelimportitem.fieldlen &lt;= #{endfieldlen} </if>
+		<if test="codeid!=null and codeid!=''"> AND sm_excelimportitem.codeid like CONCAT('%',#{codeid},'%') </if>
+		<if test="codename!=null and codename!=''"> AND sm_excelimportitem.codename = #{codename} </if>
+		<if test="onlyflag!=null and onlyflag!=''"> AND sm_excelimportitem.onlyflag = #{onlyflag} </if>
+		<if test="amuserimporttype!=null and amuserimporttype!=''"> AND sm_excelimportitem.amuserimporttype = #{amuserimporttype} </if>
+		<!-- <if test="whereString!=null and whereString!=''"> ${whereString} </if> -->
+	</sql>
+
+	<!-- 查询  表信息  -->
+	<select id="Select_SM_ExcelImportItem" parameterType="com.ytxd.model.SystemManage.SM_ExcelImportItem" resultType="com.ytxd.model.SystemManage.SM_ExcelImportItem">
+		SELECT <include refid="Select_Column" />
+		FROM sm_excelimportitem 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') visible on visible.CodeJoin=sm_excelimportitem.visible 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') notnull on notnull.CodeJoin=sm_excelimportitem.notnull 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') fieldtype on fieldtype.CodeJoin=sm_excelimportitem.fieldtype 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') codename on codename.CodeJoin=sm_excelimportitem.codename 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') onlyflag on onlyflag.CodeJoin=sm_excelimportitem.onlyflag 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') amuserimporttype on amuserimporttype.CodeJoin=sm_excelimportitem.amuserimporttype  
+		WHERE 1 = 1 
+		<include refid="Select_Parmeter" />
+		<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+		LIMIT #{startRow},#{pageSize}
+	</select>
+	
+	<!-- 生成导入模板用的sql -->
+	<select id="Select_SM_ExcelImportItem_Template" parameterType="com.ytxd.model.SystemManage.SM_ExcelImportCollect" resultType="com.ytxd.model.SystemManage.SM_ExcelImportItem">
+		select WIDTH.COLUMNWIDTH as FieldLen,ImportName, columns.column_name FieldName, ExcelColumnName, Visible, ColumnNumber, NotNull, FieldType, FieldShortestLen, FieldLen, CodeId, CodeName, OnlyFlag, AMUserImportType 
+		from SM_ExcelImportItem 
+		left join (select column_name from user_tab_columns where lower(table_name)= lower('${tablename}')) columns on lower(columns.column_name)=lower(SM_ExcelImportItem.FieldName)
+		left join (select COLUMNWIDTH, rownum,SOURCECOLUMNNAME from SM_EXCELITEM where lower(EXPORTNAME) like CONCAT('%',lower(replace('${tablename}','_Import', '')),'%') and rownum=1) WIDTH on lower(WIDTH.SOURCECOLUMNNAME)=lower(SM_ExcelImportItem.FieldName)
+		where ImportName='${importname}' and Visible='01' 
+		order by ColumnNumber
+	</select>
+	
+	<select id="Select_SM_ExcelImportItem_All" parameterType="com.ytxd.model.SystemManage.SM_ExcelImportItem" resultType="com.ytxd.model.SystemManage.SM_ExcelImportItem">
+		SELECT
+			<include refid="Select_Column" />
+		FROM sm_excelimportitem 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') visible on visible.CodeJoin=sm_excelimportitem.visible
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') notnull on notnull.CodeJoin=sm_excelimportitem.notnull 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') fieldtype on fieldtype.CodeJoin=sm_excelimportitem.fieldtype 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') codename on codename.CodeJoin=sm_excelimportitem.codename 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') onlyflag on onlyflag.CodeJoin=sm_excelimportitem.onlyflag 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') amuserimporttype on amuserimporttype.CodeJoin=sm_excelimportitem.amuserimporttype 
+		WHERE 1 = 1
+			<include refid="Select_Parmeter" />
+			<if test="sort!=null and sort!=''"> ORDER BY ${sort} ${order}</if>
+	</select>
+	<!-- 查询表记录数  -->
+	<select id="Select_SM_ExcelImportItem_Count" parameterType="com.ytxd.model.SystemManage.SM_ExcelImportItem" resultType="java.lang.Integer">
+		SELECT
+			COUNT(1)
+		FROM sm_excelimportitem
+		WHERE 1 = 1
+			<include refid="Select_Parmeter" />
+	</select>
+	<!-- 查询表信息  -->
+	<select id="Select_SM_ExcelImportItem_ById" parameterType="java.lang.String" resultType="com.ytxd.model.SystemManage.SM_ExcelImportItem">
+		SELECT <include refid="Select_Column" />
+		FROM sm_excelimportitem 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') visible on visible.CodeJoin=sm_excelimportitem.visible
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') notnull on notnull.CodeJoin=sm_excelimportitem.notnull 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') fieldtype on fieldtype.CodeJoin=sm_excelimportitem.fieldtype 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') codename on codename.CodeJoin=sm_excelimportitem.codename 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') onlyflag on onlyflag.CodeJoin=sm_excelimportitem.onlyflag 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') amuserimporttype on amuserimporttype.CodeJoin=sm_excelimportitem.amuserimporttype 
+		WHERE
+			ID = #{_parameter}
+	</select>
+
+	<!-- 新增信息表字段 -->
+	<sql id="Insert_Column">
+		<if test="importname!=null and importname!=''">,importname</if> <!---->
+		<if test="fieldname!=null and fieldname!=''">,fieldname</if> <!--字段名称-->
+		<if test="excelcolumnname!=null and excelcolumnname!=''">,excelcolumnname</if> <!--Excel列名-->
+		<if test="visible!=null and visible!=''">,visible</if> <!--是否可见-->
+		<if test="columnnumber!=null and columnnumber!=''">,columnnumber</if> <!--排序-->
+		<if test="notnull!=null and notnull!=''">,notnull</if> <!--是否必填-->
+		<if test="fieldtype!=null and fieldtype!=''">,fieldtype</if> <!--字段类型-->
+		<if test="fieldshortestlen!=null and fieldshortestlen!=''">,fieldshortestlen</if> <!--最短长度-->
+		<if test="fieldlen!=null and fieldlen!=''">,fieldlen</if> <!--最长长度-->
+		<if test="codeid!=null and codeid!=''">,codeid</if> <!--CodeId-->
+		<if test="codename!=null and codename!=''">,codename</if> <!--Code保存描述-->
+		<if test="onlyflag!=null and onlyflag!=''">,onlyflag</if> <!--唯一标识-->
+		<if test="amuserimporttype!=null and amuserimporttype!=''">,amuserimporttype</if> <!--成果人员子表导入类型-->
+	</sql>
+
+	<sql id="Insert_Parmeter">
+		<if test="importname!=null and importname!=''">,#{importname}</if>	<!---->
+		<if test="fieldname!=null and fieldname!=''">,#{fieldname}</if>	<!--字段名称-->
+		<if test="excelcolumnname!=null and excelcolumnname!=''">,#{excelcolumnname}</if>	<!--Excel列名-->
+		<if test="visible!=null and visible!=''">,#{visible}</if>	<!--是否可见-->
+		<if test="columnnumber!=null and columnnumber!=''">,#{columnnumber}</if>	<!--排序-->
+		<if test="notnull!=null and notnull!=''">,#{notnull}</if>	<!--是否必填-->
+		<if test="fieldtype!=null and fieldtype!=''">,#{fieldtype}</if>	<!--字段类型-->
+		<if test="fieldshortestlen!=null and fieldshortestlen!=''">,#{fieldshortestlen}</if>	<!--最短长度-->
+		<if test="fieldlen!=null and fieldlen!=''">,#{fieldlen}</if>	<!--最长长度-->
+		<if test="codeid!=null and codeid!=''">,#{codeid}</if>	<!--CodeId-->
+		<if test="codename!=null and codename!=''">,#{codename}</if>	<!--Code保存描述-->
+		<if test="onlyflag!=null and onlyflag!=''">,#{onlyflag}</if>	<!--唯一标识-->
+		<if test="amuserimporttype!=null and amuserimporttype!=''">,#{amuserimporttype}</if>	<!--成果人员子表导入类型-->
+	</sql>
+
+	<!-- 新增表信息  -->
+	<insert id="Insert_SM_ExcelImportItem" parameterType="com.ytxd.model.SystemManage.SM_ExcelImportItem" >
+		INSERT INTO sm_excelimportitem
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Column" />
+		</trim>
+		VALUES
+		<trim prefix="(" suffix=")" prefixOverrides=",">
+			<include refid="Insert_Parmeter" />
+		</trim>
+		<selectKey resultType="java.lang.String" keyProperty="id">
+			SELECT LAST_INSERT_ID() AS id FROM DUAL
+		</selectKey>
+	</insert>
+
+	<!-- 修改表  set 参数  -->
+	<sql id="Update_Parmeter">
+		<if test="importname!=null">,importname=#{importname}</if>
+		<if test="fieldname!=null">,fieldname=#{fieldname}</if>
+		<if test="excelcolumnname!=null">,excelcolumnname=#{excelcolumnname}</if>
+		<if test="visible!=null">,visible=#{visible}</if>
+		<if test="columnnumber!=null">,columnnumber=#{columnnumber}</if>
+		<if test="notnull!=null">,notnull=#{notnull}</if>
+		<if test="fieldtype!=null">,fieldtype=#{fieldtype}</if>
+		<if test="fieldshortestlen!=null">,fieldshortestlen=#{fieldshortestlen}</if>
+		<if test="fieldlen!=null">,fieldlen=#{fieldlen}</if>
+		<if test="codeid!=null">,codeid=#{codeid}</if>
+		<if test="codename!=null">,codename=#{codename}</if>
+		<if test="onlyflag!=null">,onlyflag=#{onlyflag}</if>
+		<if test="amuserimporttype!=null">,amuserimporttype=#{amuserimporttype}</if>
+	</sql>
+
+	<!-- 修改表信息 -->
+	<update id="Update_SM_ExcelImportItem" parameterType="com.ytxd.model.SystemManage.SM_ExcelImportItem">
+		UPDATE sm_excelimportitem
+		<set>
+			<trim prefixOverrides=",">
+			<include refid="Update_Parmeter" />
+			</trim>
+		</set>
+		WHERE id IN 
+		<foreach collection="idarray" index="index" item="item" open="(" separator="," close=")">
+	        #{item}
+	    </foreach> 
+	</update>
+
+	<!-- 删除表信息 -->
+	<delete id="Delete_SM_ExcelImportItem" parameterType="java.lang.String">
+		DELETE FROM
+			sm_excelimportitem
+		WHERE
+			id IN <foreach collection="array" index="index" item="item" open="(" separator="," close=")">#{item}</foreach>
+	</delete>
+	
+	<!-- 得到ID为空的记录 -->
+	<select id="Select_SM_ExcelImportItem_IDNULL" resultType="com.ytxd.model.SystemManage.SM_ExcelImportItem">
+		SELECT <include refid="Select_Column" /> 
+		FROM SM_EXCELIMPORTITEM 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') visible on visible.CodeJoin=sm_excelimportitem.visible
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') notnull on notnull.CodeJoin=sm_excelimportitem.notnull 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') fieldtype on fieldtype.CodeJoin=sm_excelimportitem.fieldtype 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') codename on codename.CodeJoin=sm_excelimportitem.codename 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') onlyflag on onlyflag.CodeJoin=sm_excelimportitem.onlyflag 
+		left join (select Code CodeJoin,Description DescriptionJoin from SM_CodeItem where CodeId='FD') amuserimporttype on amuserimporttype.CodeJoin=sm_excelimportitem.amuserimporttype 
+		WHERE ID IS NULL 
+		ORDER BY IMPORTNAME,COLUMNNUMBER
+	</select>
+	<update id="Update_SM_ExcelImportItem_ID" parameterType="com.ytxd.model.SystemManage.SM_ExcelImportItem">
+		UPDATE SM_EXCELIMPORTITEM 
+		SET ID=SEQ_SM_EXCELIMPORTITEM.Nextval 
+		WHERE IMPORTNAME=#{importname} and FIELDNAME=#{fieldname} 
+	</update>
+</mapper>

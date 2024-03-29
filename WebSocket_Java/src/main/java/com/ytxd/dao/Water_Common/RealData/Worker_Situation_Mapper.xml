@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Water_Common.RealData.Worker_Situation_Mapper">
+    <!-- 取最新的工情数据 取最新的一条-->
+    <select id="Select_Worker_List" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        ST_GATE_R.tm,
+        ifnull(ST_GATE_R.gtopnum,0) gtopnum,
+        case when st_stbprp_b.stcd = 'MHZM03' and ST_GATE_R.gtq is null then '-' else FORMAT(ifnull(ST_GATE_R.gtq,0),1) end flow,
+        st_stbprp_b.total_gate,
+        st_stbprp_introduce.introduce,st_stbprp_introduce.filepath
+        from st_stbprp_b
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        left join (select stcd,introduce,filepath from st_stbprp_introduce) st_stbprp_introduce on st_stbprp_introduce.stcd = st_stbprp_b.stcd
+        left join (
+        select stcd, tm,gtopnum,gtq from (
+        select stcd, tm,gtopnum,gtq, row_number() over(partition by stcd order by tm desc) rn from ST_GATE_R
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and ST_GATE_R.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and ST_GATE_R.tm &lt;= #{endtime}
+            </if>
+        </where>
+        )ST_GATE_R where rn = 1
+        ) ST_GATE_R on ST_GATE_R.stcd = st_stbprp_b.stcd
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by -st_stbprp_b.orderid desc
+    </select>
+    <!-- 取实时工情数据 -->
+    <select id="Select_Real_Worker_List" resultType="java.util.Map">
+        select st_stbprp_b.stcd,<include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Select"/>,
+        ST_GATE_R.tm,ifnull(ST_GATE_R.gtopnum,0) gtopnum,ST_GATE_R.gtq gtq,st_stbprp_b.total_gate,ST_GATE_R.gtq q
+        from st_stbprp_b
+        <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Join"/>
+        left join (
+        select stcd, tm,gtopnum,gtq from ST_GATE_R
+        <where>
+            <if test="starttime != null and starttime != '' ">
+                and ST_GATE_R.tm >= #{starttime}
+            </if>
+            <if test="endtime != null and endtime != '' ">
+                and ST_GATE_R.tm &lt;= #{endtime}
+            </if>
+        </where>
+        ) ST_GATE_R on ST_GATE_R.stcd = st_stbprp_b.stcd
+        <where>
+            <include refid="com.ytxd.dao.Water_Common.Water_Common_Mapper.Water_Common_Where"/>
+        </where>
+        order by -st_stbprp_b.orderid desc
+    </select>
+
+</mapper>

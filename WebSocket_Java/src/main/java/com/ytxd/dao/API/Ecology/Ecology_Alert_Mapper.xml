@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.API.Ecology.Ecology_Alert_Mapper">
+	<select id="GetEcologyAlertList" resultType="java.util.Map">
+		select * from (select st_ecology_cp.id,st_ecology_cp.stcd,st_stbprp_b.stnm,st_ecology_cp.type,
+		st_ecology_cp.tm,information,reserve_plan,problem_handling,hand_result,
+		st_ecology_cp.flag,flagjoin.description flagname
+		from st_ecology_cp
+		left join (select stcd,stnm from st_stbprp_b where sttp = '01'
+		) st_stbprp_b on st_stbprp_b.stcd = st_ecology_cp.stcd
+		left join (select code,description from sm_codeitem where codeid='FD'
+		) flagjoin on flagjoin.code = st_ecology_cp.flag
+		<where>
+			<if test="id != null and id != ''">
+				and st_ecology_cp.id = #{id}
+			</if>
+			<if test="stcd != null and stcd != ''">
+				and st_ecology_cp.stcd = #{stcd}
+			</if>
+			<if test="type != null and type != ''">
+				and st_ecology_cp.type like concat('%',#{type},'%')
+			</if>
+			<if test="stnm != null and stnm != ''">
+				and st_stbprp_b.stnm like concat('%',#{stnm},'%')
+			</if>
+			<if test="flag != null and flag != ''">
+				and st_ecology_cp.flag = #{flag}
+			</if>
+		</where>
+		    order by tm desc
+		) st_ecology_cp
+		<if test="sort != null and sort != '' ">
+			order by ${sort} ${order}
+		</if>
+	</select>
+	<update id="UpdateEcologyAlert" >
+		update st_ecology_cp
+		<set>
+			stcd = stcd
+			<if test="type != null">,type = #{type}</if>
+			<if test="information != null">,information = #{information}</if>
+			<if test="reserve_plan != null">,reserve_plan = #{reserve_plan}</if>
+			<if test="problem_handling != null">,problem_handling = #{problem_handling}</if>
+			<if test="hand_result != null">,hand_result = #{hand_result}</if>
+			<if test="flag != null">,flag = #{flag}</if>
+		</set>
+		where id in
+		<foreach collection="idarray" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</update>
+
+	<select id="GetManagerList" resultType="java.util.Map">
+		select * from (
+		    select sm_manager.*,sexjoin.description sexname,idtypejoin.description idtypename,
+					flagjoin.description flagname,onjobjoin.description onjobname
+		    from sm_manager
+		    left join (select code,description from sm_codeitem where codeid='FM' and flag ='01'
+		    ) sexjoin on sexjoin.code = sm_manager.sex
+		    left join (select code,description from sm_codeitem where codeid='QS' and flag ='01'
+		    ) idtypejoin on idtypejoin.code = sm_manager.idtype
+			left join (select code,description from sm_codeitem where codeid='FD' and flag ='01'
+			) flagjoin on flagjoin.code = sm_manager.flag
+			left join (select code,description from sm_codeitem where codeid='FD' and flag ='01'
+			) onjobjoin on onjobjoin.code = sm_manager.onjob
+		    <where>
+				<if test="id != null and id != '' ">
+					and sm_manager.id = #{id}
+				</if>
+				<if test="name != null and name != '' ">
+					and sm_manager.name like concat('%',#{name},'%')
+				</if>
+				<if test="sex != null and sex != '' ">
+					and sm_manager.sex = #{sex}
+				</if>
+				<if test="flag != null and flag != '' ">
+					and sm_manager.flag = #{flag}
+				</if>
+				<if test="onjob != null and onjob != '' ">
+					and sm_manager.onjob = #{onjob}
+				</if>
+			</where>
+		    order by sm_manager.submittime desc
+		) sm_manager
+		<if test="sort != null and sort != '' ">
+			order by ${sort} ${order}
+		</if>
+	</select>
+</mapper>

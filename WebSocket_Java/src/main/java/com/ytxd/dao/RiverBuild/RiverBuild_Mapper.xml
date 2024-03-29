@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.RiverBuild.RiverBuild_Mapper">
+	<resultMap id="river_build" type="java.util.Map" autoMapping="true">
+		<result column="id" property="id"/>
+		<association column="{build=id}"  javaType="java.util.List"  autoMapping="true" property="filelist" select="Select_RiverBuild_File_List"/>
+	</resultMap>
+	<select id="Select_RiverBuild_List"  resultMap="river_build">
+		select id,projectname,embodiment,bid,design,construction,filepath,project_approval,feasibility_study,
+		       hongping,process,remark,submitman,submittime,project_no,section_name,lot_number,tendering_unit,
+		name_of_project_owner,source_of_funds,bidding_method,relevant_documents,orderid
+		from rc_river_build
+		<where>
+			<if test="id != null and id != '' ">
+				and id = #{id}
+			</if>
+		</where>
+		order by orderid,submittime asc
+	</select>
+	<select id="Select_RiverBuild_File_List" resultType="java.util.Map">
+		select rc_river_build_file.id, rc_river_build_file.buildid, rc_river_build_file.filetype,
+			   rc_river_build_file.filepath,filetype_join.description filetypename
+		from rc_river_build_file
+		left join (select code,description,orderid from sm_codeitem where codeid ='FT'
+		)filetype_join on filetype_join.code = rc_river_build_file.filetype
+		<where>
+			<if test="id != null and id != '' ">
+				and rc_river_build_file.id = #{id}
+			</if>
+			<if test="buildid != null and buildid != '' ">
+				and rc_river_build_file.buildid = #{buildid}
+			</if>
+		</where>
+		order by filetype_join.orderid
+	</select>
+	<sql id="Insert_River_Build_Columns">
+		<if test="projectname != null and projectname != '' ">
+			,projectname
+		</if>
+		<if test="project_no != null and project_no != '' ">
+			,project_no
+		</if>
+		<if test="section_name != null and section_name != '' ">
+			,section_name
+		</if>
+		<if test="lot_number != null and lot_number != '' ">
+			,lot_number
+		</if>
+		<if test="tendering_unit != null and tendering_unit != '' ">
+			,tendering_unit
+		</if>
+		<if test="name_of_project_owner != null and name_of_project_owner != '' ">
+			,name_of_project_owner
+		</if>
+		<if test="source_of_funds != null and source_of_funds != '' ">
+			,source_of_funds
+		</if>
+		<if test="bidding_method != null and bidding_method != '' ">
+			,bidding_method
+		</if>
+		<if test="relevant_documents != null and relevant_documents != '' ">
+			,relevant_documents
+		</if>
+		<if test="embodiment != null and embodiment != '' ">
+			,embodiment
+		</if>
+		<if test="bid != null and bid != '' ">
+			,bid
+		</if>
+		<if test="design != null and design != '' ">
+			,design
+		</if>
+		<if test="construction != null and construction != '' ">
+			,construction
+		</if>
+		<if test="filepath != null and filepath != '' ">
+			,filepath
+		</if>
+		<if test="project_approval != null and project_approval != '' ">
+			,project_approval
+		</if>
+		<if test="feasibility_study != null and feasibility_study != '' ">
+			,feasibility_study
+		</if>
+		<if test="hongping != null and hongping != '' ">
+			,hongping
+		</if>
+		<if test="process != null and process != '' ">
+			,process
+		</if>
+		<if test="remark != null and remark != '' ">
+			,remark
+		</if>
+		<if test="submitman != null and submitman != '' ">
+			,submitman
+		</if>
+		<if test="submittime != null and submittime != '' ">
+			,submittime
+		</if>
+		<if test="orderid != null and orderid != '' ">
+			,orderid
+		</if>
+	</sql>
+	<sql id="Insert_River_Build_Params">
+		<if test="projectname != null and projectname != '' ">
+			,#{projectname}
+		</if>
+		<if test="project_no != null and project_no != '' ">
+			,#{project_no}
+		</if>
+		<if test="section_name != null and section_name != '' ">
+			,#{section_name}
+		</if>
+		<if test="lot_number != null and lot_number != '' ">
+			,#{lot_number}
+		</if>
+		<if test="tendering_unit != null and tendering_unit != '' ">
+			,#{tendering_unit}
+		</if>
+		<if test="name_of_project_owner != null and name_of_project_owner != '' ">
+			,#{name_of_project_owner}
+		</if>
+		<if test="source_of_funds != null and source_of_funds != '' ">
+			,#{source_of_funds}
+		</if>
+		<if test="bidding_method != null and bidding_method != '' ">
+			,#{bidding_method}
+		</if>
+		<if test="relevant_documents != null and relevant_documents != '' ">
+			,#{relevant_documents}
+		</if>
+		<if test="embodiment != null and embodiment != '' ">
+			,#{embodiment}
+		</if>
+		<if test="bid != null and bid != '' ">
+			,#{bid}
+		</if>
+		<if test="design != null and design != '' ">
+			,#{design}
+		</if>
+		<if test="construction != null and construction != '' ">
+			,#{construction}
+		</if>
+		<if test="filepath != null and filepath != '' ">
+			,#{filepath}
+		</if>
+		<if test="project_approval != null and project_approval != '' ">
+			,#{project_approval}
+		</if>
+		<if test="feasibility_study != null and feasibility_study != '' ">
+			,#{feasibility_study}
+		</if>
+		<if test="hongping != null and hongping != '' ">
+			,#{hongping}
+		</if>
+		<if test="process != null and process != '' ">
+			,#{process}
+		</if>
+		<if test="remark != null and remark != '' ">
+			,#{remark}
+		</if>
+		<if test="submitman != null and submitman != '' ">
+			,#{submitman}
+		</if>
+		<if test="submittime != null and submittime != '' ">
+			,#{submittime}
+		</if>
+		<if test="orderid != null and orderid != '' ">
+			,#{orderid}
+		</if>
+	</sql>
+	<insert id="Insert_River_Build">
+		insert into rc_river_build(id<include refid="Insert_River_Build_Columns"/>)
+		values(#{id}<include refid="Insert_River_Build_Params"/>)
+	</insert>
+	<sql id="Update_River_Build_Params">
+		<if test="projectname != null ">
+			,projectname = #{projectname}
+		</if>
+		<if test="project_no != null">
+			,project_no = #{project_no}
+		</if>
+		<if test="section_name != null">
+			,section_name = #{section_name}
+		</if>
+		<if test="lot_number != null ">
+			,lot_number = #{lot_number}
+		</if>
+		<if test="tendering_unit != null">
+			,tendering_unit = #{tendering_unit}
+		</if>
+		<if test="name_of_project_owner != null  ">
+			,name_of_project_owner = #{name_of_project_owner}
+		</if>
+		<if test="source_of_funds != null ">
+			,source_of_funds = #{source_of_funds}
+		</if>
+		<if test="bidding_method != null ">
+			,bidding_method = #{bidding_method}
+		</if>
+		<if test="relevant_documents != null ">
+			,relevant_documents = #{relevant_documents}
+		</if>
+		<if test="embodiment != null ">
+			,embodiment = #{embodiment}
+		</if>
+		<if test="bid != null">
+			,bid = #{bid}
+		</if>
+		<if test="design != null">
+			,design = #{design}
+		</if>
+		<if test="construction != null ">
+			,construction = #{construction}
+		</if>
+		<if test="filepath != null">
+			,filepath = #{filepath}
+		</if>
+		<if test="project_approval != null">
+			,project_approval = #{project_approval}
+		</if>
+		<if test="feasibility_study != null">
+			,feasibility_study = #{feasibility_study}
+		</if>
+		<if test="hongping != null">
+			,hongping = #{hongping}
+		</if>
+		<if test="process != null ">
+			,process = #{process}
+		</if>
+		<if test="remark != null ">
+			,remark = #{remark}
+		</if>
+		<if test="submitman != null  ">
+			,submitman = #{submitman}
+		</if>
+		<if test="submittime != null ">
+			,submittime = #{submittime}
+		</if>
+		<if test="orderid != null ">
+			,orderid = #{orderid}
+		</if>
+	</sql>
+	<update id="Update_River_Build">
+		update rc_river_build set id = id <include refid="Update_River_Build_Params"/>
+		where id = #{id}
+	</update>
+	<delete id="Delete_River_Build">
+		delete from rc_river_build where id in
+		<foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+	<insert id="Insert_River_Build_File">
+		insert into rc_river_build_file(id,buildid,filetype,filepath)
+		values(#{id},#{buildid},#{filetype},#{filepath})
+	</insert>
+	<update id="Update_River_Build_File">
+		update rc_river_build_file set id = id ,buildid = buildid,filetype = #{filetype},filepath = #{filepath}
+		where id = #{id}
+	</update>
+	<delete id="Delete_River_Build_FileByID">
+		delete from rc_river_build_file where id in
+		<foreach collection="id.split(',')" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+	<delete id="Delete_River_Build_FileByBuildId">
+		delete from rc_river_build_file where buildid in
+		<foreach collection="buildid.split(',')" item="buildid" open="(" separator="," close=")">
+			#{buildid}
+		</foreach>
+	</delete>
+</mapper>

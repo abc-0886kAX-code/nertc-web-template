@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Statistics.Stbprp_Mapper">
+    <select id="GetData" resultType="java.util.HashMap">
+        select description title,IFNULL(counts,0) counts,sc.orderid from sm_codeitem sc
+        left join(select STTP,count(*)counts from st_stbprp_b ssb
+        group by ssb.STTP)join0 on join0.STTP=sc.code
+        where codeid='TP' and flag = '01'
+        order by sc.orderid
+    </select>
+    <select id="GetData4" resultType="java.util.HashMap">
+        select description name,IFNULL(counts,0) value,join0.STTP  from sm_codeitem sc
+        left join(select STTP,count(*)counts from st_stbprp_b ssb
+        group by ssb.STTP)join0 on join0.STTP= sc.code
+        where codeid='TP' and code in ('03','PP','ZZ','ZQ')
+    </select>
+
+    <select id="GetRiverData" resultType="java.util.HashMap">
+        select counts,title,orderid from (with tmp_river as (select st_stbprp_b.stcd,tm,z,q,LDKEL,RDKEL,WRZ,WRQ,GRZ,GRQ
+                           from st_stbprp_b
+                                    left join  (select stcd,tm,z,q,row_number() over (partition by stcd order by tm desc) rn  from st_river_r
+                                                where tm between adddate(now(),interval -2 day)  and now() )
+                               st_river_r on st_stbprp_b.stcd =st_river_r.stcd and rn = 1
+                                    left join (select STCD,LDKEL,RDKEL,WRZ,WRQ,GRZ,GRQ from st_rvfcch_b
+                           )st_rvfcch_b on st_rvfcch_b.STCD=st_stbprp_b.STCD
+                           where sttp in ('ZZ','ZQ')
+        )
+
+        select count(1) counts,'总数' title,1 orderid from tmp_river
+        union all
+        select count(1) counts,'正常' title,2 orderid from tmp_river
+        where (tmp_river.Z &lt; WRZ or WRZ is null ) and (tmp_river.q &lt; WRQ  or WRQ is null) and ( z is not null or q is not null)
+        union all
+        select count(1) counts,'超保证' title,3 orderid from tmp_river
+        where tmp_river.Z > GRZ or q> GRQ
+        union all
+        select count(1) counts,'超警戒' title,4 orderid from tmp_river
+        where tmp_river.Z >= WRZ or q >= WRQ
+        union all
+        select count(1) counts,'漫堤' title,5 orderid from tmp_river
+        where tmp_river.Z > LDKEL or Z> RDKEL
+        union all
+        select count(1) counts,'没有数据' title,6 orderid from tmp_river
+        where tmp_river.Z is null and q is null and tm is null
+       )tmp_river order by orderid asc
+    </select>
+    <select id="GetRainData" resultType="java.util.HashMap">
+        select counts,title,orderid from (with tmp_rain as (
+        select st_stbprp_b.stcd,st_pptn_r.tm,st_pptn_r.p from st_stbprp_b
+        left join (select stcd,max(tm) tm,sum(p) p from st_pptn_r
+        where tm between #{starttime} and #{endtime}    group by stcd)
+        st_pptn_r on st_pptn_r.stcd = st_stbprp_b.stcd
+        where sttp  in ('ZQ','PP') and flag='01'
+        )
+        select count(1) counts,'没有数据' title,0 orderid from tmp_rain where p is null
+        union all
+        select count(1) counts,'无雨' title,1 orderid from tmp_rain where  p &lt; 1
+        union all
+        select count(1) counts,'小到中雨' title,2 orderid from tmp_rain where p >= 1 and p &lt; 25
+        union all
+        select count(1) counts,'暴雨' title,3 orderid from tmp_rain where p >= 25 and p &lt; 100
+        union all
+        select count(1) counts,'大暴雨' title,4 orderid from tmp_rain where p >= 100 and p &lt; 250
+        union all
+        select count(1) counts,'特大暴雨' title,5 orderid from tmp_rain where p >=250
+        ) tmp_rain order by orderid
+    </select>
+    <select id="GetTopData" resultType="java.util.HashMap">
+        select '水库超汛限' as title,count(*) counts from
+            (select srr.STCD,Z,srb.XXSW from st_rsvr_r srr left join (select STCD,XXSW from st_rsvrfcch_b)srb on srb.STCD=srr.STCD
+            where(srr.STCD,TM) in
+            (select STCD,MAX(TM) FROM st_rsvr_r GROUP BY STCD))ans
+        where ans.Z>ans.XXSW
+        union all
+        select '河道超警戒' as title,count(*)counts from
+            (select srr.STCD,Z,Q,srb.WRZ,srb.WRQ,MAX(TM) from st_river_r srr
+            left join (select STCD,WRZ,WRQ from st_rvfcch_b)srb on srb.STCD=srr.STCD
+            where TM BETWEEN #{riverstarttime} and #{riverendtime})ans
+        where ans.Z>ans.WRZ or ans.Q>ans.WRQ
+        union all
+        select '雨量超警戒' as title,count(*)counts from
+            (select STCD,sum(P)P from st_pptn_r
+            where TM BETWEEN #{starttime}and #{endtime})ans
+        where ans.P>=100
+    </select>
+</mapper>

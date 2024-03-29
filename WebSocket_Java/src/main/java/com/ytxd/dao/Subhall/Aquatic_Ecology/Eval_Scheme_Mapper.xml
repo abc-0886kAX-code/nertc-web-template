@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ytxd.dao.Subhall.Aquatic_Ecology.Eval_Scheme_Mapper">
+<!--	查询方案列表-->
+	<select id="Select_Eval_Scheme_List" resultType="java.util.HashMap">
+		select schemeid,schemeyear,schemename,remark,submittime,schemetips,schemestcds,score from Eval_Scheme
+		<where>
+			<if test="schemeid != null and schemeid != '' ">
+				and schemeid in
+				<foreach collection="schemeid.split(',')" item="id" open="(" separator="," close=")">
+					#{id}
+				</foreach>
+			</if>
+			<if test="schemeyear != null and schemeyear != '' ">
+				and schemeyear in
+				<foreach collection="schemeyear.split(',')" item="year" open="(" separator="," close=")">
+					#{year}
+				</foreach>
+			</if>
+			<if test="schemename != null and schemename != '' ">
+				and schemename like concat('%',#{schemename},'%')
+			</if>
+		</where>
+		order by schemeyear desc , submittime desc
+	</select>
+<!--	插入方案-->
+	<sql id="Insert_Columns">
+		<if test="schemeyear != null and schemeyear != '' ">
+			,schemeyear
+		</if>
+		<if test="schemename != null and schemename != '' ">
+			,schemename
+		</if>
+		<if test="remark != null and remark != '' ">
+			,remark
+		</if>
+		<if test="submittime != null and submittime != '' ">
+			,submittime
+		</if>
+		<if test="schemetips != null and schemetips != '' ">
+			,schemetips
+		</if>
+		<if test="schemestcds != null and schemestcds != '' ">
+			,schemestcds
+		</if>
+	</sql>
+	<sql id="Insert_Params">
+		<if test="schemeyear != null and schemeyear != '' ">
+			,#{schemeyear}
+		</if>
+		<if test="schemename != null and schemename != '' ">
+			,#{schemename}
+		</if>
+		<if test="remark != null and remark != '' ">
+			,#{remark}
+		</if>
+		<if test="submittime != null and submittime != '' ">
+			,#{submittime}
+		</if>
+		<if test="schemetips != null and schemetips != '' ">
+			,#{schemetips}
+		</if>
+		<if test="schemestcds != null and schemestcds != '' ">
+			,#{schemestcds}
+		</if>
+	</sql>
+	<insert id="Insert_Eval_Scheme">
+		insert into Eval_Scheme(schemeid<include refid="Insert_Columns"/>) values(#{schemeid}<include refid="Insert_Params"/>)
+	</insert>
+<!--	修改-->
+	<sql id="Update_Params">
+		<if test="schemeyear != null  ">
+			,schemeyear = #{schemeyear}
+		</if>
+		<if test="schemename != null  ">
+			,schemename = #{schemename}
+		</if>
+		<if test="remark != null ">
+			,remark = #{remark}
+		</if>
+		<if test="schemetips != null ">
+			,schemetips = #{schemetips}
+		</if>
+		<if test="schemestcds != null ">
+			,schemestcds = #{schemestcds}
+		</if>
+	</sql>
+	<update id="Update_Eval_Scheme">
+		update Eval_Scheme set schemeid =schemeid <include refid="Update_Params"/>
+		where schemeid in
+		<foreach collection="schemeid.split(',')" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</update>
+<!--	删除-->
+	<delete id="Delete_Eval_Scheme">
+		delete from Eval_Scheme where schemeid in
+		<foreach collection="schemeid.split(',')" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+	<insert id="Insert_Initialization_Scheme_Ind">
+		insert into Eval_Scheme_Indicator(schemeid,indid,indname,parentid,indtype,indrank,formuladesc,weight,calculation_formula,orderid,inrremake)
+		select #{schemeid},indid,indname,parentid,indtype,indrank,formuladesc,weight,calculation_formula,orderid,inrremake from eval_indicator_library
+		where 1=1 and (eval_indicator_library.SIGN IS NULL OR eval_indicator_library.SIGN != '00') AND not exists (select 1 from Eval_Scheme_Indicator where Eval_Scheme_Indicator.indid = eval_indicator_library.indid and schemeid = #{schemeid})
+	</insert>
+
+	<insert id="Insert_default_Stcd">
+		insert into eval_scheme_stcd(schemeid,stcd ) select #{schemeid},stcd from eval_stcd limit 1
+	</insert>
+
+	<update id="Update_Default_Scheme_Score">
+		with temp  as (
+			select score from Eval_scheme where schemeid != #{schemeid} order by schemeyear desc limit 1
+			)
+		update Eval_scheme set score = (select score from temp limit 1 ) where schemeid = #{schemeid}
+	</update>
+
+	<update id="Update_Default_ind_Score">
+		with temp as (select id,schemeid,indid,score,otherscore from Eval_scheme_indicator where schemeid = (select schemeid from Eval_scheme where schemeid != #{schemeid} order by schemeyear desc limit 1 )
+			)
+		update Eval_scheme_indicator set score = (select score from temp where temp.indid = Eval_scheme_indicator.indid),
+							otherscore = (select otherscore from temp where temp.indid = Eval_scheme_indicator.indid)
+		where schemeid = #{schemeid}
+	</update>
+
+	<insert id="Insert_Default_stcd_Score">
+		insert into eval_scheme_indicator_score(schemeid,stcd,essid,score)
+		select eval_scheme_stcd.schemeid,eval_scheme_stcd.stcd,Eval_scheme_indicator.id,eval_scheme_indicator_score.score from eval_scheme_stcd
+		left join Eval_scheme_indicator on Eval_scheme_indicator.schemeid = eval_scheme_stcd.schemeid
+		inner join (
+			select eval_scheme_indicator_score.schemeid,eval_scheme_indicator_score.score,Eval_scheme_indicator.indid from eval_scheme_indicator_score
+			left join Eval_scheme_indicator on Eval_scheme_indicator.schemeid = eval_scheme_indicator_score.schemeid and eval_scheme_indicator_score.essid = Eval_scheme_indicator.id
+			where eval_scheme_indicator_score.schemeid = (select schemeid from Eval_scheme where schemeid != #{schemeid} order by schemeyear desc limit 1)
+			) eval_scheme_indicator_score on eval_scheme_indicator_score.indid = Eval_scheme_indicator.indid
+		where eval_scheme_stcd.schemeid = #{schemeid}
+	</insert>
+</mapper>

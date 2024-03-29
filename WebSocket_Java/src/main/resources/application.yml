@@ -1,0 +1,168 @@
+#全局环境配置
+# Tomcat
+server:
+  tomcat:
+    uri-encoding: UTF-8    
+    max-threads: 1000
+  port: 8006
+  servlet:
+    context-path: /frx
+#    session:
+#      timeout: 7200
+spring:      
+    # 环境 dev|test|pro
+    profiles:
+        active: pro
+    jmx:
+        enabled: false
+    # jackson时间格式化
+    jackson:
+        time-zone: GMT+8
+        date-format: yyyy-MM-dd HH:mm:ss
+    redis:
+        # Redis数据库索引（默认为0）
+        database: 11
+        # Redis服务器地址
+        host: 127.0.0.1
+        # Redis服务器连接端口
+        port: 6379
+        # Redis服务器连接密码（默认为空）
+        #password: 12345
+        # 连接超时时间（毫秒）默认是2000ms
+        timeout: 5000ms
+        ################ Redis 线程池设置 ##############
+        # 连接池最大连接数（使用负值表示没有限制） 默认 8
+        lettuce:
+          pool:
+            max-active: 200 # 接池最大连接数（使用负值表示没有限制） 默认 8
+            max-idle: 20 # 连接池中的最大空闲连接 默认 8
+            min-idle: 0 # 连接池中的最小空闲连接 默认 0
+            max-wait: -1 # 连接池最大阻塞等待时间（使用负值表示没有限制） 默认 -1
+    servlet:
+        multipart:
+            maxFileSize: 104857600 #100MB
+            maxRequestSize: 104857600 #100MB
+    http:
+    encoding:
+      charset: UTF-8
+      force: true
+      enabled: true
+    mvc:
+     view:
+      prefix: /WEB-INF/view/
+      suffix: .jsp
+     pathmatch:
+      use-suffix-pattern: true
+
+    mail:
+      host: smtp.qq.com
+      username: 2625100545@qq.com
+      # SMTP授权密码
+      password: ykgznetvpzngebee
+      protocol: smtp
+      default-encoding: UTF-8
+
+    thymeleaf:
+      prefix: classpath:/templates/
+      suffix: .html
+      servlet:
+        content-type: text/html
+      enabled: true
+      encoding: UTF-8
+      mode: HTML5
+      cache: false
+
+# 暴露监控端点后会打印所有的端点
+management:
+  endpoints:
+    enabled-by-default: false
+
+# mybaits-plus配置
+mybatis-plus:
+  # MyBatis Mapper所对应的XML文件位置
+  mapper-locations: classpath:/dao/**/*Mapper.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    call-setters-on-nulls: true
+  global-config:
+    # 关闭MP3.0自带的banner
+    banner: false
+    db-config:
+      # 主键类型 0:数据库ID自增 1.未定义 2.用户输入 3 id_worker 4.uuid 5.id_worker字符串表示
+      id-type: 0
+      #字段策略 0:"忽略判断",1:"非 NULL 判断"),2:"非空判断"
+      field-strategy: 1
+      # 默认数据库表下划线命名
+      table-underline: true
+pagehelper:
+  helperDialect: mysql #设置sql语言
+  reasonable: false   # 禁用合理化时，如果pageNum<1或pageNum>pages会返回空数据
+  supportMethodsArguments: true
+  params: count=countSql
+  row-bounds-with-count: true
+security:
+  headers:
+    content-type: false
+    content-security-policy: "default-src 'self'; script-src 'self'; frame-ancestors 'self'; object-src 'none'"
+cas:
+  #CAS服务地址
+  server-url:
+  #本地客户端ip端口，不是首页地址
+  client-host: http://192.1.1.5:8080/vue
+file:
+  uploadFolder: c://ALLFile/uploadFiles/
+  staticAccessPath: /file/**
+  onlinePreviewPath: http://192.1.1.5:8012
+system:
+  # 后端免认证接口 url
+  anonUrl:
+    - /
+    - /signin
+    - /Sm_codeitem/code/**
+    - /ResetPasswordByEmail/**
+  # token有效期，单位秒
+  jwtTimeOut: 3600
+#学校代码
+college:
+  id: 12759
+Video_targetUrl: rtmp:localhost:1935/live/test
+service.path: http://127.0.0.1:9096/mh/
+astrict:
+  astrictman: 3
+  timeout: 3600
+# 高塔视频
+tower:
+  client_id: 16041274-7901-11ed-a2b5-b10a3a852bd2
+  # 获取token
+  url_token: http://111.39.105.92:8081/mhdpService/mh/oauth/token
+  # 获取实时视频流地址
+  url_real: http://111.39.105.92:8081/mhdpService/mh/oauth/realVideo
+  # 设备控制
+  url_control: http://111.39.105.92:8081/mhdpService/mh/oauth/ptz
+  # 获取告警视频流地址
+  url_warn: http://111.39.105.92:8081/mhdpService/mh/oauth/warnVideo
+#  webSocket配置信息
+socketio:
+  # host在本地测试可以设置为localhost或者本机IP，在服务器跑可换成服务器IP
+  host: 192.168.0.104
+  port: 10065
+  # 设置最大每帧处理数据的长度，防止他人利用大数据来攻击服务器
+  maxFramePayloadLength: 1048576
+  # 设置http交互最大内容长度
+  maxHttpContentLength: 1048576
+  # socket连接数大小（如只监听一个端口boss线程组为1即可）
+  bossCount: 1
+  workCount: 100
+  allowCustomRequests: true
+  # 协议升级超时时间（毫秒），默认10秒。HTTP握手升级为ws协议超时时间
+  upgradeTimeout: 1000000
+  # Ping消息超时时间（毫秒），默认60秒，这个时间间隔内没有接收到心跳消息就会发送超时事件
+  pingTimeout: 6000000
+  # Ping消息间隔（毫秒），默认25秒。客户端向服务器发送一条心跳消息间隔
+  pingInterval: 25000
+netty:
+  server:
+    port: 4001
+ysy:
+  appKey: "836367104dfa493e98f9d8a71a4ce692"
+  appSecret: "42b6b221df31aba846c23acc85ccd762"
